@@ -8,7 +8,7 @@ import { differenceInDays, parseISO } from "date-fns";
 import type { Client, Sale } from "@/types";
 
 const typeLabels: Record<string, string> = {
-  cafe: "CafeterÃ­a",
+  cafe: "Cafetería",
   individual: "Consumidor",
   restaurant: "Restaurante",
   distributor: "Distribuidor",
@@ -64,7 +64,7 @@ export default async function ClientsPage() {
   const today = new Date();
   const inactiveClients = (clients ?? []).filter((c: Client) => {
     const stats = salesByClient[c.id];
-    if (!stats) return true; // nunca comprÃ³
+    if (!stats) return true; // nunca compró
     const daysSince = differenceInDays(today, parseISO(stats.lastDate));
     return daysSince >= c.inactive_alert_days;
   });
@@ -97,11 +97,11 @@ export default async function ClientsPage() {
                 <Link key={c.id} href={`/clients/${c.id}`}
                   className="text-sm text-text-secondary hover:text-text-primary transition-colors"
                 >
-                  Â· <span className="font-medium">{c.name}</span> â€”{" "}
+                  · <span className="font-medium">{c.name}</span> â€”{" "}
                   {daysSince !== null
-                    ? `hace ${daysSince} dÃ­as sin comprar`
-                    : "nunca registrÃ³ una compra"}
-                  {" "}(alerta cada {c.inactive_alert_days} dÃ­as)
+                    ? `hace ${daysSince} días sin comprar`
+                    : "nunca registró una compra"}
+                  {" "}(alerta cada {c.inactive_alert_days} días)
                 </Link>
               );
             })}
@@ -114,7 +114,7 @@ export default async function ClientsPage() {
           <EmptyState
             icon={Users}
             title="No hay clientes registrados"
-            description="AgregÃ¡ tus clientes para trackear sus compras y recibir alertas de inactividad."
+            description="Agregá tus clientes para trackear sus compras y recibir alertas de inactividad."
             actionLabel="+ Agregar cliente"
             actionHref="/clients/new"
           />
@@ -129,7 +129,7 @@ export default async function ClientsPage() {
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">Tipo</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary hidden md:table-cell">Compras</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Total</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">Ãšltima compra</th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">íšltima compra</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Estado</th>
                 </tr>
               </thead>

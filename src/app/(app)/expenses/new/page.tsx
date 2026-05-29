@@ -25,7 +25,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const QUICK_EXPENSES = [
-  { name: "Gas / EnergÃ­a tostadora", category: "energy", frequency: "monthly" },
+  { name: "Gas / Energía tostadora", category: "energy", frequency: "monthly" },
   { name: "Alquiler local", category: "rent", frequency: "monthly" },
   { name: "Bolsas y etiquetas", category: "packaging", frequency: "monthly" },
   { name: "Mantenimiento tostadora", category: "maintenance", frequency: "yearly" },
@@ -76,14 +76,14 @@ export default function NewExpensePage() {
               <p className="section-title">Datos del gasto</p>
 
               <div>
-                <label className="label-base">DescripciÃ³n *</label>
+                <label className="label-base">Descripción *</label>
                 <input type="text" className="input-base" placeholder="Ej: Gas mayo, Bolsas kraft..." {...register("name")} />
                 {errors.name && <p className="text-xs text-status-danger mt-1">{errors.name.message}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label-base">CategorÃ­a</label>
+                  <label className="label-base">Categoría</label>
                   <select className="input-base" {...register("category")}>
                     {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
                       <option key={k} value={k}>{CATEGORY_ICONS[k as keyof typeof CATEGORY_ICONS]} {v}</option>
@@ -145,7 +145,7 @@ export default function NewExpensePage() {
                   {CATEGORY_ICONS[q.category as keyof typeof CATEGORY_ICONS]} {q.name}
                 </p>
                 <p className="text-xs text-text-secondary mt-0.5">
-                  {CATEGORY_LABELS[q.category as keyof typeof CATEGORY_LABELS]} Â· {FREQUENCY_LABELS[q.frequency as keyof typeof FREQUENCY_LABELS]}
+                  {CATEGORY_LABELS[q.category as keyof typeof CATEGORY_LABELS]} · {FREQUENCY_LABELS[q.frequency as keyof typeof FREQUENCY_LABELS]}
                 </p>
               </button>
             ))}

@@ -119,7 +119,7 @@ export default async function DashboardPage() {
       c.status !== "depleted"
   );
 
-  // Calcular margen promedio de los Ãºltimos tuestes
+  // Calcular margen promedio de los últimos tuestes
   const avgMargin =
     (recentBatches ?? []).length > 0
       ? (recentBatches ?? []).reduce((sum: number, b: RoastBatch) => {
@@ -150,7 +150,7 @@ export default async function DashboardPage() {
         </div>
         <div className="flex gap-2">
           <Link href="/inventory/new" className="btn-secondary hidden sm:flex">
-            <Leaf className="w-4 h-4" /> CafÃ© verde
+            <Leaf className="w-4 h-4" /> Café verde
           </Link>
           <Link href="/roasts/new" className="btn-primary">
             <Plus className="w-4 h-4" /> Tueste
@@ -174,7 +174,7 @@ export default async function DashboardPage() {
                 href={`/inventory/${c.id}`}
                 className="text-sm text-text-secondary hover:text-text-primary transition-colors"
               >
-                Â· {c.name} â€”{" "}
+                · {c.name} â€”{" "}
                 <span className="font-mono font-medium">
                   {formatWeight(c.current_stock_kg)} restantes
                 </span>
@@ -201,8 +201,8 @@ export default async function DashboardPage() {
                 <Link key={c.id} href={`/clients/${c.id}`}
                   className="text-sm text-blue-700 hover:text-blue-900 transition-colors"
                 >
-                  Â· <span className="font-medium">{c.name}</span> â€”{" "}
-                  {days !== null ? `hace ${days} dÃ­as sin comprar` : "sin compras registradas"}
+                  · <span className="font-medium">{c.name}</span> â€”{" "}
+                  {days !== null ? `hace ${days} días sin comprar` : "sin compras registradas"}
                 </Link>
               );
             })}
@@ -221,7 +221,7 @@ export default async function DashboardPage() {
           icon={Leaf}
           label="Stock verde"
           value={`${totalGreenStock.toFixed(1)} kg`}
-          sub={`${(coffees ?? []).filter((c: GreenCoffee) => c.status === "active").length} cafÃ©s activos`}
+          sub={`${(coffees ?? []).filter((c: GreenCoffee) => c.status === "active").length} cafés activos`}
         />
         <StatsCard
           icon={Flame}
@@ -238,7 +238,7 @@ export default async function DashboardPage() {
           label="Alertas"
           value={`${lowStockCoffees.length}`}
           alert={lowStockCoffees.length > 0}
-          sub={lowStockCoffees.length > 0 ? "cafÃ©s con bajo stock" : "todo OK"}
+          sub={lowStockCoffees.length > 0 ? "cafés con bajo stock" : "todo OK"}
         />
       </div>
 
@@ -282,11 +282,11 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* Ãšltimos tuestes */}
+      {/* íšltimos tuestes */}
       <div className="card overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border-default">
           <h2 className="text-sm font-semibold text-text-primary">
-            Ãšltimos tuestes
+            íšltimos tuestes
           </h2>
           <Link
             href="/roasts"
@@ -300,7 +300,7 @@ export default async function DashboardPage() {
           <div className="py-12 text-center">
             <Flame className="w-8 h-8 text-border-default mx-auto mb-3" />
             <p className="text-sm text-text-secondary">
-              TodavÃ­a no hay tuestes registrados
+              Todavía no hay tuestes registrados
             </p>
             <Link href="/roasts/new" className="btn-primary mt-4 inline-flex">
               Registrar primer tueste
@@ -312,7 +312,7 @@ export default async function DashboardPage() {
               <thead>
                 <tr className="border-b border-border-default">
                   <th className="text-left px-5 py-3 text-xs font-medium text-text-secondary">
-                    CafÃ©
+                    Café
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-text-secondary hidden sm:table-cell">
                     Fecha
@@ -373,12 +373,12 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      {/* Inventario rÃ¡pido */}
+      {/* Inventario rápido */}
       {(coffees ?? []).length > 0 && (
         <div className="card overflow-hidden mt-4">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border-default">
             <h2 className="text-sm font-semibold text-text-primary">
-              Inventario de cafÃ© verde
+              Inventario de café verde
             </h2>
             <Link
               href="/inventory"
@@ -392,7 +392,7 @@ export default async function DashboardPage() {
               <thead>
                 <tr className="border-b border-border-default">
                   <th className="text-left px-5 py-3 text-xs font-medium text-text-secondary">
-                    CafÃ©
+                    Café
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-text-secondary hidden sm:table-cell">
                     Origen

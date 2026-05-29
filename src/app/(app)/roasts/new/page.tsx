@@ -14,7 +14,7 @@ import { formatCurrency, formatPct, todayISO } from "@/lib/utils";
 import type { GreenCoffee, Roaster } from "@/types";
 
 const schema = z.object({
-  green_coffee_id: z.string().min(1, "SeleccionÃ¡ un cafÃ©"),
+  green_coffee_id: z.string().min(1, "Seleccioná un café"),
   roast_date: z.string().min(1),
   green_weight_kg: z.coerce.number().positive("Debe ser mayor a 0"),
   roasted_weight_kg: z.coerce.number().positive("Debe ser mayor a 0"),
@@ -107,7 +107,7 @@ export default function NewRoastPage() {
     setSelectedCoffee(found ?? null);
   }
 
-  // CÃ¡lculo en tiempo real
+  // Cálculo en tiempo real
   const green = Number(watched.green_weight_kg) || 0;
   const roasted = Number(watched.roasted_weight_kg) || 0;
   const price = selectedCoffee?.purchase_price_per_kg ?? 0;
@@ -154,7 +154,7 @@ export default function NewRoastPage() {
       return;
     }
 
-    // Descontar stock del cafÃ© verde
+    // Descontar stock del café verde
     if (selectedCoffee) {
       const newStock = Math.max(
         0,
@@ -188,18 +188,18 @@ export default function NewRoastPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Columna principal */}
           <div className="lg:col-span-2 flex flex-col gap-6">
-            {/* Paso 1: CafÃ© */}
+            {/* Paso 1: Café */}
             <div className="card p-6">
-              <p className="section-title">1 Â· SeleccionÃ¡ el cafÃ©</p>
+              <p className="section-title">1 · Seleccioná el café</p>
               <div>
-                <label className="label-base">CafÃ© verde *</label>
+                <label className="label-base">Café verde *</label>
                 <select
                   className="input-base"
                   {...register("green_coffee_id", {
                     onChange: (e) => handleCoffeeChange(e.target.value),
                   })}
                 >
-                  <option value="">Seleccionar cafÃ©...</option>
+                  <option value="">Seleccionar café...</option>
                   {coffees.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name} â€” {c.current_stock_kg.toFixed(1)} kg disponibles
@@ -239,7 +239,7 @@ export default function NewRoastPage() {
 
             {/* Paso 2: Datos del tueste */}
             <div className="card p-6">
-              <p className="section-title">2 Â· Datos del tueste</p>
+              <p className="section-title">2 · Datos del tueste</p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="label-base">Fecha *</label>
@@ -252,7 +252,7 @@ export default function NewRoastPage() {
                 <div>
                   <label className="label-base">Estado</label>
                   <select className="input-base" {...register("status")}>
-                    <option value="production">ProducciÃ³n</option>
+                    <option value="production">Producción</option>
                     <option value="trial">Prueba</option>
                     <option value="discarded">Descartado</option>
                   </select>
@@ -313,7 +313,7 @@ export default function NewRoastPage() {
                   />
                 </div>
                 <div>
-                  <label className="label-base">Temp. de carga (Â°C)</label>
+                  <label className="label-base">Temp. de carga (°C)</label>
                   <input
                     type="number"
                     step="1"
@@ -379,7 +379,7 @@ export default function NewRoastPage() {
 
             {/* Paso 3: Costos */}
             <div className="card p-6">
-              <p className="section-title">3 Â· Costos por kg</p>
+              <p className="section-title">3 · Costos por kg</p>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="label-base">Empaque</label>
@@ -391,7 +391,7 @@ export default function NewRoastPage() {
                   />
                 </div>
                 <div>
-                  <label className="label-base">EnergÃ­a</label>
+                  <label className="label-base">Energía</label>
                   <input
                     type="number"
                     step="0.01"
@@ -437,24 +437,24 @@ export default function NewRoastPage() {
 
               {!costs || !selectedCoffee ? (
                 <p className="text-xs text-text-secondary">
-                  CompletÃ¡ cafÃ©, peso verde y peso tostado para ver el cÃ¡lculo en tiempo real.
+                  Completá café, peso verde y peso tostado para ver el cálculo en tiempo real.
                 </p>
               ) : (
                 <div className="flex flex-col gap-3">
                   <div className="flex justify-between text-xs">
-                    <span className="text-text-secondary">CafÃ© verde</span>
+                    <span className="text-text-secondary">Café verde</span>
                     <span className="font-mono font-medium">
                       {formatCurrency(costs.effectiveCostPerKgRoasted, roaster?.currency)}/kg
                     </span>
                   </div>
                   <div className="flex justify-between text-xs text-text-secondary">
-                    <span>Â· Precio compra</span>
+                    <span>· Precio compra</span>
                     <span className="font-mono">
                       {formatCurrency(selectedCoffee.purchase_price_per_kg, roaster?.currency)}/kg verde
                     </span>
                   </div>
                   <div className="flex justify-between text-xs text-text-secondary">
-                    <span>Â· Merma ({formatPct(costs.shrinkagePct)})</span>
+                    <span>· Merma ({formatPct(costs.shrinkagePct)})</span>
                     <span className="font-mono">
                       +{formatCurrency(costs.effectiveCostPerKgRoasted - selectedCoffee.purchase_price_per_kg, roaster?.currency)}
                     </span>
@@ -466,7 +466,7 @@ export default function NewRoastPage() {
                     </span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-text-secondary">EnergÃ­a</span>
+                    <span className="text-text-secondary">Energía</span>
                     <span className="font-mono font-medium">
                       +{formatCurrency(costs.energyCostPerKg, roaster?.currency)}/kg
                     </span>

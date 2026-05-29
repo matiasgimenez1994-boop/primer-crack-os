@@ -192,11 +192,11 @@ export default function NewSalePage() {
     if (!roaster) return;
 
     if (data.product_type === "roasted" && !data.roast_batch_id) {
-      toast.error("SeleccionÃ¡ un lote de tueste");
+      toast.error("Seleccioná un lote de tueste");
       return;
     }
     if (data.product_type === "green" && !data.green_coffee_id) {
-      toast.error("SeleccionÃ¡ un cafÃ© verde");
+      toast.error("Seleccioná un café verde");
       return;
     }
 
@@ -277,24 +277,24 @@ export default function NewSalePage() {
                 <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${productType === "roasted" ? "border-accent-green bg-[#FDF5EE]" : "border-border-default hover:border-accent-green/40"}`}>
                   <input type="radio" value="roasted" className="accent-accent-green" {...register("product_type")} />
                   <div>
-                    <p className="text-sm font-semibold text-text-primary">â˜• CafÃ© tostado</p>
+                    <p className="text-sm font-semibold text-text-primary">â˜• Café tostado</p>
                     <p className="text-xs text-text-secondary">Bolsas de 250g, 500g, 1kg</p>
                   </div>
                 </label>
                 <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${productType === "green" ? "border-accent-olive bg-[#F2F5EE]" : "border-border-default hover:border-accent-olive/40"}`}>
                   <input type="radio" value="green" className="accent-accent-olive" {...register("product_type")} />
                   <div>
-                    <p className="text-sm font-semibold text-text-primary">ðŸŒ± CafÃ© verde</p>
+                    <p className="text-sm font-semibold text-text-primary">ðŸŒ± Café verde</p>
                     <p className="text-xs text-text-secondary">Venta por kg en verde</p>
                   </div>
                 </label>
               </div>
             </div>
 
-            {/* SelecciÃ³n de producto */}
+            {/* Selección de producto */}
             <div className="card p-6">
               <p className="section-title">
-                {productType === "roasted" ? "SeleccionÃ¡ el lote y presentaciÃ³n" : "SeleccionÃ¡ el cafÃ© verde"}
+                {productType === "roasted" ? "Seleccioná el lote y presentación" : "Seleccioná el café verde"}
               </p>
 
               {productType === "roasted" ? (
@@ -305,19 +305,19 @@ export default function NewSalePage() {
                       <option value="">Seleccionar lote...</option>
                       {batchOptions.map(({ batch, remainingKg }) => (
                         <option key={batch.id} value={batch.id}>
-                          {batch.green_coffees?.name} Â· {new Date(batch.roast_date).toLocaleDateString("es-UY")} Â· {remainingKg.toFixed(2)} kg disponibles
+                          {batch.green_coffees?.name} · {new Date(batch.roast_date).toLocaleDateString("es-UY")} · {remainingKg.toFixed(2)} kg disponibles
                         </option>
                       ))}
                     </select>
                     {batchOptions.length === 0 && (
                       <p className="text-xs text-status-warning mt-1">
-                        No hay lotes de producciÃ³n con stock disponible
+                        No hay lotes de producción con stock disponible
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <label className="label-base">PresentaciÃ³n *</label>
+                    <label className="label-base">Presentación *</label>
                     <div className="flex gap-3">
                       {weightOptions.map((w) => (
                         <label key={w.value} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-colors ${Number(watched.weight_grams) === w.value ? "border-accent-green bg-[#FDF5EE]" : "border-border-default hover:border-accent-green/40"}`}>
@@ -352,12 +352,12 @@ export default function NewSalePage() {
               ) : (
                 <div className="flex flex-col gap-4">
                   <div>
-                    <label className="label-base">CafÃ© verde *</label>
+                    <label className="label-base">Café verde *</label>
                     <select className="input-base" {...register("green_coffee_id")}>
-                      <option value="">Seleccionar cafÃ©...</option>
+                      <option value="">Seleccionar café...</option>
                       {greenCoffees.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.name} Â· {c.current_stock_kg.toFixed(2)} kg disponibles
+                          {c.name} · {c.current_stock_kg.toFixed(2)} kg disponibles
                         </option>
                       ))}
                     </select>
@@ -374,7 +374,7 @@ export default function NewSalePage() {
                     />
                     {selectedGreen && (
                       <p className="text-xs text-text-secondary mt-1">
-                        Stock disponible: {selectedGreen.current_stock_kg.toFixed(3)} kg Â· Precio compra: {formatCurrency(selectedGreen.purchase_price_per_kg, roaster?.currency)}/kg
+                        Stock disponible: {selectedGreen.current_stock_kg.toFixed(3)} kg · Precio compra: {formatCurrency(selectedGreen.purchase_price_per_kg, roaster?.currency)}/kg
                       </p>
                     )}
                   </div>
@@ -430,7 +430,7 @@ export default function NewSalePage() {
                   </div>
                   {discountAmount > 0 && subtotal > 0 && (
                     <p className="text-xs text-status-warning mt-1">
-                      -{formatCurrency(discountAmount, roaster?.currency)} sobre el total Â· Total: {formatCurrency(totalFinal, roaster?.currency)}
+                      -{formatCurrency(discountAmount, roaster?.currency)} sobre el total · Total: {formatCurrency(totalFinal, roaster?.currency)}
                     </p>
                   )}
                 </div>
@@ -469,7 +469,7 @@ export default function NewSalePage() {
                     {[
                       { value: "cash", label: "ðŸ’µ Efectivo" },
                       { value: "transfer", label: "ðŸ¦ Transferencia" },
-                      { value: "credit", label: "ðŸ“‹ A crÃ©dito" },
+                      { value: "credit", label: "ðŸ“‹ A crédito" },
                     ].map((opt) => (
                       <label key={opt.value}
                         className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-colors text-sm font-medium ${
@@ -491,9 +491,9 @@ export default function NewSalePage() {
                   <div className="col-span-2">
                     <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                       <p className="text-xs font-medium text-orange-700 mb-2">
-                        âš ï¸ Esta venta quedarÃ¡ como pago pendiente
+                        âš ï¸ Esta venta quedará como pago pendiente
                       </p>
-                      <label className="label-base">Fecha lÃ­mite de pago (opcional)</label>
+                      <label className="label-base">Fecha límite de pago (opcional)</label>
                       <input type="date" className="input-base bg-white" {...register("due_date")} />
                     </div>
                   </div>
@@ -531,7 +531,7 @@ export default function NewSalePage() {
 
               {unitPrice === 0 ? (
                 <p className="text-xs text-text-secondary">
-                  CompletÃ¡ el precio para ver el resumen.
+                  Completá el precio para ver el resumen.
                 </p>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -541,7 +541,7 @@ export default function NewSalePage() {
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-text-secondary">Cantidad</span>
-                    <span className="font-mono">Ã— {qty}</span>
+                    <span className="font-mono">í— {qty}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-text-secondary">Subtotal</span>

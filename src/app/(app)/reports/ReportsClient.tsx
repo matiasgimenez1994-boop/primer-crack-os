@@ -22,7 +22,7 @@ export function ReportsClient({ data }: { data: ReportData }) {
   const [activeTab, setActiveTab] = useState<"production" | "margins" | "stock" | "sales">("production");
 
   const tabs = [
-    { key: "production", label: "ProducciÃ³n", icon: Flame },
+    { key: "production", label: "Producción", icon: Flame },
     { key: "margins", label: "Rentabilidad", icon: TrendingUp },
     { key: "stock", label: "Stock valorizado", icon: Package },
     { key: "sales", label: "Historial ventas", icon: DollarSign },
@@ -35,7 +35,7 @@ export function ReportsClient({ data }: { data: ReportData }) {
     toast.loading("Generando PDF...");
     try {
       const doc = await generatePDF({
-        title: "Reporte de ProducciÃ³n",
+        title: "Reporte de Producción",
         businessName: data.roasterName,
         tables: [
           {
@@ -44,13 +44,13 @@ export function ReportsClient({ data }: { data: ReportData }) {
             rows: data.monthlyRoasting.map(m => [m.month, m.kg.toFixed(2), m.lotes]),
           },
           {
-            title: "CafÃ©s mÃ¡s tostados",
-            headers: ["CafÃ©", "Kg totales", "Lotes"],
+            title: "Cafés más tostados",
+            headers: ["Café", "Kg totales", "Lotes"],
             rows: data.topRoasted.map(c => [c.name, c.kg.toFixed(2), c.lotes]),
           },
           {
             title: "Ranking por margen",
-            headers: ["CafÃ©", "Margen", "Ingresos", "Costo"],
+            headers: ["Café", "Margen", "Ingresos", "Costo"],
             rows: data.topMargin.map(c => [
               c.name,
               `${c.margin.toFixed(1)}%`,
@@ -60,7 +60,7 @@ export function ReportsClient({ data }: { data: ReportData }) {
           },
           {
             title: "Stock valorizado",
-            headers: ["CafÃ©", "Origen", "Stock (kg)", "Precio/kg", "Valor"],
+            headers: ["Café", "Origen", "Stock (kg)", "Precio/kg", "Valor"],
             rows: data.stockValued.map(c => [
               c.name, c.origin, c.kg.toFixed(3),
               c.price.toFixed(2), c.value.toFixed(2),
@@ -79,7 +79,7 @@ export function ReportsClient({ data }: { data: ReportData }) {
 
   function handleExportCSVTuestes() {
     const csv = generateCSV(
-      ["CafÃ©", "Fecha", "Verde (kg)", "Tostado (kg)", "Merma (%)", "Costo/kg", "Estado"],
+      ["Café", "Fecha", "Verde (kg)", "Tostado (kg)", "Merma (%)", "Costo/kg", "Estado"],
       data.roastHistory.map(r => [r.cafe, r.fecha, r.verde, r.tostado, r.merma, r.costo, r.estado])
     );
     downloadCSV(`tuestes-${new Date().toISOString().split("T")[0]}.csv`, csv);
@@ -97,7 +97,7 @@ export function ReportsClient({ data }: { data: ReportData }) {
 
   function handleExportCSVStock() {
     const csv = generateCSV(
-      ["CafÃ©", "Origen", "Stock (kg)", "Precio/kg", "Valor total", "Estado"],
+      ["Café", "Origen", "Stock (kg)", "Precio/kg", "Valor total", "Estado"],
       data.stockValued.map(c => [c.name, c.origin, c.kg, c.price, c.value, c.status])
     );
     downloadCSV(`stock-valorizado-${new Date().toISOString().split("T")[0]}.csv`, csv);
@@ -134,10 +134,10 @@ export function ReportsClient({ data }: { data: ReportData }) {
         ))}
       </div>
 
-      {/* TAB: ProducciÃ³n */}
+      {/* TAB: Producción */}
       {activeTab === "production" && (
         <div className="flex flex-col gap-6">
-          {/* GrÃ¡fico kg por mes */}
+          {/* Gráfico kg por mes */}
           <div className="card p-5">
             <p className="text-sm font-semibold text-text-primary mb-5">Kg tostados por mes</p>
             <div className="flex items-end gap-3 h-40">
@@ -163,16 +163,16 @@ export function ReportsClient({ data }: { data: ReportData }) {
             </div>
           </div>
 
-          {/* Top cafÃ©s por kg */}
+          {/* Top cafés por kg */}
           <div className="card overflow-hidden">
             <div className="px-5 py-4 border-b border-border-default">
-              <p className="text-sm font-semibold text-text-primary">CafÃ©s mÃ¡s tostados</p>
+              <p className="text-sm font-semibold text-text-primary">Cafés más tostados</p>
             </div>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border-default bg-[#FDFAF6]">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">#</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">CafÃ©</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">Café</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Kg tostados</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Lotes</th>
                   <th className="px-5 py-3 w-40" />
@@ -207,17 +207,17 @@ export function ReportsClient({ data }: { data: ReportData }) {
         <div className="flex flex-col gap-6">
           <div className="card overflow-hidden">
             <div className="px-5 py-4 border-b border-border-default">
-              <p className="text-sm font-semibold text-text-primary">Ranking de cafÃ©s por margen</p>
+              <p className="text-sm font-semibold text-text-primary">Ranking de cafés por margen</p>
               <p className="text-xs text-text-secondary mt-0.5">Basado en ventas registradas</p>
             </div>
             {data.topMargin.length === 0 ? (
-              <p className="text-sm text-text-secondary p-6">RegistrÃ¡ ventas para ver el ranking de rentabilidad</p>
+              <p className="text-sm text-text-secondary p-6">Registrá ventas para ver el ranking de rentabilidad</p>
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border-default bg-[#FDFAF6]">
                     <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">#</th>
-                    <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">CafÃ©</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">Café</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Margen</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">Ingresos</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">Costo</th>
@@ -271,7 +271,7 @@ export function ReportsClient({ data }: { data: ReportData }) {
               </p>
             </div>
             <div className="card p-4">
-              <p className="text-xs text-text-secondary">CafÃ©s en stock</p>
+              <p className="text-xs text-text-secondary">Cafés en stock</p>
               <p className="text-2xl font-mono font-semibold text-text-primary mt-1">
                 {data.stockValued.length}
               </p>
@@ -288,7 +288,7 @@ export function ReportsClient({ data }: { data: ReportData }) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border-default bg-[#FDFAF6]">
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">CafÃ©</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">Café</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">Origen</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Stock</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Precio/kg</th>
@@ -379,7 +379,7 @@ export function ReportsClient({ data }: { data: ReportData }) {
                           s.estado === "Parcial" ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
                           "bg-orange-50 text-status-warning border-orange-200"
                         }`}>
-                          {s.pago} Â· {s.estado}
+                          {s.pago} · {s.estado}
                         </span>
                       </td>
                     </tr>

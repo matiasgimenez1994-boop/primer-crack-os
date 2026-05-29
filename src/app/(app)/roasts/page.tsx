@@ -41,7 +41,7 @@ export default async function RoastsPage() {
           <EmptyState
             icon={Flame}
             title="No hay tuestes registrados"
-            description="RegistrÃ¡ tu primer tueste para ver costos y rentabilidad automÃ¡ticamente."
+            description="Registrá tu primer tueste para ver costos y rentabilidad automáticamente."
             actionLabel="+ Registrar tueste"
             actionHref="/roasts/new"
           />
@@ -53,7 +53,7 @@ export default async function RoastsPage() {
               <thead>
                 <tr className="border-b border-border-default bg-[#FDFAF6]">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">
-                    CafÃ©
+                    Café
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">
                     Fecha

@@ -38,7 +38,7 @@ export default async function ProfilesPage() {
       {(profiles ?? []).length === 0 ? (
         <div className="card">
           <EmptyState icon={BookOpen} title="No hay perfiles guardados"
-            description="GuardÃ¡ los parÃ¡metros de tus mejores tuestes para repetirlos exactamente."
+            description="Guardá los parámetros de tus mejores tuestes para repetirlos exactamente."
             actionLabel="+ Crear primer perfil" actionHref="/profiles/new" />
         </div>
       ) : (
@@ -90,7 +90,7 @@ function ProfileCard({ profile: p }: { profile: RoastProfile }) {
           </div>
           {coffee && (
             <p className="text-xs text-text-secondary mt-0.5 truncate">
-              {coffee.name}{coffee.origin_country ? ` Â· ${coffee.origin_country}` : ""}
+              {coffee.name}{coffee.origin_country ? ` · ${coffee.origin_country}` : ""}
             </p>
           )}
         </div>
@@ -99,10 +99,10 @@ function ProfileCard({ profile: p }: { profile: RoastProfile }) {
         )}
       </div>
 
-      {/* ParÃ¡metros clave */}
+      {/* Parámetros clave */}
       <div className="grid grid-cols-3 gap-2 text-center">
         {[
-          { label: "Carga", value: p.charge_temp_celsius ? `${p.charge_temp_celsius}Â°C` : "â€”" },
+          { label: "Carga", value: p.charge_temp_celsius ? `${p.charge_temp_celsius}°C` : "â€”" },
           { label: "Tiempo", value: p.total_time_min ? `${p.total_time_min}'` : "â€”" },
           { label: "Desarrollo", value: p.development_pct ? `${p.development_pct}%` : "â€”" },
         ].map(({ label, value }) => (

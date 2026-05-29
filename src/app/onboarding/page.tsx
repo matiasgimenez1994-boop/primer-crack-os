@@ -13,7 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 const schema = z.object({
-  business_name: z.string().min(2, "IngresÃ¡ el nombre de tu tostaderÃ­a"),
+  business_name: z.string().min(2, "Ingresá el nombre de tu tostadería"),
   country: z.string().min(1),
   currency: z.string().min(1),
   default_energy_cost_per_kg: z.coerce.number().min(0),
@@ -23,7 +23,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const steps = ["Tu tostaderÃ­a", "Costos default", "Â¡Listo!"];
+const steps = ["Tu tostadería", "Costos default", "¡Listo!"];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -55,7 +55,7 @@ export default function OnboardingPage() {
     );
 
     if (error) {
-      toast.error("Error al guardar. IntentÃ¡ de nuevo.");
+      toast.error("Error al guardar. Intentá de nuevo.");
       return;
     }
 
@@ -72,7 +72,7 @@ export default function OnboardingPage() {
             <FirstCrackIcon className="w-7 h-7 text-accent-green" />
           </div>
           <h1 className="text-2xl font-semibold text-text-primary">
-            ConfigurÃ¡ tu tostaderÃ­a
+            Configurá tu tostadería
           </h1>
           <p className="text-sm text-text-secondary mt-1">
             Solo necesitamos unos datos para empezar
@@ -111,7 +111,7 @@ export default function OnboardingPage() {
               <Check className="w-7 h-7 text-status-success" />
             </div>
             <h2 className="text-xl font-semibold text-text-primary mb-2">
-              Â¡Todo listo!
+              ¡Todo listo!
             </h2>
             <p className="text-sm text-text-secondary">
               Redirigiendo a tu dashboard...
@@ -122,17 +122,17 @@ export default function OnboardingPage() {
             {step === 0 && (
               <div className="flex flex-col gap-4">
                 <h2 className="text-base font-semibold text-text-primary">
-                  Tu tostaderÃ­a
+                  Tu tostadería
                 </h2>
 
                 <div>
                   <label className="label-base">
-                    Nombre de la tostaderÃ­a *
+                    Nombre de la tostadería *
                   </label>
                   <input
                     type="text"
                     className="input-base"
-                    placeholder="Ej: CafÃ© Brachi"
+                    placeholder="Ej: Café Brachi"
                     {...register("business_name")}
                   />
                   {errors.business_name && (
@@ -144,15 +144,15 @@ export default function OnboardingPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="label-base">PaÃ­s</label>
+                    <label className="label-base">País</label>
                     <select className="input-base" {...register("country")}>
                       <option>Uruguay</option>
                       <option>Argentina</option>
                       <option>Chile</option>
                       <option>Colombia</option>
                       <option>Brasil</option>
-                      <option>PerÃº</option>
-                      <option>MÃ©xico</option>
+                      <option>Perú</option>
+                      <option>México</option>
                       <option>Otro</option>
                     </select>
                   </div>
@@ -186,13 +186,13 @@ export default function OnboardingPage() {
                     Costos por defecto
                   </h2>
                   <p className="text-xs text-text-secondary mt-1">
-                    PodÃ©s cambiarlos en cualquier tueste individual
+                    Podés cambiarlos en cualquier tueste individual
                   </p>
                 </div>
 
                 <div>
                   <label className="label-base">
-                    Costo de energÃ­a por kg tostado
+                    Costo de energía por kg tostado
                   </label>
                   <div className="relative">
                     <input
@@ -235,7 +235,7 @@ export default function OnboardingPage() {
                     {...register("low_stock_threshold")}
                   />
                   <p className="text-xs text-text-secondary mt-1">
-                    Te avisamos cuando un cafÃ© tenga menos de este stock
+                    Te avisamos cuando un café tenga menos de este stock
                   </p>
                 </div>
 
@@ -245,7 +245,7 @@ export default function OnboardingPage() {
                     onClick={() => setStep(0)}
                     className="btn-secondary flex-1"
                   >
-                    AtrÃ¡s
+                    Atrás
                   </button>
                   <button
                     type="submit"

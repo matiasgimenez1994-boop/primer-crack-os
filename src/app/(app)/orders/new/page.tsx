@@ -14,7 +14,7 @@ import type { Client, GreenCoffee, Roaster } from "@/types";
 
 const itemSchema = z.object({
   product_type: z.enum(["roasted", "green"]),
-  green_coffee_id: z.string().min(1, "SeleccionÃ¡ un cafÃ©"),
+  green_coffee_id: z.string().min(1, "Seleccioná un café"),
   weight_grams: z.coerce.number().optional().or(z.literal("")),
   green_weight_kg: z.coerce.number().positive().optional().or(z.literal("")),
   quantity: z.coerce.number().int().positive(),
@@ -28,7 +28,7 @@ const schema = z.object({
   order_date: z.string().min(1),
   delivery_date: z.string().optional(),
   notes: z.string().optional(),
-  items: z.array(itemSchema).min(1, "AgregÃ¡ al menos un producto"),
+  items: z.array(itemSchema).min(1, "Agregá al menos un producto"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -146,7 +146,7 @@ export default function NewOrderPage() {
                 </div>
                 {!watch("client_id") && (
                   <div className="col-span-2">
-                    <label className="label-base">Nombre del cliente (si no estÃ¡ en la lista)</label>
+                    <label className="label-base">Nombre del cliente (si no está en la lista)</label>
                     <input type="text" className="input-base" placeholder="Nombre o empresa"
                       {...register("client_name")} />
                   </div>
@@ -163,7 +163,7 @@ export default function NewOrderPage() {
               <div>
                 <label className="label-base">Notas del pedido</label>
                 <textarea className="input-base resize-none" rows={2}
-                  placeholder="Instrucciones especiales, direcciÃ³n de entrega..."
+                  placeholder="Instrucciones especiales, dirección de entrega..."
                   {...register("notes")} />
               </div>
             </div>
@@ -214,10 +214,10 @@ export default function NewOrderPage() {
                         ))}
                       </div>
 
-                      {/* CafÃ© */}
+                      {/* Café */}
                       <div className="grid grid-cols-2 gap-3">
                         <div className="col-span-2">
-                          <label className="label-base">CafÃ©</label>
+                          <label className="label-base">Café</label>
                           <select className="input-base" {...register(`items.${idx}.green_coffee_id`)}>
                             <option value="">Seleccionar...</option>
                             {coffees.map(c => (
@@ -228,7 +228,7 @@ export default function NewOrderPage() {
 
                         {item?.product_type === "roasted" ? (
                           <div>
-                            <label className="label-base">PresentaciÃ³n</label>
+                            <label className="label-base">Presentación</label>
                             <select className="input-base" {...register(`items.${idx}.weight_grams`)}>
                               {WEIGHT_OPTIONS.map(w => (
                                 <option key={w.value} value={w.value}>{w.label}</option>
@@ -297,7 +297,7 @@ export default function NewOrderPage() {
                   return (
                     <div key={idx} className="flex justify-between text-xs">
                       <span className="text-text-secondary truncate max-w-[140px]">
-                        {item?.quantity}Ã— {coffee?.name}
+                        {item?.quantity}í— {coffee?.name}
                         {item?.product_type === "roasted" && item?.weight_grams ? ` ${item.weight_grams}g` : ""}
                       </span>
                       <span className="font-mono shrink-0 ml-2">

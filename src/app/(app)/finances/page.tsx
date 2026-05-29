@@ -66,7 +66,7 @@ export default async function FinancesPage() {
       s + c.current_stock_kg * c.purchase_price_per_kg, 0
   );
 
-  // â”€â”€ HistÃ³rico â”€â”€
+  // â”€â”€ Histórico â”€â”€
   const totalRevenue = (allSales ?? []).reduce((s: number, x: Sale) => s + x.final_price, 0);
   const totalGrossProfit = (allSales ?? []).reduce((s: number, x: Sale) => s + x.profit, 0);
   const totalExpenses = (allExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
@@ -77,7 +77,7 @@ export default async function FinancesPage() {
     .filter((e: Expense) => e.frequency !== "once")
     .reduce((s: number, e: Expense) => s + toMonthlyAmount(e.amount, e.frequency), 0);
 
-  // â”€â”€ Ãšltimos 6 meses â”€â”€
+  // â”€â”€ íšltimos 6 meses â”€â”€
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const d = subMonths(new Date(), 5 - i);
     const start = format(startOfMonth(d), "yyyy-MM-dd");
@@ -98,7 +98,7 @@ export default async function FinancesPage() {
 
   const maxRevenue = Math.max(...monthlyData.map(m => m.revenue), 1);
 
-  // â”€â”€ Gastos por categorÃ­a este mes â”€â”€
+  // â”€â”€ Gastos por categoría este mes â”€â”€
   const expenseByCategory: Record<string, number> = {};
   (monthExpenses ?? []).forEach((e: Expense) => {
     expenseByCategory[e.category] = (expenseByCategory[e.category] ?? 0) + e.amount;
@@ -158,12 +158,12 @@ export default async function FinancesPage() {
       <div className="card p-5 mb-6">
         <p className="text-sm font-semibold text-text-primary mb-1">Rentabilidad real del mes</p>
         <p className="text-xs text-text-secondary mb-4">
-          Ingresos - Costo de producciÃ³n - Gastos operativos
+          Ingresos - Costo de producción - Gastos operativos
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
           {[
             { label: "Ingresos", value: monthRevenue, color: "text-text-primary" },
-            { label: "- Costo producciÃ³n", value: monthRevenue - monthGrossProfit, color: "text-status-danger" },
+            { label: "- Costo producción", value: monthRevenue - monthGrossProfit, color: "text-status-danger" },
             { label: "- Gastos operativos", value: monthExpenseTotal, color: "text-status-warning" },
             { label: "= Ganancia neta", value: monthNetProfit, color: monthNetProfit >= 0 ? "text-status-success" : "text-status-danger", bold: true },
           ].map(({ label, value, color, bold }) => (
@@ -182,10 +182,10 @@ export default async function FinancesPage() {
         )}
       </div>
 
-      {/* GrÃ¡fico 6 meses */}
+      {/* Gráfico 6 meses */}
       <div className="card p-5 mb-6">
         <div className="flex items-center justify-between mb-5">
-          <p className="text-sm font-semibold text-text-primary">Ãšltimos 6 meses</p>
+          <p className="text-sm font-semibold text-text-primary">íšltimos 6 meses</p>
           <div className="flex items-center gap-4 text-xs text-text-secondary">
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-accent-green inline-block" /> Ingresos</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-accent-olive inline-block" /> G. neta</span>
@@ -213,10 +213,10 @@ export default async function FinancesPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Gastos por categorÃ­a */}
+        {/* Gastos por categoría */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="section-title mb-0">Gastos por categorÃ­a (mes)</p>
+            <p className="section-title mb-0">Gastos por categoría (mes)</p>
             <Link href="/expenses" className="text-xs text-accent-green hover:underline">Ver todos â†’</Link>
           </div>
           {Object.keys(expenseByCategory).length === 0 ? (
@@ -247,9 +247,9 @@ export default async function FinancesPage() {
           )}
         </div>
 
-        {/* Resumen histÃ³rico */}
+        {/* Resumen histórico */}
         <div className="card p-5">
-          <p className="section-title">Resumen histÃ³rico</p>
+          <p className="section-title">Resumen histórico</p>
           <div className="grid grid-cols-2 gap-4">
             {[
               { label: "Ingresos totales", value: formatCurrency(totalRevenue, roaster.currency) },
@@ -281,7 +281,7 @@ export default async function FinancesPage() {
         </div>
       </div>
 
-      {/* Accesos rÃ¡pidos */}
+      {/* Accesos rápidos */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { href: "/finances/pending", icon: Clock, label: "Pagos pendientes", sub: `${(pendingSales ?? []).length} sin cobrar`, alert: (pendingSales ?? []).length > 0 },

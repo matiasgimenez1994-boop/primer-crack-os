@@ -55,7 +55,7 @@ export default async function OrdersPage() {
         </Link>
       </div>
 
-      {/* Stats rÃ¡pidas */}
+      {/* Stats rápidas */}
       <div className="flex gap-2 flex-wrap mb-5">
         {STATUS_ORDER.filter(s => counts[s]).map(s => {
           const cfg = STATUS_CONFIG[s];
@@ -79,8 +79,8 @@ export default async function OrdersPage() {
           {overdue.map((o: Order) => (
             <Link key={o.id} href={`/orders/${o.id}`}
               className="block text-xs text-status-danger ml-6 hover:underline">
-              Â· {(o as any).clients?.name ?? o.client_name ?? "Sin cliente"} â€”
-              vencido hace {differenceInDays(new Date(), parseISO(o.delivery_date!))} dÃ­as
+              · {(o as any).clients?.name ?? o.client_name ?? "Sin cliente"} â€”
+              vencido hace {differenceInDays(new Date(), parseISO(o.delivery_date!))} días
             </Link>
           ))}
         </div>
@@ -89,7 +89,7 @@ export default async function OrdersPage() {
       {(orders ?? []).length === 0 ? (
         <div className="card">
           <EmptyState icon={ClipboardList} title="No hay pedidos"
-            description="RegistrÃ¡ los pedidos de tus clientes para hacer un seguimiento desde que piden hasta que entregan."
+            description="Registrá los pedidos de tus clientes para hacer un seguimiento desde que piden hasta que entregan."
             actionLabel="+ Nuevo pedido" actionHref="/orders/new" />
         </div>
       ) : (

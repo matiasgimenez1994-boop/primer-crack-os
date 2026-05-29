@@ -105,7 +105,7 @@ export default function PendingPaymentsPage() {
             <h1 className="page-title">Pagos pendientes</h1>
             {sales.length > 0 && (
               <p className="text-sm text-text-secondary">
-                {sales.length} venta{sales.length > 1 ? "s" : ""} Â· Total pendiente:{" "}
+                {sales.length} venta{sales.length > 1 ? "s" : ""} · Total pendiente:{" "}
                 <span className="font-mono font-semibold text-status-danger">
                   {formatCurrency(totalPending, roaster?.currency)}
                 </span>
@@ -125,8 +125,8 @@ export default function PendingPaymentsPage() {
           </div>
           {overdue.map(s => (
             <p key={s.id} className="text-xs text-status-danger ml-6">
-              Â· {(s as any).clients?.name ?? "Sin cliente"} â€” vencido hace{" "}
-              {differenceInDays(new Date(), parseISO(s.due_date!))} dÃ­as
+              · {(s as any).clients?.name ?? "Sin cliente"} â€” vencido hace{" "}
+              {differenceInDays(new Date(), parseISO(s.due_date!))} días
             </p>
           ))}
         </div>
@@ -135,7 +135,7 @@ export default function PendingPaymentsPage() {
       {sales.length === 0 ? (
         <div className="card p-12 text-center">
           <CheckCircle className="w-12 h-12 text-status-success mx-auto mb-3" />
-          <p className="text-base font-semibold text-text-primary">Todo al dÃ­a</p>
+          <p className="text-base font-semibold text-text-primary">Todo al día</p>
           <p className="text-sm text-text-secondary mt-1">No hay pagos pendientes</p>
         </div>
       ) : (
@@ -203,12 +203,12 @@ function PartialPayCard({
               </span>
             )}
           </div>
-          <p className="text-sm text-text-secondary ml-6">{productName} Â· {formatDate(sale.sale_date)}</p>
+          <p className="text-sm text-text-secondary ml-6">{productName} · {formatDate(sale.sale_date)}</p>
           {sale.due_date && (
             <p className={`text-xs ml-6 mt-0.5 font-medium ${isOverdue ? "text-status-danger" : "text-status-warning"}`}>
               {isOverdue
-                ? `Vencido hace ${Math.abs(daysUntilDue ?? 0)} dÃ­as`
-                : `Vence en ${daysUntilDue} dÃ­as (${formatDate(sale.due_date)})`
+                ? `Vencido hace ${Math.abs(daysUntilDue ?? 0)} días`
+                : `Vence en ${daysUntilDue} días (${formatDate(sale.due_date)})`
               }
             </p>
           )}

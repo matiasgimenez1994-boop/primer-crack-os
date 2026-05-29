@@ -14,10 +14,10 @@ interface Props {
 }
 
 const SIZE_OPTIONS = [
-  { id: "small",  label: "PequeÃ±a",  w: 60,  h: 40,  desc: "60Ã—40mm" },
-  { id: "medium", label: "Mediana",  w: 80,  h: 55,  desc: "80Ã—55mm" },
-  { id: "large",  label: "Grande",   w: 100, h: 70,  desc: "100Ã—70mm" },
-  { id: "tall",   label: "Alta",     w: 60,  h: 90,  desc: "60Ã—90mm" },
+  { id: "small",  label: "Pequeña",  w: 60,  h: 40,  desc: "60í—40mm" },
+  { id: "medium", label: "Mediana",  w: 80,  h: 55,  desc: "80í—55mm" },
+  { id: "large",  label: "Grande",   w: 100, h: 70,  desc: "100í—70mm" },
+  { id: "tall",   label: "Alta",     w: 60,  h: 90,  desc: "60í—90mm" },
 ];
 
 const WEIGHT_OPTIONS = [100, 200, 250, 500, 1000];
@@ -58,12 +58,12 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Panel de configuraciÃ³n */}
+        {/* Panel de configuración */}
         <div className="lg:col-span-1 flex flex-col gap-5 no-print">
 
           {/* Seleccionar tueste */}
           <div className="card p-5">
-            <p className="section-title">1 Â· SeleccionÃ¡ el tueste</p>
+            <p className="section-title">1 · Seleccioná el tueste</p>
             <select
               className="input-base"
               value={selectedBatch?.id ?? ""}
@@ -75,18 +75,18 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
               <option value="">Seleccionar tueste...</option>
               {batches.map((b: RoastBatch) => (
                 <option key={b.id} value={b.id}>
-                  {(b as any).green_coffees?.name} Â· {formatDate(b.roast_date)}
+                  {(b as any).green_coffees?.name} · {formatDate(b.roast_date)}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* TamaÃ±o y presentaciÃ³n */}
+          {/* Tamaño y presentación */}
           <div className="card p-5 flex flex-col gap-4">
-            <p className="section-title">2 Â· TamaÃ±o y presentaciÃ³n</p>
+            <p className="section-title">2 · Tamaño y presentación</p>
 
             <div>
-              <label className="label-base">TamaÃ±o de etiqueta</label>
+              <label className="label-base">Tamaño de etiqueta</label>
               <div className="grid grid-cols-2 gap-2">
                 {SIZE_OPTIONS.map(s => (
                   <button key={s.id} type="button"
@@ -103,7 +103,7 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
             </div>
 
             <div>
-              <label className="label-base">Peso / presentaciÃ³n</label>
+              <label className="label-base">Peso / presentación</label>
               <div className="flex flex-wrap gap-2">
                 {WEIGHT_OPTIONS.map(w => (
                   <button key={w} type="button"
@@ -145,13 +145,13 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
 
           {/* Opciones de contenido */}
           <div className="card p-5 flex flex-col gap-3">
-            <p className="section-title">3 Â· Contenido</p>
+            <p className="section-title">3 · Contenido</p>
             {[
               { key: "showOrigin", label: "Origen y productor", value: showOrigin, set: setShowOrigin },
               { key: "showTasting", label: "Notas de cata", value: showTasting, set: setShowTasting },
               { key: "showScore", label: "Puntaje Q", value: showScore, set: setShowScore },
               { key: "showRoastDate", label: "Fecha de tueste", value: showRoastDate, set: setShowRoastDate },
-              { key: "showQR", label: "CÃ³digo QR", value: showQR, set: setShowQR },
+              { key: "showQR", label: "Código QR", value: showQR, set: setShowQR },
             ].map(({ key, label, value, set }) => (
               <label key={key} className="flex items-center justify-between cursor-pointer">
                 <span className="text-sm text-text-primary">{label}</span>
@@ -165,7 +165,7 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
             <div className="pt-2 border-t border-border-default">
               <label className="label-base">Frase personalizada (opcional)</label>
               <input type="text" className="input-base text-xs"
-                placeholder="Tostado artesanalmente Â· Montevideo"
+                placeholder="Tostado artesanalmente · Montevideo"
                 value={customTagline}
                 onChange={e => setCustomTagline(e.target.value)} />
             </div>
@@ -178,7 +178,7 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
             <div className="card flex items-center justify-center" style={{ minHeight: 300 }}>
               <div className="text-center">
                 <Tag className="w-10 h-10 text-border-default mx-auto mb-3" />
-                <p className="text-sm text-text-secondary">SeleccionÃ¡ un tueste para ver la etiqueta</p>
+                <p className="text-sm text-text-secondary">Seleccioná un tueste para ver la etiqueta</p>
               </div>
             </div>
           ) : (
@@ -187,7 +187,7 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
               <div className="card p-6 mb-4 no-print">
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-sm font-semibold text-text-primary">Preview</p>
-                  <p className="text-xs text-text-secondary">{sizeConfig.desc} Â· {copies} copia{copies > 1 ? "s" : ""}</p>
+                  <p className="text-xs text-text-secondary">{sizeConfig.desc} · {copies} copia{copies > 1 ? "s" : ""}</p>
                 </div>
                 <div className="flex justify-center">
                   <LabelPreview
@@ -209,7 +209,7 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
                 </div>
               </div>
 
-              {/* BotÃ³n imprimir */}
+              {/* Botón imprimir */}
               <div className="no-print">
                 <button onClick={handlePrint}
                   className="btn-primary w-full justify-center text-sm py-3">
@@ -217,7 +217,7 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
                   Imprimir {copies} etiqueta{copies > 1 ? "s" : ""}
                 </button>
                 <p className="text-xs text-text-secondary text-center mt-2">
-                  Se abrirÃ¡ el diÃ¡logo de impresiÃ³n del navegador
+                  Se abrirá el diálogo de impresión del navegador
                 </p>
               </div>
             </div>
@@ -225,7 +225,7 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
         </div>
       </div>
 
-      {/* Zona de impresiÃ³n â€” solo visible al imprimir */}
+      {/* Zona de impresión â€” solo visible al imprimir */}
       {selectedBatch && (
         <div className="print-only">
           <div className="print-labels-grid">
@@ -332,7 +332,7 @@ function LabelPreview({
       }} />
 
       <div style={{ paddingLeft: forPrint ? "3mm" : 10, flex: 1, display: "flex", flexDirection: "column", gap: forPrint ? "1mm" : 4 }}>
-        {/* TostaderÃ­a */}
+        {/* Tostadería */}
         <p style={{
           fontSize: forPrint ? "6pt" : 9,
           color: isDark ? "#C17B4E" : "#C17B4E",
@@ -344,28 +344,28 @@ function LabelPreview({
           {roasterName}
         </p>
 
-        {/* Nombre del cafÃ© */}
+        {/* Nombre del café */}
         <p style={{
           fontSize: forPrint ? "9pt" : 14,
           fontWeight: 700,
           color: isDark ? "#FDFAF6" : "#1C1208",
           lineHeight: 1.2,
         }}>
-          {coffee?.name ?? "CafÃ©"}
+          {coffee?.name ?? "Café"}
         </p>
 
         {/* Origen */}
         {showOrigin && coffee?.origin_country && (
           <p style={{ fontSize: forPrint ? "7pt" : 10, color: isDark ? "#E8D5C4" : "#6B5744" }}>
             {coffee.origin_country}
-            {coffee.farm_producer ? ` Â· ${coffee.farm_producer}` : ""}
+            {coffee.farm_producer ? ` · ${coffee.farm_producer}` : ""}
           </p>
         )}
 
         {/* Variedad y proceso */}
         {(coffee?.variety || coffee?.process) && (
           <p style={{ fontSize: forPrint ? "6.5pt" : 9, color: isDark ? "#BBA99A" : "#6B5744" }}>
-            {[coffee.variety, coffee.process].filter(Boolean).join(" Â· ")}
+            {[coffee.variety, coffee.process].filter(Boolean).join(" · ")}
           </p>
         )}
 

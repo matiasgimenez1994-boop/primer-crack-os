@@ -49,9 +49,9 @@ export default async function InventoryPage({
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">Inventario de cafÃ© verde</h1>
+        <h1 className="page-title">Inventario de café verde</h1>
         <Link href="/inventory/new" className="btn-primary">
-          <Plus className="w-4 h-4" /> Agregar cafÃ©
+          <Plus className="w-4 h-4" /> Agregar café
         </Link>
       </div>
 
@@ -78,9 +78,9 @@ export default async function InventoryPage({
         <div className="card">
           <EmptyState
             icon={Leaf}
-            title="No hay cafÃ©s en inventario"
-            description="AgregÃ¡ tu primer cafÃ© verde para empezar a registrar tuestes y calcular costos."
-            actionLabel="+ Agregar cafÃ© verde"
+            title="No hay cafés en inventario"
+            description="Agregá tu primer café verde para empezar a registrar tuestes y calcular costos."
+            actionLabel="+ Agregar café verde"
             actionHref="/inventory/new"
           />
         </div>
@@ -91,7 +91,7 @@ export default async function InventoryPage({
               <thead>
                 <tr className="border-b border-border-default bg-[#FDFAF6]">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">
-                    CafÃ©
+                    Café
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary hidden md:table-cell">
                     Origen

@@ -37,7 +37,7 @@ export default async function ExpensesPage() {
     .filter((e: Expense) => e.frequency !== "once")
     .reduce((s: number, e: Expense) => s + toMonthlyAmount(e.amount, e.frequency), 0);
 
-  // Por categorÃ­a este mes
+  // Por categoría este mes
   const byCategory: Record<string, number> = {};
   (monthExpenses ?? []).forEach((e: Expense) => {
     byCategory[e.category] = (byCategory[e.category] ?? 0) + e.amount;
@@ -63,14 +63,14 @@ export default async function ExpensesPage() {
         <StatsCard icon={Receipt} label="Estimado mensual"
           value={formatCurrency(monthlyEstimate, roaster.currency)}
           sub="gastos recurrentes" />
-        <StatsCard icon={Receipt} label="Total histÃ³rico"
+        <StatsCard icon={Receipt} label="Total histórico"
           value={formatCurrency(totalHistoric, roaster.currency)} />
       </div>
 
-      {/* Por categorÃ­a */}
+      {/* Por categoría */}
       {topCategories.length > 0 && (
         <div className="card p-5 mb-6">
-          <p className="section-title">Gastos del mes por categorÃ­a</p>
+          <p className="section-title">Gastos del mes por categoría</p>
           <div className="flex flex-col gap-3">
             {topCategories.map(([cat, amount]) => {
               const pct = monthTotal > 0 ? (amount / monthTotal) * 100 : 0;
@@ -100,7 +100,7 @@ export default async function ExpensesPage() {
       {(allExpenses ?? []).length === 0 ? (
         <div className="card">
           <EmptyState icon={Receipt} title="No hay gastos registrados"
-            description="RegistrÃ¡ tus gastos fijos y variables para ver la rentabilidad real del negocio."
+            description="Registrá tus gastos fijos y variables para ver la rentabilidad real del negocio."
             actionLabel="+ Registrar gasto" actionHref="/expenses/new" />
         </div>
       ) : (
@@ -110,7 +110,7 @@ export default async function ExpensesPage() {
               <thead>
                 <tr className="border-b border-border-default bg-[#FDFAF6]">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">Gasto</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">CategorÃ­a</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">Categoría</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary hidden md:table-cell">Frecuencia</th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">Fecha</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Monto</th>
