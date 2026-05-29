@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { ArrowLeft, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { calculateCosts, getShrinkageBg } from "@/lib/costs";
-import { formatCurrency, formatPct } from "@/lib/utils";
-import type { RoastBatch, Roaster } from "@/types";
+import { useEffect, useState } from"react";
+import { useRouter, useParams } from"next/navigation";
+import { useForm, useWatch } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import Link from"next/link";
+import { ArrowLeft, Trash2 } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import { calculateCosts, getShrinkageBg } from"@/lib/costs";
+import { formatCurrency, formatPct } from"@/lib/utils";
+import type { RoastBatch, Roaster } from"@/types";
 
 const schema = z.object({
   roast_date: z.string().min(1),
@@ -21,17 +21,15 @@ const schema = z.object({
   charge_temp_celsius: z.coerce.number().optional().or(z.literal("")),
   first_crack_time_min: z.coerce.number().optional().or(z.literal("")),
   development_time_min: z.coerce.number().optional().or(z.literal("")),
-  roast_level: z.enum(["light", "medium", "medium_dark", "dark"]).optional().or(z.literal("")),
+  roast_level: z.enum(["light","medium","medium_dark","dark"]).optional().or(z.literal("")),
   sensory_result: z.string().optional(),
   roaster_notes: z.string().optional(),
-  status: z.enum(["trial", "production", "discarded"]),
+  status: z.enum(["trial","production","discarded"]),
   packaging_cost_per_kg: z.coerce.number().min(0),
   energy_cost_per_kg: z.coerce.number().min(0),
   labor_cost_per_kg: z.coerce.number().min(0),
-}).refine(
-  (d) => d.roasted_weight_kg < d.green_weight_kg,
-  { message: "El peso tostado debe ser menor al verde", path: ["roasted_weight_kg"] }
-);
+}).refine((d) => d.roasted_weight_kg < d.green_weight_kg,
+  { message:"El peso tostado debe ser menor al verde", path: ["roasted_weight_kg"] });
 
 type FormData = z.infer<typeof schema>;
 
@@ -78,13 +76,13 @@ export default function EditRoastPage() {
                 roast_date: b.roast_date,
                 green_weight_kg: b.green_weight_kg,
                 roasted_weight_kg: b.roasted_weight_kg,
-                roast_duration_min: b.roast_duration_min ?? "",
-                charge_temp_celsius: b.charge_temp_celsius ?? "",
-                first_crack_time_min: b.first_crack_time_min ?? "",
-                development_time_min: b.development_time_min ?? "",
-                roast_level: b.roast_level ?? "",
-                sensory_result: b.sensory_result ?? "",
-                roaster_notes: b.roaster_notes ?? "",
+                roast_duration_min: b.roast_duration_min ??"",
+                charge_temp_celsius: b.charge_temp_celsius ??"",
+                first_crack_time_min: b.first_crack_time_min ??"",
+                development_time_min: b.development_time_min ??"",
+                roast_level: b.roast_level ??"",
+                sensory_result: b.sensory_result ??"",
+                roaster_notes: b.roaster_notes ??"",
                 status: b.status,
                 packaging_cost_per_kg: b.packaging_cost_per_kg,
                 energy_cost_per_kg: b.energy_cost_per_kg,
@@ -153,15 +151,12 @@ export default function EditRoastPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px]">
+    return (<div className="flex items-center justify-center min-h-[300px]">
         <div className="w-6 h-6 border-2 border-border-default border-t-accent-terra rounded-full animate-spin" />
-      </div>
-    );
+      </div>);
   }
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href={`/roasts/${id}`} className="btn-ghost p-2">
@@ -210,14 +205,12 @@ export default function EditRoastPage() {
                   <label className="label-base">Peso tostado (kg)</label>
                   <div>
                     <input type="number" step="0.001" className="input-base font-mono" {...register("roasted_weight_kg")} />
-                    {costs && (
-                      <div className="mt-1.5 flex items-center gap-1.5">
+                    {costs && (<div className="mt-1.5 flex items-center gap-1.5">
                         <span className="text-xs text-text-secondary">Merma:</span>
                         <span className={`text-xs font-mono font-medium px-1.5 py-0.5 rounded border ${getShrinkageBg(costs.shrinkagePct)}`}>
                           {formatPct(costs.shrinkagePct)}
                         </span>
-                      </div>
-                    )}
+                      </div>)}
                   </div>
                 </div>
 
@@ -289,7 +282,7 @@ export default function EditRoastPage() {
                 className="btn-primary flex-1 justify-center"
                 disabled={isSubmitting || !isDirty}
               >
-                {isSubmitting ? "Guardando..." : "Guardar cambios"}
+                {isSubmitting ?"Guardando..." :"Guardar cambios"}
               </button>
             </div>
           </div>
@@ -300,12 +293,9 @@ export default function EditRoastPage() {
               <p className="text-sm font-semibold text-text-primary mb-4">
                 Costo actualizado
               </p>
-              {!costs ? (
-                <p className="text-xs text-text-secondary">
+              {!costs ? (<p className="text-xs text-text-secondary">
                   Modificá los pesos para ver el nuevo costo.
-                </p>
-              ) : (
-                <div className="flex flex-col gap-2 text-xs">
+                </p>) : (<div className="flex flex-col gap-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-text-secondary">Café verde c/merma</span>
                     <span className="font-mono">{formatCurrency(costs.effectiveCostPerKgRoasted, roaster?.currency)}/kg</span>
@@ -324,12 +314,10 @@ export default function EditRoastPage() {
                       {formatCurrency(costs.totalCostPerKg, roaster?.currency)}/kg
                     </span>
                   </div>
-                </div>
-              )}
+                </div>)}
             </div>
           </div>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }

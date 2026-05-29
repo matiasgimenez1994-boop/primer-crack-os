@@ -1,20 +1,20 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { todayISO } from "@/lib/utils";
-import { CATEGORY_LABELS, CATEGORY_ICONS, FREQUENCY_LABELS } from "@/lib/expenses";
-import type { Roaster } from "@/types";
+import { useEffect, useState } from"react";
+import { useRouter } from"next/navigation";
+import { useForm } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import Link from"next/link";
+import { ArrowLeft } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import { todayISO } from"@/lib/utils";
+import { CATEGORY_LABELS, CATEGORY_ICONS, FREQUENCY_LABELS } from"@/lib/expenses";
+import type { Roaster } from"@/types";
 
 const schema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
+  name: z.string().min(1,"El nombre es requerido"),
   category: z.enum(["energy","rent","packaging","maintenance","labor","marketing","supplies","other"]),
   amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
   frequency: z.enum(["once","daily","weekly","monthly","yearly"]),
@@ -25,11 +25,11 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const QUICK_EXPENSES = [
-  { name: "Gas / Energía tostadora", category: "energy", frequency: "monthly" },
-  { name: "Alquiler local", category: "rent", frequency: "monthly" },
-  { name: "Bolsas y etiquetas", category: "packaging", frequency: "monthly" },
-  { name: "Mantenimiento tostadora", category: "maintenance", frequency: "yearly" },
-  { name: "Mano de obra", category: "labor", frequency: "monthly" },
+  { name:"Gas / Energía tostadora", category:"energy", frequency:"monthly" },
+  { name:"Alquiler local", category:"rent", frequency:"monthly" },
+  { name:"Bolsas y etiquetas", category:"packaging", frequency:"monthly" },
+  { name:"Mantenimiento tostadora", category:"maintenance", frequency:"yearly" },
+  { name:"Mano de obra", category:"labor", frequency:"monthly" },
 ];
 
 export default function NewExpensePage() {
@@ -47,7 +47,7 @@ export default function NewExpensePage() {
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { category: "energy", frequency: "monthly", expense_date: todayISO() },
+    defaultValues: { category:"energy", frequency:"monthly", expense_date: todayISO() },
   });
 
   async function onSubmit(data: FormData) {
@@ -60,8 +60,7 @@ export default function NewExpensePage() {
     router.push("/expenses");
   }
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/expenses" className="btn-ghost p-2"><ArrowLeft className="w-4 h-4" /></Link>
@@ -85,17 +84,13 @@ export default function NewExpensePage() {
                 <div>
                   <label className="label-base">Categoría</label>
                   <select className="input-base" {...register("category")}>
-                    {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-                      <option key={k} value={k}>{CATEGORY_ICONS[k as keyof typeof CATEGORY_ICONS]} {v}</option>
-                    ))}
+                    {Object.entries(CATEGORY_LABELS).map(([k, v]) => (<option key={k} value={k}>{CATEGORY_ICONS[k as keyof typeof CATEGORY_ICONS]} {v}</option>))}
                   </select>
                 </div>
                 <div>
                   <label className="label-base">Frecuencia</label>
                   <select className="input-base" {...register("frequency")}>
-                    {Object.entries(FREQUENCY_LABELS).map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
-                    ))}
+                    {Object.entries(FREQUENCY_LABELS).map(([k, v]) => (<option key={k} value={k}>{v}</option>))}
                   </select>
                 </div>
               </div>
@@ -121,7 +116,7 @@ export default function NewExpensePage() {
             <div className="flex gap-3">
               <Link href="/expenses" className="btn-secondary flex-1 justify-center">Cancelar</Link>
               <button type="submit" className="btn-primary flex-1 justify-center" disabled={isSubmitting}>
-                {isSubmitting ? "Guardando..." : "Guardar gasto"}
+                {isSubmitting ?"Guardando..." :"Guardar gasto"}
               </button>
             </div>
           </form>
@@ -132,8 +127,7 @@ export default function NewExpensePage() {
           <p className="section-title">Gastos frecuentes</p>
           <p className="text-xs text-text-secondary mb-3">Click para pre-completar el formulario</p>
           <div className="flex flex-col gap-2">
-            {QUICK_EXPENSES.map((q) => (
-              <button key={q.name} type="button"
+            {QUICK_EXPENSES.map((q) => (<button key={q.name} type="button"
                 onClick={() => {
                   setValue("name", q.name);
                   setValue("category", q.category as FormData["category"]);
@@ -147,12 +141,10 @@ export default function NewExpensePage() {
                 <p className="text-xs text-text-secondary mt-0.5">
                   {CATEGORY_LABELS[q.category as keyof typeof CATEGORY_LABELS]} · {FREQUENCY_LABELS[q.frequency as keyof typeof FREQUENCY_LABELS]}
                 </p>
-              </button>
-            ))}
+              </button>))}
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>);
 }
 

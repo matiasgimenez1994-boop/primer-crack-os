@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Share2, Check, Link as LinkIcon } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from"react";
+import { Share2, Check, Link as LinkIcon } from"lucide-react";
+import { toast } from"sonner";
 
 interface Props {
   token: string | null;
@@ -27,7 +27,7 @@ export function ShareProfileButton({ token, profileId }: Props) {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      toast.success("Link copiado al portapapeles ✓");
+      toast.success("Link copiado al portapapeles");
       setTimeout(() => setCopied(false), 2500);
     } catch {
       // Fallback para browsers que no soportan clipboard API
@@ -38,7 +38,7 @@ export function ShareProfileButton({ token, profileId }: Props) {
       document.execCommand("copy");
       document.body.removeChild(input);
       setCopied(true);
-      toast.success("Link copiado ✓");
+      toast.success("Link copiado");
       setTimeout(() => setCopied(false), 2500);
     }
   }
@@ -47,8 +47,8 @@ export function ShareProfileButton({ token, profileId }: Props) {
     if (!token || !navigator.share) return;
     try {
       await navigator.share({
-        title: "Perfil de tueste",
-        text: "Mirá este perfil de tueste en Primer crack OS",
+        title:"Perfil de tueste",
+        text:"Mirá este perfil de tueste en Primer crack OS",
         url: getShareUrl(),
       });
     } catch {
@@ -56,12 +56,11 @@ export function ShareProfileButton({ token, profileId }: Props) {
     }
   }
 
-  return (
-    <div className="flex gap-1">
+  return (<div className="flex gap-1">
       <button
         onClick={handleShare}
         className={`btn-secondary text-xs flex items-center gap-1.5 transition-colors ${
-          copied ? "border-status-success text-status-success bg-green-50" : ""
+          copied ?"border-status-success text-status-success bg-green-50" :""
         }`}
         title="Copiar link del perfil"
       >
@@ -70,6 +69,5 @@ export function ShareProfileButton({ token, profileId }: Props) {
           : <><LinkIcon className="w-3.5 h-3.5" /> Compartir</>
         }
       </button>
-    </div>
-  );
+    </div>);
 }

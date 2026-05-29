@@ -1,20 +1,20 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { todayISO, formatCurrency } from "@/lib/utils";
-import type { Client, GreenCoffee, Roaster } from "@/types";
+import { useEffect, useState } from"react";
+import { useRouter } from"next/navigation";
+import { useForm, useFieldArray } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import Link from"next/link";
+import { ArrowLeft, Plus, Trash2 } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import { todayISO, formatCurrency } from"@/lib/utils";
+import type { Client, GreenCoffee, Roaster } from"@/types";
 
 const itemSchema = z.object({
-  product_type: z.enum(["roasted", "green"]),
-  green_coffee_id: z.string().min(1, "Seleccioná un café"),
+  product_type: z.enum(["roasted","green"]),
+  green_coffee_id: z.string().min(1,"Seleccioná un café"),
   weight_grams: z.coerce.number().optional().or(z.literal("")),
   green_weight_kg: z.coerce.number().positive().optional().or(z.literal("")),
   quantity: z.coerce.number().int().positive(),
@@ -28,15 +28,15 @@ const schema = z.object({
   order_date: z.string().min(1),
   delivery_date: z.string().optional(),
   notes: z.string().optional(),
-  items: z.array(itemSchema).min(1, "Agregá al menos un producto"),
+  items: z.array(itemSchema).min(1,"Agregá al menos un producto"),
 });
 
 type FormData = z.infer<typeof schema>;
 
 const WEIGHT_OPTIONS = [
-  { value: 250, label: "250 g" },
-  { value: 500, label: "500 g" },
-  { value: 1000, label: "1 kg" },
+  { value: 250, label:"250 g" },
+  { value: 500, label:"500 g" },
+  { value: 1000, label:"1 kg" },
 ];
 
 export default function NewOrderPage() {
@@ -51,11 +51,11 @@ export default function NewOrderPage() {
     resolver: zodResolver(schema),
     defaultValues: {
       order_date: todayISO(),
-      items: [{ product_type: "roasted", green_coffee_id: "", quantity: 1, unit_price: 0, weight_grams: 250 }],
+      items: [{ product_type:"roasted", green_coffee_id:"", quantity: 1, unit_price: 0, weight_grams: 250 }],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control, name: "items" });
+  const { fields, append, remove } = useFieldArray({ control, name:"items" });
   const watchedItems = watch("items");
 
   useEffect(() => {
@@ -97,7 +97,7 @@ export default function NewOrderPage() {
         delivery_date: data.delivery_date || null,
         notes: data.notes || null,
         total_amount: totalAmount,
-        status: "pending",
+        status:"pending",
       }).select().single();
 
     if (error || !order) { toast.error("Error al crear el pedido"); return; }
@@ -106,8 +106,8 @@ export default function NewOrderPage() {
       order_id: order.id,
       green_coffee_id: i.green_coffee_id || null,
       product_type: i.product_type,
-      weight_grams: i.product_type === "roasted" ? Number(i.weight_grams) || 250 : null,
-      green_weight_kg: i.product_type === "green" ? Number(i.green_weight_kg) || null : null,
+      weight_grams: i.product_type ==="roasted" ? Number(i.weight_grams) || 250 : null,
+      green_weight_kg: i.product_type ==="green" ? Number(i.green_weight_kg) || null : null,
       quantity: Number(i.quantity),
       unit_price: Number(i.unit_price),
       notes: i.notes || null,
@@ -118,8 +118,7 @@ export default function NewOrderPage() {
     router.push(`/orders/${order.id}`);
   }
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/orders" className="btn-ghost p-2"><ArrowLeft className="w-4 h-4" /></Link>
@@ -139,18 +138,14 @@ export default function NewOrderPage() {
                   <label className="label-base">Cliente</label>
                   <select className="input-base" {...register("client_id")}>
                     <option value="">Sin cliente / cliente nuevo</option>
-                    {clients.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
+                    {clients.map(c => (<option key={c.id} value={c.id}>{c.name}</option>))}
                   </select>
                 </div>
-                {!watch("client_id") && (
-                  <div className="col-span-2">
+                {!watch("client_id") && (<div className="col-span-2">
                     <label className="label-base">Nombre del cliente (si no está en la lista)</label>
                     <input type="text" className="input-base" placeholder="Nombre o empresa"
                       {...register("client_name")} />
-                  </div>
-                )}
+                  </div>)}
                 <div>
                   <label className="label-base">Fecha del pedido</label>
                   <input type="date" className="input-base" {...register("order_date")} />
@@ -173,45 +168,38 @@ export default function NewOrderPage() {
               <div className="flex items-center justify-between mb-4">
                 <p className="section-title mb-0">Productos</p>
                 <button type="button"
-                  onClick={() => append({ product_type: "roasted", green_coffee_id: "", quantity: 1, unit_price: 0, weight_grams: 250 })}
+                  onClick={() => append({ product_type:"roasted", green_coffee_id:"", quantity: 1, unit_price: 0, weight_grams: 250 })}
                   className="btn-secondary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Agregar
                 </button>
               </div>
 
-              {errors.items?.root && (
-                <p className="text-xs text-status-danger mb-3">{errors.items.root.message}</p>
-              )}
+              {errors.items?.root && (<p className="text-xs text-status-danger mb-3">{errors.items.root.message}</p>)}
 
               <div className="flex flex-col gap-4">
                 {fields.map((field, idx) => {
                   const item = watchedItems[idx];
-                  return (
-                    <div key={field.id} className="border border-border-default rounded-xl p-4 flex flex-col gap-3">
+                  return (<div key={field.id} className="border border-border-default rounded-xl p-4 flex flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-text-secondary">Item {idx + 1}</span>
-                        {fields.length > 1 && (
-                          <button type="button" onClick={() => remove(idx)}
+                        {fields.length > 1 && (<button type="button" onClick={() => remove(idx)}
                             className="text-status-danger hover:bg-red-50 p-1 rounded transition-colors">
                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+                          </button>)}
                       </div>
 
                       {/* Tipo */}
                       <div className="flex gap-2">
-                        {[{ v: "roasted", l: "â˜• Tostado" }, { v: "green", l: "ðŸŒ± Verde" }].map(opt => (
-                          <label key={opt.v}
+                        {[{ v:"roasted", l:"Tostado" }, { v:"green", l:"Verde" }].map(opt => (<label key={opt.v}
                             className={`flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg border-2 cursor-pointer text-sm font-medium transition-colors ${
                               item?.product_type === opt.v
-                                ? "border-accent-green bg-[#FDF5EE] text-accent-green"
-                                : "border-border-default text-text-secondary hover:border-accent-green/30"
+                                ?"border-accent-green bg-[#FDF5EE] text-accent-green"
+                                :"border-border-default text-text-secondary hover:border-accent-green/30"
                             }`}>
                             <input type="radio" value={opt.v} className="sr-only"
                               {...register(`items.${idx}.product_type`)} />
                             {opt.l}
-                          </label>
-                        ))}
+                          </label>))}
                       </div>
 
                       {/* Café */}
@@ -220,28 +208,20 @@ export default function NewOrderPage() {
                           <label className="label-base">Café</label>
                           <select className="input-base" {...register(`items.${idx}.green_coffee_id`)}>
                             <option value="">Seleccionar...</option>
-                            {coffees.map(c => (
-                              <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
+                            {coffees.map(c => (<option key={c.id} value={c.id}>{c.name}</option>))}
                           </select>
                         </div>
 
-                        {item?.product_type === "roasted" ? (
-                          <div>
+                        {item?.product_type ==="roasted" ? (<div>
                             <label className="label-base">Presentación</label>
                             <select className="input-base" {...register(`items.${idx}.weight_grams`)}>
-                              {WEIGHT_OPTIONS.map(w => (
-                                <option key={w.value} value={w.value}>{w.label}</option>
-                              ))}
+                              {WEIGHT_OPTIONS.map(w => (<option key={w.value} value={w.value}>{w.label}</option>))}
                             </select>
-                          </div>
-                        ) : (
-                          <div>
+                          </div>) : (<div>
                             <label className="label-base">Cantidad (kg)</label>
                             <input type="number" step="0.001" className="input-base font-mono"
                               placeholder="5.000" {...register(`items.${idx}.green_weight_kg`)} />
-                          </div>
-                        )}
+                          </div>)}
 
                         <div>
                           <label className="label-base">Cantidad</label>
@@ -265,13 +245,12 @@ export default function NewOrderPage() {
 
                       {/* Subtotal del item */}
                       <div className="flex justify-end text-xs text-text-secondary">
-                        Subtotal:{" "}
+                        Subtotal:{""}
                         <span className="font-mono font-medium text-text-primary ml-1">
                           {formatCurrency((Number(item?.unit_price) || 0) * (Number(item?.quantity) || 1), roaster?.currency)}
                         </span>
                       </div>
-                    </div>
-                  );
+                    </div>);
                 })}
               </div>
             </div>
@@ -279,7 +258,7 @@ export default function NewOrderPage() {
             <div className="flex gap-3">
               <Link href="/orders" className="btn-secondary flex-1 justify-center">Cancelar</Link>
               <button type="submit" className="btn-primary flex-1 justify-center" disabled={isSubmitting}>
-                {isSubmitting ? "Guardando..." : "Crear pedido"}
+                {isSubmitting ?"Guardando..." :"Crear pedido"}
               </button>
             </div>
           </div>
@@ -294,17 +273,15 @@ export default function NewOrderPage() {
                   const coffee = coffees.find(c => c.id === item?.green_coffee_id);
                   const subtotal = (Number(item?.unit_price) || 0) * (Number(item?.quantity) || 1);
                   if (!coffee) return null;
-                  return (
-                    <div key={idx} className="flex justify-between text-xs">
+                  return (<div key={idx} className="flex justify-between text-xs">
                       <span className="text-text-secondary truncate max-w-[140px]">
                         {item?.quantity}í— {coffee?.name}
-                        {item?.product_type === "roasted" && item?.weight_grams ? ` ${item.weight_grams}g` : ""}
+                        {item?.product_type ==="roasted" && item?.weight_grams ? ` ${item.weight_grams}g` :""}
                       </span>
                       <span className="font-mono shrink-0 ml-2">
                         {formatCurrency(subtotal, roaster?.currency)}
                       </span>
-                    </div>
-                  );
+                    </div>);
                 })}
               </div>
               <div className="border-t border-border-default pt-3 flex justify-between">
@@ -317,7 +294,6 @@ export default function NewOrderPage() {
           </div>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }
 

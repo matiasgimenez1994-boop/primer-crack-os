@@ -1,15 +1,15 @@
-﻿import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Plus, Receipt } from "lucide-react";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { StatsCard } from "@/components/ui/StatsCard";
-import { formatCurrency, formatDate, currentMonthRange } from "@/lib/utils";
+﻿import { createClient } from"@/lib/supabase/server";
+import { redirect } from"next/navigation";
+import Link from"next/link";
+import { Plus, Receipt } from"lucide-react";
+import { EmptyState } from"@/components/ui/EmptyState";
+import { StatsCard } from"@/components/ui/StatsCard";
+import { formatCurrency, formatDate, currentMonthRange } from"@/lib/utils";
 import {
   CATEGORY_LABELS, CATEGORY_COLORS, CATEGORY_ICONS,
   FREQUENCY_LABELS, toMonthlyAmount,
-} from "@/lib/expenses";
-import type { Expense } from "@/types";
+} from"@/lib/expenses";
+import type { Expense } from"@/types";
 
 export default async function ExpensesPage() {
   const supabase = await createClient();
@@ -34,7 +34,7 @@ export default async function ExpensesPage() {
 
   // Estimado mensual (recurrentes)
   const monthlyEstimate = (allExpenses ?? [])
-    .filter((e: Expense) => e.frequency !== "once")
+    .filter((e: Expense) => e.frequency !=="once")
     .reduce((s: number, e: Expense) => s + toMonthlyAmount(e.amount, e.frequency), 0);
 
   // Por categoría este mes
@@ -46,8 +46,7 @@ export default async function ExpensesPage() {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 5);
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <h1 className="text-xl font-semibold text-text-primary">Gastos</h1>
         <Link href="/expenses/new" className="btn-primary">
@@ -68,17 +67,15 @@ export default async function ExpensesPage() {
       </div>
 
       {/* Por categoría */}
-      {topCategories.length > 0 && (
-        <div className="card p-5 mb-6">
+      {topCategories.length > 0 && (<div className="card p-5 mb-6">
           <p className="section-title">Gastos del mes por categoría</p>
           <div className="flex flex-col gap-3">
             {topCategories.map(([cat, amount]) => {
               const pct = monthTotal > 0 ? (amount / monthTotal) * 100 : 0;
-              return (
-                <div key={cat}>
+              return (<div key={cat}>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-text-secondary">
-                      {CATEGORY_ICONS[cat as keyof typeof CATEGORY_ICONS]}{" "}
+                      {CATEGORY_ICONS[cat as keyof typeof CATEGORY_ICONS]}{""}
                       {CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS]}
                     </span>
                     <span className="font-mono font-medium text-text-primary">
@@ -89,22 +86,17 @@ export default async function ExpensesPage() {
                   <div className="h-1.5 bg-border-default rounded-full overflow-hidden">
                     <div className="h-full bg-accent-green rounded-full" style={{ width: `${pct}%` }} />
                   </div>
-                </div>
-              );
+                </div>);
             })}
           </div>
-        </div>
-      )}
+        </div>)}
 
       {/* Tabla */}
-      {(allExpenses ?? []).length === 0 ? (
-        <div className="card">
+      {(allExpenses ?? []).length === 0 ? (<div className="card">
           <EmptyState icon={Receipt} title="No hay gastos registrados"
             description="Registrá tus gastos fijos y variables para ver la rentabilidad real del negocio."
             actionLabel="+ Registrar gasto" actionHref="/expenses/new" />
-        </div>
-      ) : (
-        <div className="card overflow-hidden">
+        </div>) : (<div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -119,8 +111,7 @@ export default async function ExpensesPage() {
                 </tr>
               </thead>
               <tbody>
-                {(allExpenses ?? []).map((e: Expense) => (
-                  <tr key={e.id} className="border-b border-border-default last:border-0 hover:bg-[#F5EFE6]/50 transition-colors group">
+                {(allExpenses ?? []).map((e: Expense) => (<tr key={e.id} className="border-b border-border-default last:border-0 hover:bg-[#F5EFE6]/50 transition-colors group">
                     <td className="px-5 py-3.5">
                       <p className="font-medium text-text-primary">{e.name}</p>
                       {e.notes && <p className="text-xs text-text-secondary mt-0.5">{e.notes}</p>}
@@ -140,9 +131,9 @@ export default async function ExpensesPage() {
                       {formatCurrency(e.amount, roaster.currency)}
                     </td>
                     <td className="px-5 py-3.5 text-right font-mono text-text-secondary hidden md:table-cell">
-                      {e.frequency !== "once"
+                      {e.frequency !=="once"
                         ? formatCurrency(toMonthlyAmount(e.amount, e.frequency), roaster.currency)
-                        : "â€”"}
+                        :"â€”"}
                     </td>
                     <td className="px-3 py-3.5 text-right">
                       <Link href={`/expenses/${e.id}/edit`}
@@ -150,14 +141,11 @@ export default async function ExpensesPage() {
                         Editar
                       </Link>
                     </td>
-                  </tr>
-                ))}
+                  </tr>))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        </div>)}
+    </div>);
 }
 

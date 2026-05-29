@@ -1,20 +1,20 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { ArrowLeft, Calculator } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { calculateCosts, getShrinkageBg } from "@/lib/costs";
-import { formatCurrency, formatPct, todayISO } from "@/lib/utils";
-import type { GreenCoffee, Roaster } from "@/types";
+import { useEffect, useState } from"react";
+import { useRouter, useSearchParams } from"next/navigation";
+import { useForm, useWatch } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import Link from"next/link";
+import { ArrowLeft, Calculator } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import { calculateCosts, getShrinkageBg } from"@/lib/costs";
+import { formatCurrency, formatPct, todayISO } from"@/lib/utils";
+import type { GreenCoffee, Roaster } from"@/types";
 
 const schema = z.object({
-  green_coffee_id: z.string().min(1, "Seleccioná un café"),
+  green_coffee_id: z.string().min(1,"Seleccioná un café"),
   roast_date: z.string().min(1),
   green_weight_kg: z.coerce.number().positive("Debe ser mayor a 0"),
   roasted_weight_kg: z.coerce.number().positive("Debe ser mayor a 0"),
@@ -22,20 +22,18 @@ const schema = z.object({
   charge_temp_celsius: z.coerce.number().optional().or(z.literal("")),
   first_crack_time_min: z.coerce.number().optional().or(z.literal("")),
   development_time_min: z.coerce.number().optional().or(z.literal("")),
-  roast_level: z.enum(["light", "medium", "medium_dark", "dark"]).optional().or(z.literal("")),
+  roast_level: z.enum(["light","medium","medium_dark","dark"]).optional().or(z.literal("")),
   sensory_result: z.string().optional(),
   roaster_notes: z.string().optional(),
-  status: z.enum(["trial", "production", "discarded"]),
+  status: z.enum(["trial","production","discarded"]),
   packaging_cost_per_kg: z.coerce.number().min(0),
   energy_cost_per_kg: z.coerce.number().min(0),
   labor_cost_per_kg: z.coerce.number().min(0),
-}).refine(
-  (d) => d.roasted_weight_kg < d.green_weight_kg,
+}).refine((d) => d.roasted_weight_kg < d.green_weight_kg,
   {
-    message: "El peso tostado debe ser menor al verde",
+    message:"El peso tostado debe ser menor al verde",
     path: ["roasted_weight_kg"],
-  }
-);
+  });
 
 type FormData = z.infer<typeof schema>;
 
@@ -57,7 +55,7 @@ export default function NewRoastPage() {
     resolver: zodResolver(schema),
     defaultValues: {
       roast_date: todayISO(),
-      status: "production",
+      status:"production",
       packaging_cost_per_kg: 0.3,
       energy_cost_per_kg: 0.5,
       labor_cost_per_kg: 0,
@@ -85,7 +83,7 @@ export default function NewRoastPage() {
             .from("green_coffees")
             .select("*")
             .eq("roaster_id", r.id)
-            .neq("status", "depleted")
+            .neq("status","depleted")
             .order("name")
             .then(({ data: c }) => {
               setCoffees(c ?? []);
@@ -156,15 +154,13 @@ export default function NewRoastPage() {
 
     // Descontar stock del café verde
     if (selectedCoffee) {
-      const newStock = Math.max(
-        0,
-        selectedCoffee.current_stock_kg - data.green_weight_kg
-      );
+      const newStock = Math.max(0,
+        selectedCoffee.current_stock_kg - data.green_weight_kg);
       await supabase
         .from("green_coffees")
         .update({
           current_stock_kg: newStock,
-          status: newStock === 0 ? "depleted" : selectedCoffee.status,
+          status: newStock === 0 ?"depleted" : selectedCoffee.status,
         })
         .eq("id", selectedCoffee.id);
     }
@@ -173,8 +169,7 @@ export default function NewRoastPage() {
     router.push(`/roasts/${batch.id}`);
   }
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/roasts" className="btn-ghost p-2">
@@ -200,21 +195,16 @@ export default function NewRoastPage() {
                   })}
                 >
                   <option value="">Seleccionar café...</option>
-                  {coffees.map((c) => (
-                    <option key={c.id} value={c.id}>
+                  {coffees.map((c) => (<option key={c.id} value={c.id}>
                       {c.name} â€” {c.current_stock_kg.toFixed(1)} kg disponibles
-                    </option>
-                  ))}
+                    </option>))}
                 </select>
-                {errors.green_coffee_id && (
-                  <p className="text-xs text-status-danger mt-1">
+                {errors.green_coffee_id && (<p className="text-xs text-status-danger mt-1">
                     {errors.green_coffee_id.message}
-                  </p>
-                )}
+                  </p>)}
               </div>
 
-              {selectedCoffee && (
-                <div className="mt-3 p-3 bg-[#F5EFE6] rounded-lg grid grid-cols-3 gap-3 text-xs">
+              {selectedCoffee && (<div className="mt-3 p-3 bg-[#F5EFE6] rounded-lg grid grid-cols-3 gap-3 text-xs">
                   <div>
                     <p className="text-text-secondary">Precio compra</p>
                     <p className="font-mono font-medium text-text-primary">
@@ -230,11 +220,10 @@ export default function NewRoastPage() {
                   <div>
                     <p className="text-text-secondary">Origen</p>
                     <p className="font-medium text-text-primary">
-                      {selectedCoffee.origin_country ?? "â€”"}
+                      {selectedCoffee.origin_country ??"â€”"}
                     </p>
                   </div>
-                </div>
-              )}
+                </div>)}
             </div>
 
             {/* Paso 2: Datos del tueste */}
@@ -267,11 +256,9 @@ export default function NewRoastPage() {
                     placeholder="5.000"
                     {...register("green_weight_kg")}
                   />
-                  {errors.green_weight_kg && (
-                    <p className="text-xs text-status-danger mt-1">
+                  {errors.green_weight_kg && (<p className="text-xs text-status-danger mt-1">
                       {errors.green_weight_kg.message}
-                    </p>
-                  )}
+                    </p>)}
                 </div>
 
                 <div>
@@ -284,21 +271,17 @@ export default function NewRoastPage() {
                       placeholder="4.290"
                       {...register("roasted_weight_kg")}
                     />
-                    {errors.roasted_weight_kg && (
-                      <p className="text-xs text-status-danger mt-1">
+                    {errors.roasted_weight_kg && (<p className="text-xs text-status-danger mt-1">
                         {errors.roasted_weight_kg.message}
-                      </p>
-                    )}
-                    {costs && (
-                      <div className="mt-1.5 flex items-center gap-1.5">
+                      </p>)}
+                    {costs && (<div className="mt-1.5 flex items-center gap-1.5">
                         <span className="text-xs text-text-secondary">Merma:</span>
                         <span
                           className={`text-xs font-mono font-medium px-1.5 py-0.5 rounded border ${getShrinkageBg(costs.shrinkagePct)}`}
                         >
                           {formatPct(costs.shrinkagePct)}
                         </span>
-                      </div>
-                    )}
+                      </div>)}
                   </div>
                 </div>
 
@@ -420,7 +403,7 @@ export default function NewRoastPage() {
                 className="btn-primary flex-1 justify-center"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Guardando..." : "Guardar y ver costos â†’"}
+                {isSubmitting ?"Guardando..." :"Guardar y ver costos â†’"}
               </button>
             </div>
           </div>
@@ -435,12 +418,9 @@ export default function NewRoastPage() {
                 </p>
               </div>
 
-              {!costs || !selectedCoffee ? (
-                <p className="text-xs text-text-secondary">
+              {!costs || !selectedCoffee ? (<p className="text-xs text-text-secondary">
                   Completá café, peso verde y peso tostado para ver el cálculo en tiempo real.
-                </p>
-              ) : (
-                <div className="flex flex-col gap-3">
+                </p>) : (<div className="flex flex-col gap-3">
                   <div className="flex justify-between text-xs">
                     <span className="text-text-secondary">Café verde</span>
                     <span className="font-mono font-medium">
@@ -471,14 +451,12 @@ export default function NewRoastPage() {
                       +{formatCurrency(costs.energyCostPerKg, roaster?.currency)}/kg
                     </span>
                   </div>
-                  {costs.laborCostPerKg > 0 && (
-                    <div className="flex justify-between text-xs">
+                  {costs.laborCostPerKg > 0 && (<div className="flex justify-between text-xs">
                       <span className="text-text-secondary">Mano de obra</span>
                       <span className="font-mono font-medium">
                         +{formatCurrency(costs.laborCostPerKg, roaster?.currency)}/kg
                       </span>
-                    </div>
-                  )}
+                    </div>)}
                   <div className="border-t border-border-default pt-3 flex justify-between">
                     <span className="text-sm font-semibold text-text-primary">
                       Costo total
@@ -495,13 +473,11 @@ export default function NewRoastPage() {
                       </span>
                     </div>
                   </div>
-                </div>
-              )}
+                </div>)}
             </div>
           </div>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }
 

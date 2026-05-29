@@ -1,11 +1,10 @@
-import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from"@supabase/ssr";
+import { NextResponse, type NextRequest } from"next/server";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
@@ -14,16 +13,13 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
           cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+            request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options as Parameters<typeof supabaseResponse.cookies.set>[2])
-          );
+            supabaseResponse.cookies.set(name, value, options as Parameters<typeof supabaseResponse.cookies.set>[2]));
         },
       },
-    }
-  );
+    });
 
   const {
     data: { user },
@@ -31,18 +27,18 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  const authRoutes = ["/login", "/register"];
+  const authRoutes = ["/login","/register"];
   const isAuthRoute = authRoutes.some((r) => pathname.startsWith(r));
 
-  if (!user && !isAuthRoute && pathname !== "/") {
+  if (!user && !isAuthRoute && pathname !=="/") {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname ="/login";
     return NextResponse.redirect(url);
   }
 
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname ="/dashboard";
     return NextResponse.redirect(url);
   }
 

@@ -1,11 +1,11 @@
-﻿import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Plus, BookOpen, Star } from "lucide-react";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ROAST_LEVEL_LABELS } from "@/lib/costs";
-import type { RoastProfile } from "@/types";
+﻿import { createClient } from"@/lib/supabase/server";
+import { redirect } from"next/navigation";
+import Link from"next/link";
+import { Plus, BookOpen, Star } from"lucide-react";
+import { EmptyState } from"@/components/ui/EmptyState";
+import { StatusBadge } from"@/components/ui/StatusBadge";
+import { ROAST_LEVEL_LABELS } from"@/lib/costs";
+import type { RoastProfile } from"@/types";
 
 export default async function ProfilesPage() {
   const supabase = await createClient();
@@ -26,8 +26,7 @@ export default async function ProfilesPage() {
   const favorites = (profiles ?? []).filter((p: RoastProfile) => p.is_favorite);
   const rest = (profiles ?? []).filter((p: RoastProfile) => !p.is_favorite);
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <h1 className="text-xl font-semibold text-text-primary">Perfiles de tueste</h1>
         <Link href="/profiles/new" className="btn-primary">
@@ -35,49 +34,35 @@ export default async function ProfilesPage() {
         </Link>
       </div>
 
-      {(profiles ?? []).length === 0 ? (
-        <div className="card">
+      {(profiles ?? []).length === 0 ? (<div className="card">
           <EmptyState icon={BookOpen} title="No hay perfiles guardados"
             description="Guardá los parámetros de tus mejores tuestes para repetirlos exactamente."
             actionLabel="+ Crear primer perfil" actionHref="/profiles/new" />
-        </div>
-      ) : (
-        <div className="flex flex-col gap-6">
+        </div>) : (<div className="flex flex-col gap-6">
           {/* Favoritos */}
-          {favorites.length > 0 && (
-            <div>
+          {favorites.length > 0 && (<div>
               <p className="section-title flex items-center gap-1.5">
                 <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" /> Favoritos
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {favorites.map((p: RoastProfile) => (
-                  <ProfileCard key={p.id} profile={p} />
-                ))}
+                {favorites.map((p: RoastProfile) => (<ProfileCard key={p.id} profile={p} />))}
               </div>
-            </div>
-          )}
+            </div>)}
 
           {/* Todos los perfiles */}
-          {rest.length > 0 && (
-            <div>
+          {rest.length > 0 && (<div>
               {favorites.length > 0 && <p className="section-title">Todos los perfiles</p>}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {rest.map((p: RoastProfile) => (
-                  <ProfileCard key={p.id} profile={p} />
-                ))}
+                {rest.map((p: RoastProfile) => (<ProfileCard key={p.id} profile={p} />))}
               </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+            </div>)}
+        </div>)}
+    </div>);
 }
 
 function ProfileCard({ profile: p }: { profile: RoastProfile }) {
   const coffee = (p as any).green_coffees;
-  return (
-    <Link href={`/profiles/${p.id}`}
+  return (<Link href={`/profiles/${p.id}`}
       className="card p-5 hover:shadow-card-hover transition-all group flex flex-col gap-3"
     >
       <div className="flex items-start justify-between">
@@ -88,40 +73,31 @@ function ProfileCard({ profile: p }: { profile: RoastProfile }) {
               {p.name}
             </h3>
           </div>
-          {coffee && (
-            <p className="text-xs text-text-secondary mt-0.5 truncate">
-              {coffee.name}{coffee.origin_country ? ` · ${coffee.origin_country}` : ""}
-            </p>
-          )}
+          {coffee && (<p className="text-xs text-text-secondary mt-0.5 truncate">
+              {coffee.name}{coffee.origin_country ? ` · ${coffee.origin_country}` :""}
+            </p>)}
         </div>
-        {p.roast_level && (
-          <StatusBadge status={p.roast_level} className="shrink-0 ml-2" />
-        )}
+        {p.roast_level && (<StatusBadge status={p.roast_level} className="shrink-0 ml-2" />)}
       </div>
 
       {/* Parámetros clave */}
       <div className="grid grid-cols-3 gap-2 text-center">
         {[
-          { label: "Carga", value: p.charge_temp_celsius ? `${p.charge_temp_celsius}°C` : "â€”" },
-          { label: "Tiempo", value: p.total_time_min ? `${p.total_time_min}'` : "â€”" },
-          { label: "Desarrollo", value: p.development_pct ? `${p.development_pct}%` : "â€”" },
-        ].map(({ label, value }) => (
-          <div key={label} className="bg-[#FDFAF6] rounded-lg py-2 px-1">
+          { label:"Carga", value: p.charge_temp_celsius ? `${p.charge_temp_celsius}°C` :"â€”" },
+          { label:"Tiempo", value: p.total_time_min ? `${p.total_time_min}'` :"â€”" },
+          { label:"Desarrollo", value: p.development_pct ? `${p.development_pct}%` :"â€”" },
+        ].map(({ label, value }) => (<div key={label} className="bg-[#FDFAF6] rounded-lg py-2 px-1">
             <p className="text-xs font-mono font-semibold text-text-primary">{value}</p>
             <p className="text-xs text-text-secondary mt-0.5">{label}</p>
-          </div>
-        ))}
+          </div>))}
       </div>
 
-      {p.cup_result && (
-        <p className="text-xs text-text-secondary italic truncate">"{p.cup_result}"</p>
-      )}
+      {p.cup_result && (<p className="text-xs text-text-secondary italic truncate">"{p.cup_result}"</p>)}
 
       <div className="flex items-center justify-between text-xs text-text-secondary">
-        <span>{p.times_used} {p.times_used === 1 ? "uso" : "usos"}</span>
+        <span>{p.times_used} {p.times_used === 1 ?"uso" :"usos"}</span>
         {p.roaster_machine && <span className="truncate ml-2">{p.roaster_machine}</span>}
       </div>
-    </Link>
-  );
+    </Link>);
 }
 

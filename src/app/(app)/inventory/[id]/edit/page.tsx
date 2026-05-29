@@ -1,30 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { ArrowLeft, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { PROCESS_OPTIONS } from "@/lib/costs";
-import type { GreenCoffee, Roaster } from "@/types";
+import { useEffect, useState } from"react";
+import { useRouter, useParams } from"next/navigation";
+import { useForm } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import Link from"next/link";
+import { ArrowLeft, Trash2 } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import { PROCESS_OPTIONS } from"@/lib/costs";
+import type { GreenCoffee, Roaster } from"@/types";
 
 const schema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
+  name: z.string().min(1,"El nombre es requerido"),
   origin_country: z.string().optional(),
   farm_producer: z.string().optional(),
   variety: z.string().optional(),
   process: z.string().optional(),
   score: z.coerce.number().min(0).max(100).optional().or(z.literal("")),
   purchase_price_per_kg: z.coerce.number().positive("El precio debe ser mayor a 0"),
-  current_stock_kg: z.coerce.number().min(0, "El stock no puede ser negativo"),
+  current_stock_kg: z.coerce.number().min(0,"El stock no puede ser negativo"),
   purchase_date: z.string().optional(),
   supplier: z.string().optional(),
   tasting_notes: z.string().optional(),
-  status: z.enum(["active", "depleted", "reserved"]),
+  status: z.enum(["active","depleted","reserved"]),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -67,8 +67,8 @@ export default function EditCoffeePage() {
               setCoffee(c);
               reset({
                 ...c,
-                score: c.score ?? "",
-                purchase_date: c.purchase_date ?? "",
+                score: c.score ??"",
+                purchase_date: c.purchase_date ??"",
               });
               setLoading(false);
             });
@@ -83,7 +83,7 @@ export default function EditCoffeePage() {
       .from("green_coffees")
       .update({
         ...data,
-        score: data.score === "" ? null : data.score,
+        score: data.score ==="" ? null : data.score,
       })
       .eq("id", id);
 
@@ -114,15 +114,12 @@ export default function EditCoffeePage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[300px]">
+    return (<div className="flex items-center justify-center min-h-[300px]">
         <div className="w-6 h-6 border-2 border-border-default border-t-accent-terra rounded-full animate-spin" />
-      </div>
-    );
+      </div>);
   }
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href={`/inventory/${id}`} className="btn-ghost p-2">
@@ -147,9 +144,7 @@ export default function EditCoffeePage() {
             <div>
               <label className="label-base">Nombre comercial *</label>
               <input type="text" className="input-base" {...register("name")} />
-              {errors.name && (
-                <p className="text-xs text-status-danger mt-1">{errors.name.message}</p>
-              )}
+              {errors.name && (<p className="text-xs text-status-danger mt-1">{errors.name.message}</p>)}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -173,9 +168,7 @@ export default function EditCoffeePage() {
                 <label className="label-base">Proceso</label>
                 <select className="input-base" {...register("process")}>
                   <option value="">Seleccionar...</option>
-                  {PROCESS_OPTIONS.map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
+                  {PROCESS_OPTIONS.map((p) => (<option key={p} value={p}>{p}</option>))}
                 </select>
               </div>
               <div>
@@ -204,11 +197,9 @@ export default function EditCoffeePage() {
                     className="input-base font-mono"
                     {...register("purchase_price_per_kg")}
                   />
-                  {errors.purchase_price_per_kg && (
-                    <p className="text-xs text-status-danger mt-1">
+                  {errors.purchase_price_per_kg && (<p className="text-xs text-status-danger mt-1">
                       {errors.purchase_price_per_kg.message}
-                    </p>
-                  )}
+                    </p>)}
                 </div>
                 <div>
                   <label className="label-base">Stock actual (kg)</label>
@@ -254,12 +245,11 @@ export default function EditCoffeePage() {
                 className="btn-primary flex-1 justify-center"
                 disabled={isSubmitting || !isDirty}
               >
-                {isSubmitting ? "Guardando..." : "Guardar cambios"}
+                {isSubmitting ?"Guardando..." :"Guardar cambios"}
               </button>
             </div>
           </div>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }

@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { ArrowLeft, Trash2, Star } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import type { GreenCoffee } from "@/types";
+import { useEffect, useState } from"react";
+import { useRouter, useParams } from"next/navigation";
+import { useForm } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import Link from"next/link";
+import { ArrowLeft, Trash2, Star } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import type { GreenCoffee } from"@/types";
 
 const schema = z.object({
   name: z.string().min(1),
@@ -54,15 +54,15 @@ export default function EditProfilePage() {
               if (!p) return;
               reset({
                 ...p,
-                green_coffee_id: p.green_coffee_id ?? "",
-                charge_kg: p.charge_kg ?? "",
-                charge_temp_celsius: p.charge_temp_celsius ?? "",
-                total_time_min: p.total_time_min ?? "",
-                first_crack_time_min: p.first_crack_time_min ?? "",
-                development_time_min: p.development_time_min ?? "",
-                roast_level: p.roast_level ?? "",
-                cup_result: p.cup_result ?? "",
-                recommendation: p.recommendation ?? "",
+                green_coffee_id: p.green_coffee_id ??"",
+                charge_kg: p.charge_kg ??"",
+                charge_temp_celsius: p.charge_temp_celsius ??"",
+                total_time_min: p.total_time_min ??"",
+                first_crack_time_min: p.first_crack_time_min ??"",
+                development_time_min: p.development_time_min ??"",
+                roast_level: p.roast_level ??"",
+                cup_result: p.cup_result ??"",
+                recommendation: p.recommendation ??"",
               });
               setLoading(false);
             });
@@ -93,16 +93,13 @@ export default function EditProfilePage() {
     router.push("/profiles");
   }
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[300px]">
+  if (loading) return (<div className="flex items-center justify-center min-h-[300px]">
       <div className="w-6 h-6 border-2 border-border-default border-t-accent-terra rounded-full animate-spin" />
-    </div>
-  );
+    </div>);
 
   const isFavorite = watch("is_favorite");
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href={`/profiles/${id}`} className="btn-ghost p-2"><ArrowLeft className="w-4 h-4" /></Link>
@@ -119,9 +116,9 @@ export default function EditProfilePage() {
             <div className="card p-6 flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <p className="section-title mb-0">Identificación</p>
-                <label className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors text-xs font-medium ${isFavorite ? "border-yellow-300 bg-yellow-50 text-yellow-700" : "border-border-default text-text-secondary hover:bg-[#F5EFE6]"}`}>
+                <label className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors text-xs font-medium ${isFavorite ?"border-yellow-300 bg-yellow-50 text-yellow-700" :"border-border-default text-text-secondary hover:bg-[#F5EFE6]"}`}>
                   <input type="checkbox" className="sr-only" {...register("is_favorite")} />
-                  <Star className={`w-3.5 h-3.5 ${isFavorite ? "fill-yellow-500 text-yellow-500" : ""}`} />
+                  <Star className={`w-3.5 h-3.5 ${isFavorite ?"fill-yellow-500 text-yellow-500" :""}`} />
                   Favorito
                 </label>
               </div>
@@ -193,12 +190,11 @@ export default function EditProfilePage() {
             <div className="flex gap-3">
               <Link href={`/profiles/${id}`} className="btn-secondary flex-1 justify-center">Cancelar</Link>
               <button type="submit" className="btn-primary flex-1 justify-center" disabled={isSubmitting || !isDirty}>
-                {isSubmitting ? "Guardando..." : "Guardar cambios"}
+                {isSubmitting ?"Guardando..." :"Guardar cambios"}
               </button>
             </div>
           </div>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }

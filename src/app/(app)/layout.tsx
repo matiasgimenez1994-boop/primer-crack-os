@@ -1,6 +1,6 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { redirect } from"next/navigation";
+import { createClient } from"@/lib/supabase/server";
+import { AppLayout } from"@/components/layout/AppLayout";
 
 export default async function AppGroupLayout({
   children,

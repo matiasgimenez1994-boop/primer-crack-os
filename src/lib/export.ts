@@ -4,7 +4,7 @@
 
 export function generateCSV(headers: string[], rows: (string | number | null)[][]): string {
   const escape = (val: string | number | null) => {
-    if (val === null || val === undefined) return "";
+    if (val === null || val === undefined) return"";
     const str = String(val);
     if (str.includes(",") || str.includes('"') || str.includes("\n")) {
       return `"${str.replace(/"/g, '""')}"`;
@@ -19,7 +19,7 @@ export function generateCSV(headers: string[], rows: (string | number | null)[][
 }
 
 export function downloadCSV(filename: string, csv: string) {
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["" + csv], { type:"text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -45,20 +45,20 @@ export async function generatePDF(options: {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
 
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
 
   // Header
   doc.setFillColor(44, 24, 16); // brand-dark
-  doc.rect(0, 0, 210, 22, "F");
+  doc.rect(0, 0, 210, 22,"F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("helvetica","bold");
   doc.text("Primer crack OS", 14, 10);
   doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("helvetica","normal");
   doc.text(options.businessName, 14, 16);
-  doc.text(options.title, 210 - 14, 10, { align: "right" });
-  doc.text(new Date().toLocaleDateString("es-UY"), 210 - 14, 16, { align: "right" });
+  doc.text(options.title, 210 - 14, 10, { align:"right" });
+  doc.text(new Date().toLocaleDateString("es-UY"), 210 - 14, 16, { align:"right" });
 
   let y = 30;
 
@@ -74,7 +74,7 @@ export async function generatePDF(options: {
 
     doc.setTextColor(28, 18, 8);
     doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("helvetica","bold");
     doc.text(table.title, 14, y);
     y += 2;
 
@@ -82,12 +82,12 @@ export async function generatePDF(options: {
       startY: y + 2,
       head: [table.headers],
       body: table.rows,
-      theme: "striped",
+      theme:"striped",
       headStyles: {
         fillColor: [44, 24, 16],
         textColor: [255, 255, 255],
         fontSize: 8,
-        fontStyle: "bold",
+        fontStyle:"bold",
       },
       bodyStyles: { fontSize: 8, textColor: [28, 18, 8] },
       alternateRowStyles: { fillColor: [253, 250, 246] },
@@ -103,10 +103,8 @@ export async function generatePDF(options: {
     doc.setPage(i);
     doc.setTextColor(160, 150, 140);
     doc.setFontSize(7);
-    doc.text(
-      `Primer crack OS · ${options.businessName} · Página ${i} de ${pageCount}`,
-      14, 290
-    );
+    doc.text(`Primer crack OS · ${options.businessName} · Página ${i} de ${pageCount}`,
+      14, 290);
   }
 
   return doc;

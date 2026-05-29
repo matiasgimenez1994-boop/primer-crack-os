@@ -1,26 +1,26 @@
-﻿import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Plus, Users, AlertTriangle } from "lucide-react";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { differenceInDays, parseISO } from "date-fns";
-import type { Client, Sale } from "@/types";
+﻿import { createClient } from"@/lib/supabase/server";
+import { redirect } from"next/navigation";
+import Link from"next/link";
+import { Plus, Users, AlertTriangle } from"lucide-react";
+import { EmptyState } from"@/components/ui/EmptyState";
+import { formatCurrency, formatDate } from"@/lib/utils";
+import { differenceInDays, parseISO } from"date-fns";
+import type { Client, Sale } from"@/types";
 
 const typeLabels: Record<string, string> = {
-  cafe: "Cafetería",
-  individual: "Consumidor",
-  restaurant: "Restaurante",
-  distributor: "Distribuidor",
-  other: "Otro",
+  cafe:"Cafetería",
+  individual:"Consumidor",
+  restaurant:"Restaurante",
+  distributor:"Distribuidor",
+  other:"Otro",
 };
 
 const typeColors: Record<string, string> = {
-  cafe: "bg-amber-50 text-amber-700 border-amber-200",
-  individual: "bg-blue-50 text-blue-700 border-blue-200",
-  restaurant: "bg-purple-50 text-purple-700 border-purple-200",
-  distributor: "bg-green-50 text-green-700 border-green-200",
-  other: "bg-gray-100 text-gray-600 border-gray-200",
+  cafe:"bg-amber-50 text-amber-700 border-amber-200",
+  individual:"bg-blue-50 text-blue-700 border-blue-200",
+  restaurant:"bg-purple-50 text-purple-700 border-purple-200",
+  distributor:"bg-green-50 text-green-700 border-green-200",
+  other:"bg-gray-100 text-gray-600 border-gray-200",
 };
 
 export default async function ClientsPage() {
@@ -45,11 +45,11 @@ export default async function ClientsPage() {
     .from("sales")
     .select("client_id, final_price, sale_date")
     .eq("roaster_id", roaster.id)
-    .not("client_id", "is", null);
+    .not("client_id","is", null);
 
   // Agrupar ventas por cliente
   const salesByClient: Record<string, { total: number; lastDate: string; count: number }> = {};
-  (sales ?? []).forEach((s: Pick<Sale, "client_id" | "final_price" | "sale_date">) => {
+  (sales ?? []).forEach((s: Pick<Sale,"client_id" |"final_price" |"sale_date">) => {
     if (!s.client_id) return;
     if (!salesByClient[s.client_id]) {
       salesByClient[s.client_id] = { total: 0, lastDate: s.sale_date, count: 0 };
@@ -69,8 +69,7 @@ export default async function ClientsPage() {
     return daysSince >= c.inactive_alert_days;
   });
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <h1 className="page-title">Clientes</h1>
         <Link href="/clients/new" className="btn-primary">
@@ -79,12 +78,11 @@ export default async function ClientsPage() {
       </div>
 
       {/* Alertas de inactividad */}
-      {inactiveClients.length > 0 && (
-        <div className="mb-5 bg-orange-50 border border-orange-200 rounded-xl p-4">
+      {inactiveClients.length > 0 && (<div className="mb-5 bg-orange-50 border border-orange-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-4 h-4 text-status-warning" />
             <span className="text-sm font-medium text-status-warning">
-              {inactiveClients.length} cliente{inactiveClients.length > 1 ? "s" : ""} sin compras recientes
+              {inactiveClients.length} cliente{inactiveClients.length > 1 ?"s" :""} sin compras recientes
             </span>
           </div>
           <div className="flex flex-col gap-1">
@@ -93,24 +91,20 @@ export default async function ClientsPage() {
               const daysSince = stats
                 ? differenceInDays(today, parseISO(stats.lastDate))
                 : null;
-              return (
-                <Link key={c.id} href={`/clients/${c.id}`}
+              return (<Link key={c.id} href={`/clients/${c.id}`}
                   className="text-sm text-text-secondary hover:text-text-primary transition-colors"
                 >
-                  · <span className="font-medium">{c.name}</span> â€”{" "}
+                  · <span className="font-medium">{c.name}</span> â€”{""}
                   {daysSince !== null
                     ? `hace ${daysSince} días sin comprar`
-                    : "nunca registró una compra"}
-                  {" "}(alerta cada {c.inactive_alert_days} días)
-                </Link>
-              );
+                    :"nunca registró una compra"}
+                  {""}(alerta cada {c.inactive_alert_days} días)
+                </Link>);
             })}
           </div>
-        </div>
-      )}
+        </div>)}
 
-      {(clients ?? []).length === 0 ? (
-        <div className="card">
+      {(clients ?? []).length === 0 ? (<div className="card">
           <EmptyState
             icon={Users}
             title="No hay clientes registrados"
@@ -118,9 +112,7 @@ export default async function ClientsPage() {
             actionLabel="+ Agregar cliente"
             actionHref="/clients/new"
           />
-        </div>
-      ) : (
-        <div className="card overflow-hidden">
+        </div>) : (<div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -141,17 +133,14 @@ export default async function ClientsPage() {
                     : null;
                   const isInactive = inactiveClients.some((x: Client) => x.id === c.id);
 
-                  return (
-                    <tr key={c.id} className="border-b border-border-default last:border-0 hover:bg-[#F5EFE6]/50 transition-colors group">
+                  return (<tr key={c.id} className="border-b border-border-default last:border-0 hover:bg-[#F5EFE6]/50 transition-colors group">
                       <td className="px-5 py-3.5">
                         <Link href={`/clients/${c.id}`}
                           className="font-medium text-text-primary group-hover:text-accent-green transition-colors"
                         >
                           {c.name}
                         </Link>
-                        {c.phone && (
-                          <p className="text-xs text-text-secondary mt-0.5">{c.phone}</p>
-                        )}
+                        {c.phone && (<p className="text-xs text-text-secondary mt-0.5">{c.phone}</p>)}
                       </td>
                       <td className="px-5 py-3.5 hidden sm:table-cell">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${typeColors[c.type] ?? typeColors.other}`}>
@@ -162,34 +151,25 @@ export default async function ClientsPage() {
                         {stats?.count ?? 0}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary">
-                        {stats ? formatCurrency(stats.total, roaster.currency) : "â€”"}
+                        {stats ? formatCurrency(stats.total, roaster.currency) :"â€”"}
                       </td>
                       <td className="px-5 py-3.5 text-right text-text-secondary hidden sm:table-cell">
-                        {stats ? (
-                          <span className={daysSince !== null && daysSince >= c.inactive_alert_days ? "text-status-warning font-medium" : ""}>
+                        {stats ? (<span className={daysSince !== null && daysSince >= c.inactive_alert_days ?"text-status-warning font-medium" :""}>
                             {formatDate(stats.lastDate)}
-                          </span>
-                        ) : "â€”"}
+                          </span>) :"â€”"}
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        {isInactive ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-status-warning font-medium">
+                        {isInactive ? (<span className="inline-flex items-center gap-1 text-xs text-status-warning font-medium">
                             <AlertTriangle className="w-3 h-3" />
                             Inactivo
-                          </span>
-                        ) : (
-                          <span className="text-xs text-status-success font-medium">Activo</span>
-                        )}
+                          </span>) : (<span className="text-xs text-status-success font-medium">Activo</span>)}
                       </td>
-                    </tr>
-                  );
+                    </tr>);
                 })}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        </div>)}
+    </div>);
 }
 

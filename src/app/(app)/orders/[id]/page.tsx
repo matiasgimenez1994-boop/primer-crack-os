@@ -1,39 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import { useEffect, useState } from"react";
+import { useParams, useRouter } from"next/navigation";
+import Link from"next/link";
 import {
   ArrowLeft, CheckCircle, Flame, Package,
   Truck, XCircle, ShoppingBag, Clock, AlertTriangle,
-} from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { formatCurrency, formatDate, todayISO } from "@/lib/utils";
-import { toast } from "sonner";
-import { differenceInDays, parseISO } from "date-fns";
-import type { Order, OrderItem, Roaster } from "@/types";
+} from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { formatCurrency, formatDate, todayISO } from"@/lib/utils";
+import { toast } from"sonner";
+import { differenceInDays, parseISO } from"date-fns";
+import type { Order, OrderItem, Roaster } from"@/types";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: React.FC<{className?:string}> }> = {
-  pending:   { label: "Pendiente",  color: "text-yellow-700",     bg: "bg-yellow-50",  border: "border-yellow-200", icon: Clock },
-  roasting:  { label: "Tostando",   color: "text-orange-700",     bg: "bg-orange-50",  border: "border-orange-200", icon: Flame },
-  ready:     { label: "Listo",      color: "text-status-success",  bg: "bg-green-50",   border: "border-green-200",  icon: Package },
-  delivered: { label: "Entregado",  color: "text-text-secondary",  bg: "bg-gray-100",   border: "border-gray-200",   icon: Truck },
-  cancelled: { label: "Cancelado",  color: "text-status-danger",   bg: "bg-red-50",     border: "border-red-200",    icon: XCircle },
+  pending:   { label:"Pendiente",  color:"text-yellow-700",     bg:"bg-yellow-50",  border:"border-yellow-200", icon: Clock },
+  roasting:  { label:"Tostando",   color:"text-orange-700",     bg:"bg-orange-50",  border:"border-orange-200", icon: Flame },
+  ready:     { label:"Listo",      color:"text-status-success",  bg:"bg-green-50",   border:"border-green-200",  icon: Package },
+  delivered: { label:"Entregado",  color:"text-text-secondary",  bg:"bg-gray-100",   border:"border-gray-200",   icon: Truck },
+  cancelled: { label:"Cancelado",  color:"text-status-danger",   bg:"bg-red-50",     border:"border-red-200",    icon: XCircle },
 };
 
 const NEXT_STATUS: Record<string, string> = {
-  pending: "roasting",
-  roasting: "ready",
-  ready: "delivered",
+  pending:"roasting",
+  roasting:"ready",
+  ready:"delivered",
 };
 
 const NEXT_LABEL: Record<string, string> = {
-  pending: "🔥 Empezar tueste",
-  roasting: "✅ Marcar listo",
-  ready: "🚚 Marcar entregado",
+  pending:" Empezar tueste",
+  roasting:" Marcar listo",
+  ready:" Marcar entregado",
 };
 
-const WEIGHT_LABELS: Record<number, string> = { 250: "250g", 500: "500g", 1000: "1kg" };
+const WEIGHT_LABELS: Record<number, string> = { 250:"250g", 500:"500g", 1000:"1kg" };
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -72,7 +72,7 @@ export default function OrderDetailPage() {
 
   async function cancelOrder() {
     if (!confirm("¿Cancelar este pedido?")) return;
-    await supabase.from("orders").update({ status: "cancelled" }).eq("id", id);
+    await supabase.from("orders").update({ status:"cancelled" }).eq("id", id);
     toast.success("Pedido cancelado");
     load();
   }
@@ -86,39 +86,37 @@ export default function OrderDetailPage() {
       client_id: order.client_id,
       client_name: order.client_name,
       sale_date: todayISO(),
-      product_type: "roasted",
+      product_type:"roasted",
       quantity: 1,
       unit_price: order.total_amount,
-      discount_type: "pct",
+      discount_type:"pct",
       discount_value: 0,
       discount_pct: 0,
       final_price: order.total_amount,
       cost_per_unit: 0,
       profit: 0,
-      payment_type: "cash",
-      payment_status: "paid",
+      payment_type:"cash",
+      payment_status:"paid",
       amount_paid: order.total_amount,
       paid_at: new Date().toISOString(),
       notes: `Pedido #${id.slice(0, 8)}`,
     });
 
     if (error) { toast.error("Error al crear la venta"); return; }
-    await supabase.from("orders").update({ status: "delivered" }).eq("id", id);
+    await supabase.from("orders").update({ status:"delivered" }).eq("id", id);
     toast.success("Venta registrada y pedido marcado como entregado");
     router.push("/sales");
   }
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[300px]">
+  if (loading) return (<div className="flex items-center justify-center min-h-[300px]">
       <div className="w-6 h-6 border-2 border-border-default border-t-accent-terra rounded-full animate-spin" />
-    </div>
-  );
+    </div>);
 
   if (!order) return <p className="text-text-secondary p-8">Pedido no encontrado</p>;
 
   const cfg = STATUS_CONFIG[order.status];
   const StatusIcon = cfg.icon;
-  const isActive = !["delivered", "cancelled"].includes(order.status);
+  const isActive = !["delivered","cancelled"].includes(order.status);
   const isOverdue = order.delivery_date && order.delivery_date < todayISO() && isActive;
   const daysUntilDelivery = order.delivery_date
     ? differenceInDays(parseISO(order.delivery_date), new Date())
@@ -126,14 +124,13 @@ export default function OrderDetailPage() {
   const items: OrderItem[] = (order as any).order_items ?? [];
   const client = (order as any).clients;
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/orders" className="btn-ghost p-2"><ArrowLeft className="w-4 h-4" /></Link>
           <div>
             <h1 className="text-xl font-semibold text-text-primary">
-              {client?.name ?? order.client_name ?? "Sin cliente"}
+              {client?.name ?? order.client_name ??"Sin cliente"}
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border ${cfg.bg} ${cfg.color} ${cfg.border}`}>
@@ -144,34 +141,26 @@ export default function OrderDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          {isActive && NEXT_STATUS[order.status] && (
-            <button onClick={advanceStatus} className="btn-primary text-xs">
+          {isActive && NEXT_STATUS[order.status] && (<button onClick={advanceStatus} className="btn-primary text-xs">
               {NEXT_LABEL[order.status]}
-            </button>
-          )}
-          {order.status === "ready" && (
-            <button onClick={convertToSale} className="btn-secondary text-xs">
+            </button>)}
+          {order.status ==="ready" && (<button onClick={convertToSale} className="btn-secondary text-xs">
               <ShoppingBag className="w-3.5 h-3.5" /> Registrar venta
-            </button>
-          )}
-          {isActive && order.status !== "cancelled" && (
-            <button onClick={cancelOrder}
+            </button>)}
+          {isActive && order.status !=="cancelled" && (<button onClick={cancelOrder}
               className="btn-ghost text-xs text-status-danger hover:bg-red-50">
               <XCircle className="w-3.5 h-3.5" /> Cancelar
-            </button>
-          )}
+            </button>)}
         </div>
       </div>
 
       {/* Alerta vencimiento */}
-      {isOverdue && (
-        <div className="mb-5 bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
+      {isOverdue && (<div className="mb-5 bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-status-danger shrink-0" />
           <p className="text-sm text-status-danger font-medium">
             Entrega vencida hace {Math.abs(daysUntilDelivery ?? 0)} días
           </p>
-        </div>
-      )}
+        </div>)}
 
       {/* Timeline de estado */}
       <div className="card p-5 mb-5">
@@ -180,27 +169,22 @@ export default function OrderDetailPage() {
             const scfg = STATUS_CONFIG[s];
             const SIcon = scfg.icon;
             const isCurrentOrPast = ["pending","roasting","ready","delivered"].indexOf(order.status) >= i
-              && order.status !== "cancelled";
+              && order.status !=="cancelled";
             const isCurrent = order.status === s;
-            return (
-              <div key={s} className="flex items-center flex-1 last:flex-none">
-                <div className={`flex flex-col items-center gap-1 ${isCurrent ? "scale-110" : ""}`}>
+            return (<div key={s} className="flex items-center flex-1 last:flex-none">
+                <div className={`flex flex-col items-center gap-1 ${isCurrent ?"scale-110" :""}`}>
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${
                     isCurrent ? `${scfg.bg} ${scfg.border} ${scfg.color}` :
-                    isCurrentOrPast ? "bg-status-success border-status-success text-white" :
-                    "bg-[#FDFAF6] border-border-default text-text-secondary"
+                    isCurrentOrPast ?"bg-status-success border-status-success text-white" :"bg-[#FDFAF6] border-border-default text-text-secondary"
                   }`}>
                     <SIcon className="w-4 h-4" />
                   </div>
-                  <span className={`text-xs font-medium hidden sm:block ${isCurrent ? scfg.color : isCurrentOrPast ? "text-status-success" : "text-text-secondary"}`}>
+                  <span className={`text-xs font-medium hidden sm:block ${isCurrent ? scfg.color : isCurrentOrPast ?"text-status-success" :"text-text-secondary"}`}>
                     {scfg.label}
                   </span>
                 </div>
-                {i < arr.length - 1 && (
-                  <div className={`flex-1 h-0.5 mx-1 ${isCurrentOrPast && order.status !== s ? "bg-status-success" : "bg-border-default"}`} />
-                )}
-              </div>
-            );
+                {i < arr.length - 1 && (<div className={`flex-1 h-0.5 mx-1 ${isCurrentOrPast && order.status !== s ?"bg-status-success" :"bg-border-default"}`} />)}
+              </div>);
           })}
         </div>
       </div>
@@ -223,12 +207,11 @@ export default function OrderDetailPage() {
               </thead>
               <tbody>
                 {items.map((item: OrderItem) => {
-                  const coffeeName = (item as any).green_coffees?.name ?? "—";
-                  const desc = item.product_type === "roasted"
-                    ? `${coffeeName} · ${WEIGHT_LABELS[item.weight_grams!] ?? item.weight_grams + "g"}`
+                  const coffeeName = (item as any).green_coffees?.name ??"—";
+                  const desc = item.product_type ==="roasted"
+                    ? `${coffeeName} · ${WEIGHT_LABELS[item.weight_grams!] ?? item.weight_grams +"g"}`
                     : `${coffeeName} · Verde ${item.green_weight_kg}kg`;
-                  return (
-                    <tr key={item.id} className="border-b border-border-default last:border-0">
+                  return (<tr key={item.id} className="border-b border-border-default last:border-0">
                       <td className="px-5 py-3.5">
                         <p className="font-medium text-text-primary">{desc}</p>
                         {item.notes && <p className="text-xs text-text-secondary mt-0.5">{item.notes}</p>}
@@ -240,8 +223,7 @@ export default function OrderDetailPage() {
                       <td className="px-5 py-3.5 text-right font-mono font-semibold text-text-primary">
                         {formatCurrency(item.unit_price * item.quantity, roaster?.currency)}
                       </td>
-                    </tr>
-                  );
+                    </tr>);
                 })}
               </tbody>
               <tfoot className="border-t-2 border-border-default bg-[#FDFAF6]">
@@ -265,50 +247,37 @@ export default function OrderDetailPage() {
                 <dt className="text-text-secondary">Fecha pedido</dt>
                 <dd className="font-medium">{formatDate(order.order_date)}</dd>
               </div>
-              {order.delivery_date && (
-                <div className="flex justify-between">
+              {order.delivery_date && (<div className="flex justify-between">
                   <dt className="text-text-secondary">Entrega</dt>
-                  <dd className={`font-medium ${isOverdue ? "text-status-danger" : ""}`}>
+                  <dd className={`font-medium ${isOverdue ?"text-status-danger" :""}`}>
                     {formatDate(order.delivery_date)}
-                    {daysUntilDelivery !== null && !isOverdue && daysUntilDelivery <= 3 && (
-                      <span className="text-xs text-status-warning ml-1">(en {daysUntilDelivery}d)</span>
-                    )}
+                    {daysUntilDelivery !== null && !isOverdue && daysUntilDelivery <= 3 && (<span className="text-xs text-status-warning ml-1">(en {daysUntilDelivery}d)</span>)}
                   </dd>
-                </div>
-              )}
+                </div>)}
             </dl>
           </div>
 
-          {client && (
-            <div className="card p-5">
+          {client && (<div className="card p-5">
               <p className="section-title">Cliente</p>
               <Link href={`/clients/${order.client_id}`}
                 className="font-semibold text-text-primary hover:text-accent-terra transition-colors text-sm">
                 {client.name}
               </Link>
-              {client.phone && (
-                <a href={`https://wa.me/${client.phone.replace(/\D/g,"")}`} target="_blank"
+              {client.phone && (<a href={`https://wa.me/${client.phone.replace(/\D/g,"")}`} target="_blank"
                   className="block text-xs text-accent-terra hover:underline mt-1">
-                  📱 {client.phone}
-                </a>
-              )}
-              {client.email && (
-                <a href={`mailto:${client.email}`}
+                   {client.phone}
+                </a>)}
+              {client.email && (<a href={`mailto:${client.email}`}
                   className="block text-xs text-accent-terra hover:underline mt-0.5">
-                  ✉️ {client.email}
-                </a>
-              )}
-            </div>
-          )}
+                  ️ {client.email}
+                </a>)}
+            </div>)}
 
-          {order.notes && (
-            <div className="card p-5">
+          {order.notes && (<div className="card p-5">
               <p className="section-title">Notas</p>
               <p className="text-sm text-text-secondary">{order.notes}</p>
-            </div>
-          )}
+            </div>)}
         </div>
       </div>
-    </div>
-  );
+    </div>);
 }

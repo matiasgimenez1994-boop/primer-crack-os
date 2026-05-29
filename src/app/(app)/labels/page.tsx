@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import { LabelsClient } from "./LabelsClient";
+import { createClient } from"@/lib/supabase/server";
+import { redirect } from"next/navigation";
+import { LabelsClient } from"./LabelsClient";
 
 export default async function LabelsPage() {
   const supabase = await createClient();
@@ -15,15 +15,13 @@ export default async function LabelsPage() {
     .from("roast_batches")
     .select("*, green_coffees(name, origin_country, farm_producer, variety, process, tasting_notes, score)")
     .eq("roaster_id", roaster.id)
-    .eq("status", "production")
+    .eq("status","production")
     .order("roast_date", { ascending: false })
     .limit(50);
 
-  return (
-    <LabelsClient
+  return (<LabelsClient
       roasterName={roaster.business_name}
       batches={batches ?? []}
       currency={roaster.currency}
-    />
-  );
+    />);
 }

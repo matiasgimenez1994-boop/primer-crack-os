@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { ArrowLeft, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { CATEGORY_LABELS, CATEGORY_ICONS, FREQUENCY_LABELS } from "@/lib/expenses";
+import { useEffect, useState } from"react";
+import { useRouter, useParams } from"next/navigation";
+import { useForm } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import Link from"next/link";
+import { ArrowLeft, Trash2 } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import { CATEGORY_LABELS, CATEGORY_ICONS, FREQUENCY_LABELS } from"@/lib/expenses";
 
 const schema = z.object({
   name: z.string().min(1),
@@ -44,7 +44,7 @@ export default function EditExpensePage() {
           supabase.from("expenses").select("*").eq("id", id).eq("roaster_id", r.id).single()
             .then(({ data: e }) => {
               if (!e) return;
-              reset({ ...e, notes: e.notes ?? "" });
+              reset({ ...e, notes: e.notes ??"" });
               setLoading(false);
             });
         });
@@ -67,14 +67,11 @@ export default function EditExpensePage() {
     router.push("/expenses");
   }
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[300px]">
+  if (loading) return (<div className="flex items-center justify-center min-h-[300px]">
       <div className="w-6 h-6 border-2 border-border-default border-t-accent-terra rounded-full animate-spin" />
-    </div>
-  );
+    </div>);
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/expenses" className="btn-ghost p-2"><ArrowLeft className="w-4 h-4" /></Link>
@@ -95,17 +92,13 @@ export default function EditExpensePage() {
             <div>
               <label className="label-base">Categoría</label>
               <select className="input-base" {...register("category")}>
-                {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{CATEGORY_ICONS[k as keyof typeof CATEGORY_ICONS]} {v}</option>
-                ))}
+                {Object.entries(CATEGORY_LABELS).map(([k, v]) => (<option key={k} value={k}>{CATEGORY_ICONS[k as keyof typeof CATEGORY_ICONS]} {v}</option>))}
               </select>
             </div>
             <div>
               <label className="label-base">Frecuencia</label>
               <select className="input-base" {...register("frequency")}>
-                {Object.entries(FREQUENCY_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
+                {Object.entries(FREQUENCY_LABELS).map(([k, v]) => (<option key={k} value={k}>{v}</option>))}
               </select>
             </div>
           </div>
@@ -126,11 +119,10 @@ export default function EditExpensePage() {
           <div className="flex gap-3 pt-2">
             <Link href="/expenses" className="btn-secondary flex-1 justify-center">Cancelar</Link>
             <button type="submit" className="btn-primary flex-1 justify-center" disabled={isSubmitting || !isDirty}>
-              {isSubmitting ? "Guardando..." : "Guardar cambios"}
+              {isSubmitting ?"Guardando..." :"Guardar cambios"}
             </button>
           </div>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }

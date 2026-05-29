@@ -1,6 +1,6 @@
-export type CoffeeStatus = "active" | "depleted" | "reserved";
-export type RoastLevel = "light" | "medium" | "medium_dark" | "dark";
-export type RoastStatus = "trial" | "production" | "discarded";
+export type CoffeeStatus ="active" |"depleted" |"reserved";
+export type RoastLevel ="light" |"medium" |"medium_dark" |"dark";
+export type RoastStatus ="trial" |"production" |"discarded";
 
 export interface Roaster {
   id: string;
@@ -89,15 +89,15 @@ export interface MarginResult {
   marginPct: number;
 }
 
-export type ClientType = "cafe" | "individual" | "restaurant" | "distributor" | "other";
-export type OrderStatus = "pending" | "roasting" | "ready" | "delivered" | "cancelled";
+export type ClientType ="cafe" |"individual" |"restaurant" |"distributor" |"other";
+export type OrderStatus ="pending" |"roasting" |"ready" |"delivered" |"cancelled";
 
 export interface OrderItem {
   id: string;
   order_id: string;
   green_coffee_id: string | null;
   roast_batch_id: string | null;
-  product_type: "roasted" | "green";
+  product_type:"roasted" |"green";
   weight_grams: number | null;
   green_weight_kg: number | null;
   quantity: number;
@@ -149,8 +149,8 @@ export interface RoastProfile {
   updated_at: string;
   green_coffees?: GreenCoffee;
 }
-export type ExpenseCategory = "energy" | "rent" | "packaging" | "maintenance" | "labor" | "marketing" | "supplies" | "other";
-export type ExpenseFrequency = "once" | "daily" | "weekly" | "monthly" | "yearly";
+export type ExpenseCategory ="energy" |"rent" |"packaging" |"maintenance" |"labor" |"marketing" |"supplies" |"other";
+export type ExpenseFrequency ="once" |"daily" |"weekly" |"monthly" |"yearly";
 
 export interface Expense {
   id: string;
@@ -163,8 +163,8 @@ export interface Expense {
   notes: string | null;
   created_at: string;
 }
-export type PaymentType = "cash" | "transfer" | "credit";
-export type PaymentStatus = "paid" | "pending" | "partial";
+export type PaymentType ="cash" |"transfer" |"credit";
+export type PaymentStatus ="paid" |"pending" |"partial";
 
 export interface Payment {
   id: string;
@@ -176,7 +176,7 @@ export interface Payment {
   notes: string | null;
   created_at: string;
 }
-export type ProductType = "roasted" | "green";
+export type ProductType ="roasted" |"green";
 
 export interface Client {
   id: string;

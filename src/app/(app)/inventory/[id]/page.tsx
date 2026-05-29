@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
-import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Edit, Flame } from "lucide-react";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ShrinkageIndicator } from "@/components/ui/ShrinkageIndicator";
-import { formatCurrency, formatWeight, formatDate } from "@/lib/utils";
-import type { RoastBatch } from "@/types";
+import { createClient } from"@/lib/supabase/server";
+import { notFound, redirect } from"next/navigation";
+import Link from"next/link";
+import { ArrowLeft, Edit, Flame } from"lucide-react";
+import { StatusBadge } from"@/components/ui/StatusBadge";
+import { ShrinkageIndicator } from"@/components/ui/ShrinkageIndicator";
+import { formatCurrency, formatWeight, formatDate } from"@/lib/utils";
+import type { RoastBatch } from"@/types";
 
 export default async function CoffeeDetailPage({
   params,
@@ -39,23 +39,20 @@ export default async function CoffeeDetailPage({
     .eq("green_coffee_id", id)
     .order("roast_date", { ascending: false });
 
-  const totalRoasted = (batches ?? []).reduce(
-    (sum: number, b: RoastBatch) => sum + b.roasted_weight_kg,
-    0
-  );
+  const totalRoasted = (batches ?? []).reduce((sum: number, b: RoastBatch) => sum + b.roasted_weight_kg,
+    0);
 
   const fields = [
-    { label: "País de origen", value: coffee.origin_country },
-    { label: "Finca / Productor", value: coffee.farm_producer },
-    { label: "Variedad", value: coffee.variety },
-    { label: "Proceso", value: coffee.process },
-    { label: "Puntaje Q", value: coffee.score ? `${coffee.score}` : null },
-    { label: "Proveedor", value: coffee.supplier },
-    { label: "Fecha de compra", value: coffee.purchase_date ? formatDate(coffee.purchase_date) : null },
+    { label:"País de origen", value: coffee.origin_country },
+    { label:"Finca / Productor", value: coffee.farm_producer },
+    { label:"Variedad", value: coffee.variety },
+    { label:"Proceso", value: coffee.process },
+    { label:"Puntaje Q", value: coffee.score ? `${coffee.score}` : null },
+    { label:"Proveedor", value: coffee.supplier },
+    { label:"Fecha de compra", value: coffee.purchase_date ? formatDate(coffee.purchase_date) : null },
   ].filter((f) => f.value);
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/inventory" className="btn-ghost p-2">
@@ -63,9 +60,7 @@ export default async function CoffeeDetailPage({
           </Link>
           <div>
             <h1 className="page-title">{coffee.name}</h1>
-            {coffee.origin_country && (
-              <p className="text-sm text-text-secondary">{coffee.origin_country}</p>
-            )}
+            {coffee.origin_country && (<p className="text-sm text-text-secondary">{coffee.origin_country}</p>)}
           </div>
         </div>
         <div className="flex gap-2">
@@ -112,10 +107,8 @@ export default async function CoffeeDetailPage({
               <div>
                 <p className="text-xs text-text-secondary">Valor actual</p>
                 <p className="font-mono font-medium">
-                  {formatCurrency(
-                    coffee.current_stock_kg * coffee.purchase_price_per_kg,
-                    roaster?.currency
-                  )}
+                  {formatCurrency(coffee.current_stock_kg * coffee.purchase_price_per_kg,
+                    roaster?.currency)}
                 </p>
               </div>
             </div>
@@ -124,25 +117,21 @@ export default async function CoffeeDetailPage({
           <div className="card p-5">
             <p className="section-title">Detalles</p>
             <dl className="flex flex-col gap-2.5">
-              {fields.map((f) => (
-                <div key={f.label} className="flex justify-between text-sm">
+              {fields.map((f) => (<div key={f.label} className="flex justify-between text-sm">
                   <dt className="text-text-secondary">{f.label}</dt>
                   <dd className="font-medium text-text-primary text-right">
                     {f.value}
                   </dd>
-                </div>
-              ))}
+                </div>))}
             </dl>
           </div>
 
-          {coffee.tasting_notes && (
-            <div className="card p-5">
+          {coffee.tasting_notes && (<div className="card p-5">
               <p className="section-title">Notas de cata</p>
               <p className="text-sm text-text-secondary leading-relaxed">
                 {coffee.tasting_notes}
               </p>
-            </div>
-          )}
+            </div>)}
         </div>
 
         {/* Historial de tuestes */}
@@ -152,15 +141,12 @@ export default async function CoffeeDetailPage({
               <h2 className="text-sm font-semibold text-text-primary">
                 Historial de tuestes
               </h2>
-              {(batches ?? []).length > 0 && (
-                <span className="text-xs text-text-secondary font-mono">
+              {(batches ?? []).length > 0 && (<span className="text-xs text-text-secondary font-mono">
                   {formatWeight(totalRoasted)} tostados en total
-                </span>
-              )}
+                </span>)}
             </div>
 
-            {(batches ?? []).length === 0 ? (
-              <div className="py-12 text-center">
+            {(batches ?? []).length === 0 ? (<div className="py-12 text-center">
                 <p className="text-sm text-text-secondary">
                   Todavía no hay tuestes con este café
                 </p>
@@ -170,9 +156,7 @@ export default async function CoffeeDetailPage({
                 >
                   Registrar primer tueste
                 </Link>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
+              </div>) : (<div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border-default bg-[#FDFAF6]">
@@ -194,8 +178,7 @@ export default async function CoffeeDetailPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {(batches ?? []).map((b: RoastBatch) => (
-                      <tr
+                    {(batches ?? []).map((b: RoastBatch) => (<tr
                         key={b.id}
                         className="border-b border-border-default last:border-0 hover:bg-[#F5EFE6]/50 transition-colors"
                       >
@@ -216,20 +199,17 @@ export default async function CoffeeDetailPage({
                         <td className="px-5 py-3 text-right font-mono">
                           {b.total_cost_per_kg_roasted
                             ? formatCurrency(b.total_cost_per_kg_roasted, roaster?.currency)
-                            : "—"}
+                            :"—"}
                         </td>
                         <td className="px-5 py-3 text-right">
                           <StatusBadge status={b.status} />
                         </td>
-                      </tr>
-                    ))}
+                      </tr>))}
                   </tbody>
                 </table>
-              </div>
-            )}
+              </div>)}
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>);
 }

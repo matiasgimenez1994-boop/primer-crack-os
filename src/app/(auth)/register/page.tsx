@@ -1,24 +1,24 @@
 "use client";
 
-export const dynamic = "force-dynamic";
+export const dynamic ="force-dynamic";
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Eye, EyeOff } from "lucide-react";
-import { FirstCrackIcon } from "@/components/ui/FirstCrackIcon";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
+import { useState } from"react";
+import Link from"next/link";
+import { useRouter } from"next/navigation";
+import { useForm } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import { Eye, EyeOff } from"lucide-react";
+import { FirstCrackIcon } from"@/components/ui/FirstCrackIcon";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
 
 const schema = z.object({
   email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Mínimo 6 caracteres"),
+  password: z.string().min(6,"Mínimo 6 caracteres"),
   confirm: z.string(),
 }).refine((d) => d.password === d.confirm, {
-  message: "Las contraseñas no coinciden",
+  message:"Las contraseñas no coinciden",
   path: ["confirm"],
 });
 
@@ -50,8 +50,7 @@ export default function RegisterPage() {
     router.refresh();
   }
 
-  return (
-    <div className="min-h-screen bg-bg-base flex items-center justify-center p-4">
+  return (<div className="min-h-screen bg-bg-base flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-12 h-12 rounded-2xl bg-brand-dark flex items-center justify-center mx-auto mb-4">
@@ -78,18 +77,16 @@ export default function RegisterPage() {
               placeholder="tu@email.com"
               {...register("email")}
             />
-            {errors.email && (
-              <p className="text-xs text-status-danger mt-1">
+            {errors.email && (<p className="text-xs text-status-danger mt-1">
                 {errors.email.message}
-              </p>
-            )}
+              </p>)}
           </div>
 
           <div>
             <label className="label-base">Contraseña</label>
             <div className="relative">
               <input
-                type={showPwd ? "text" : "password"}
+                type={showPwd ?"text" :"password"}
                 className="input-base pr-10"
                 placeholder="Mínimo 6 caracteres"
                 {...register("password")}
@@ -102,26 +99,22 @@ export default function RegisterPage() {
                 {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            {errors.password && (
-              <p className="text-xs text-status-danger mt-1">
+            {errors.password && (<p className="text-xs text-status-danger mt-1">
                 {errors.password.message}
-              </p>
-            )}
+              </p>)}
           </div>
 
           <div>
             <label className="label-base">Confirmar contraseña</label>
             <input
-              type={showPwd ? "text" : "password"}
+              type={showPwd ?"text" :"password"}
               className="input-base"
               placeholder="Repetí tu contraseña"
               {...register("confirm")}
             />
-            {errors.confirm && (
-              <p className="text-xs text-status-danger mt-1">
+            {errors.confirm && (<p className="text-xs text-status-danger mt-1">
                 {errors.confirm.message}
-              </p>
-            )}
+              </p>)}
           </div>
 
           <button
@@ -129,17 +122,16 @@ export default function RegisterPage() {
             className="btn-primary w-full mt-1"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Creando cuenta..." : "Crear cuenta gratis"}
+            {isSubmitting ?"Creando cuenta..." :"Crear cuenta gratis"}
           </button>
         </form>
 
         <p className="text-center text-sm text-text-secondary mt-5">
-          ¿Ya tenés cuenta?{" "}
+          ¿Ya tenés cuenta?{""}
           <Link href="/login" className="text-accent-green font-medium hover:underline">
             Ingresá
           </Link>
         </p>
       </div>
-    </div>
-  );
+    </div>);
 }

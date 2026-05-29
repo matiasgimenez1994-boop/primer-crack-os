@@ -1,19 +1,19 @@
-﻿"use client";
+"use client";
 
-export const dynamic = "force-dynamic";
+export const dynamic ="force-dynamic";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { ChevronRight, Check } from "lucide-react";
-import { FirstCrackIcon } from "@/components/ui/FirstCrackIcon";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
+import { useState } from"react";
+import { useRouter } from"next/navigation";
+import { useForm } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import { ChevronRight, Check } from"lucide-react";
+import { FirstCrackIcon } from"@/components/ui/FirstCrackIcon";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
 
 const schema = z.object({
-  business_name: z.string().min(2, "Ingresá el nombre de tu tostadería"),
+  business_name: z.string().min(2,"Ingresá el nombre de tu tostadería"),
   country: z.string().min(1),
   currency: z.string().min(1),
   default_energy_cost_per_kg: z.coerce.number().min(0),
@@ -23,7 +23,7 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const steps = ["Tu tostadería", "Costos default", "¡Listo!"];
+const steps = ["Tu tostadería","Costos default","¡Listo!"];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -37,8 +37,8 @@ export default function OnboardingPage() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      country: "Uruguay",
-      currency: "USD",
+      country:"Uruguay",
+      currency:"USD",
       default_energy_cost_per_kg: 0.5,
       default_packaging_cost_per_kg: 0.3,
       low_stock_threshold: 2,
@@ -49,10 +49,8 @@ export default function OnboardingPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { error } = await supabase.from("roasters").upsert(
-      { user_id: user.id, ...data },
-      { onConflict: "user_id" }
-    );
+    const { error } = await supabase.from("roasters").upsert({ user_id: user.id, ...data },
+      { onConflict:"user_id" });
 
     if (error) {
       toast.error("Error al guardar. Intentá de nuevo.");
@@ -63,8 +61,7 @@ export default function OnboardingPage() {
     setTimeout(() => router.push("/dashboard"), 1500);
   }
 
-  return (
-    <div className="min-h-screen bg-bg-base flex items-center justify-center p-4">
+  return (<div className="min-h-screen bg-bg-base flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
@@ -81,32 +78,27 @@ export default function OnboardingPage() {
 
         {/* Steps indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {steps.map((s, i) => (
-            <div key={i} className="flex items-center gap-2">
+          {steps.map((s, i) => (<div key={i} className="flex items-center gap-2">
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors ${
                   i < step
-                    ? "bg-accent-olive text-white"
+                    ?"bg-accent-olive text-white"
                     : i === step
-                    ? "bg-brand-dark text-white"
-                    : "bg-border-default text-text-secondary"
+                    ?"bg-brand-dark text-white"
+                    :"bg-border-default text-text-secondary"
                 }`}
               >
                 {i < step ? <Check className="w-3 h-3" /> : i + 1}
               </div>
-              {i < steps.length - 1 && (
-                <div
+              {i < steps.length - 1 && (<div
                   className={`w-8 h-0.5 ${
-                    i < step ? "bg-accent-olive" : "bg-border-default"
+                    i < step ?"bg-accent-olive" :"bg-border-default"
                   }`}
-                />
-              )}
-            </div>
-          ))}
+                />)}
+            </div>))}
         </div>
 
-        {step === 2 ? (
-          <div className="card p-8 text-center">
+        {step === 2 ? (<div className="card p-8 text-center">
             <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
               <Check className="w-7 h-7 text-status-success" />
             </div>
@@ -116,11 +108,8 @@ export default function OnboardingPage() {
             <p className="text-sm text-text-secondary">
               Redirigiendo a tu dashboard...
             </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="card p-6">
-            {step === 0 && (
-              <div className="flex flex-col gap-4">
+          </div>) : (<form onSubmit={handleSubmit(onSubmit)} className="card p-6">
+            {step === 0 && (<div className="flex flex-col gap-4">
                 <h2 className="text-base font-semibold text-text-primary">
                   Tu tostadería
                 </h2>
@@ -135,11 +124,9 @@ export default function OnboardingPage() {
                     placeholder="Ej: Café Brachi"
                     {...register("business_name")}
                   />
-                  {errors.business_name && (
-                    <p className="text-xs text-status-danger mt-1">
+                  {errors.business_name && (<p className="text-xs text-status-danger mt-1">
                       {errors.business_name.message}
-                    </p>
-                  )}
+                    </p>)}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -176,11 +163,9 @@ export default function OnboardingPage() {
                 >
                   Continuar <ChevronRight className="w-4 h-4" />
                 </button>
-              </div>
-            )}
+              </div>)}
 
-            {step === 1 && (
-              <div className="flex flex-col gap-4">
+            {step === 1 && (<div className="flex flex-col gap-4">
                 <div>
                   <h2 className="text-base font-semibold text-text-primary">
                     Costos por defecto
@@ -252,15 +237,12 @@ export default function OnboardingPage() {
                     className="btn-primary flex-1"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Guardando..." : "Empezar â†’"}
+                    {isSubmitting ?"Guardando..." :"Empezar â†’"}
                   </button>
                 </div>
-              </div>
-            )}
-          </form>
-        )}
+              </div>)}
+          </form>)}
       </div>
-    </div>
-  );
+    </div>);
 }
 

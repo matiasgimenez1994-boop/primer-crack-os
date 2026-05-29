@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { calculateMargin } from "@/lib/costs";
-import { formatCurrency, formatPct } from "@/lib/utils";
-import { toast } from "sonner";
-import { Check } from "lucide-react";
+import { useState } from"react";
+import { createClient } from"@/lib/supabase/client";
+import { calculateMargin } from"@/lib/costs";
+import { formatCurrency, formatPct } from"@/lib/utils";
+import { toast } from"sonner";
+import { Check } from"lucide-react";
 
 interface Props {
   batchId: string;
@@ -17,9 +17,9 @@ interface Props {
 }
 
 const weightLabels: Record<number, string> = {
-  250: "250 g",
-  500: "500 g",
-  1000: "1 kg",
+  250:"250 g",
+  500:"500 g",
+  1000:"1 kg",
 };
 
 export function PricingTable({
@@ -31,15 +31,9 @@ export function PricingTable({
   savedPrices,
 }: Props) {
   const supabase = createClient();
-  const [prices, setPrices] = useState<Record<number, string>>(
-    Object.fromEntries(
-      defaultWeights.map((w) => [w, savedPrices[w]?.toString() ?? ""])
-    )
-  );
+  const [prices, setPrices] = useState<Record<number, string>>(Object.fromEntries(defaultWeights.map((w) => [w, savedPrices[w]?.toString() ??""])));
   const [saving, setSaving] = useState<number | null>(null);
-  const [saved, setSaved] = useState<number[]>(
-    defaultWeights.filter((w) => savedPrices[w] !== undefined) as number[]
-  );
+  const [saved, setSaved] = useState<number[]>(defaultWeights.filter((w) => savedPrices[w] !== undefined) as number[]);
 
   async function savePrice(weight: number) {
     const price = parseFloat(prices[weight]);
@@ -49,10 +43,8 @@ export function PricingTable({
     }
 
     setSaving(weight);
-    const { error } = await supabase.from("selling_prices").upsert(
-      { roast_batch_id: batchId, weight_grams: weight, price },
-      { onConflict: "roast_batch_id,weight_grams" }
-    );
+    const { error } = await supabase.from("selling_prices").upsert({ roast_batch_id: batchId, weight_grams: weight, price },
+      { onConflict:"roast_batch_id,weight_grams" });
     setSaving(null);
 
     if (error) {
@@ -65,12 +57,11 @@ export function PricingTable({
   }
 
   // Calcular totales del lote si todos los precios están ingresados
-  const allPrices = defaultWeights.map((w) => parseFloat(prices[w] || "0")).filter(Boolean);
+  const allPrices = defaultWeights.map((w) => parseFloat(prices[w] ||"0")).filter(Boolean);
   const avgPrice = allPrices.length > 0 ? allPrices.reduce((a, b) => a + b, 0) / allPrices.length : 0;
   const estRevenue = avgPrice > 0 ? roastedWeightKg * (1000 / 500) * avgPrice : null;
 
-  return (
-    <div>
+  return (<div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -95,14 +86,13 @@ export function PricingTable({
           </thead>
           <tbody>
             {defaultWeights.map((weight) => {
-              const price = parseFloat(prices[weight] || "0");
+              const price = parseFloat(prices[weight] ||"0");
               const margin =
                 price > 0
                   ? calculateMargin(price, weight, costPerKg)
                   : null;
 
-              return (
-                <tr
+              return (<tr
                   key={weight}
                   className="border-b border-border-default last:border-0"
                 >
@@ -110,10 +100,8 @@ export function PricingTable({
                     {weightLabels[weight]}
                   </td>
                   <td className="py-3.5 text-right font-mono text-text-secondary">
-                    {formatCurrency(
-                      costPerKg * (weight / 1000),
-                      currency
-                    )}
+                    {formatCurrency(costPerKg * (weight / 1000),
+                      currency)}
                   </td>
                   <td className="py-3.5 text-right">
                     <input
@@ -137,46 +125,35 @@ export function PricingTable({
                     />
                   </td>
                   <td className="py-3.5 text-right font-mono">
-                    {margin ? (
-                      <span
+                    {margin ? (<span
                         className={
                           margin.profit > 0
-                            ? "text-status-success"
-                            : "text-status-danger"
+                            ?"text-status-success"
+                            :"text-status-danger"
                         }
                       >
                         {formatCurrency(margin.profit, currency)}
-                      </span>
-                    ) : (
-                      <span className="text-text-secondary">—</span>
-                    )}
+                      </span>) : (<span className="text-text-secondary">—</span>)}
                   </td>
                   <td className="py-3.5 text-right font-mono">
-                    {margin ? (
-                      <span
+                    {margin ? (<span
                         className={`font-semibold ${
                           margin.marginPct >= 40
-                            ? "text-status-success"
+                            ?"text-status-success"
                             : margin.marginPct >= 20
-                            ? "text-status-warning"
-                            : "text-status-danger"
+                            ?"text-status-warning"
+                            :"text-status-danger"
                         }`}
                       >
                         {formatPct(margin.marginPct)}
-                      </span>
-                    ) : (
-                      <span className="text-text-secondary">—</span>
-                    )}
+                      </span>) : (<span className="text-text-secondary">—</span>)}
                   </td>
                   <td className="py-3.5 pl-3">
-                    {saved.includes(weight) && (
-                      <span className="text-status-success">
+                    {saved.includes(weight) && (<span className="text-status-success">
                         <Check className="w-4 h-4" />
-                      </span>
-                    )}
+                      </span>)}
                   </td>
-                </tr>
-              );
+                </tr>);
             })}
           </tbody>
         </table>
@@ -194,23 +171,21 @@ export function PricingTable({
             </p>
           </div>
           {defaultWeights.map((weight) => {
-            const price = parseFloat(prices[weight] || "0");
+            const price = parseFloat(prices[weight] ||"0");
             const margin = price > 0 ? calculateMargin(price, weight, costPerKg) : null;
             const unitsApprox = Math.floor(roastedWeightKg / (weight / 1000));
             if (!margin || unitsApprox === 0) return null;
-            return (
-              <div key={weight}>
+            return (<div key={weight}>
                 <p className="text-xs text-text-secondary">
                   {unitsApprox} bolsas {weightLabels[weight]}
                 </p>
                 <p className="font-mono font-semibold text-text-primary">
-                  {formatCurrency(price * unitsApprox, currency)}{" "}
+                  {formatCurrency(price * unitsApprox, currency)}{""}
                   <span className="text-xs text-status-success font-normal">
                     ({formatPct(margin.marginPct)} margen)
                   </span>
                 </p>
-              </div>
-            );
+              </div>);
           })}
         </div>
       </div>
@@ -218,6 +193,5 @@ export function PricingTable({
       <p className="text-xs text-text-secondary mt-3">
         Los precios se guardan automáticamente al salir de cada campo.
       </p>
-    </div>
-  );
+    </div>);
 }

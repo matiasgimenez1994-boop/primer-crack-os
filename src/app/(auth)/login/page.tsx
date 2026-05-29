@@ -1,21 +1,21 @@
 "use client";
 
-export const dynamic = "force-dynamic";
+export const dynamic ="force-dynamic";
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Eye, EyeOff } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { FirstCrackIcon } from "@/components/ui/FirstCrackIcon";
+import { useState } from"react";
+import Link from"next/link";
+import { useRouter } from"next/navigation";
+import { useForm } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import { Eye, EyeOff } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import { FirstCrackIcon } from"@/components/ui/FirstCrackIcon";
 
 const schema = z.object({
   email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Mínimo 6 caracteres"),
+  password: z.string().min(6,"Mínimo 6 caracteres"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -39,8 +39,7 @@ export default function LoginPage() {
     router.refresh();
   }
 
-  return (
-    <div className="min-h-screen bg-bg-base flex items-center justify-center p-4">
+  return (<div className="min-h-screen bg-bg-base flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-12 h-12 rounded-2xl bg-brand-dark flex items-center justify-center mx-auto mb-4">
@@ -59,7 +58,7 @@ export default function LoginPage() {
           <div>
             <label className="label-base">Contraseña</label>
             <div className="relative">
-              <input type={showPwd ? "text" : "password"} className="input-base pr-10"
+              <input type={showPwd ?"text" :"password"} className="input-base pr-10"
                 placeholder="••••••••" {...register("password")} />
               <button type="button" onClick={() => setShowPwd(!showPwd)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
@@ -69,17 +68,16 @@ export default function LoginPage() {
             {errors.password && <p className="text-xs text-status-danger mt-1">{errors.password.message}</p>}
           </div>
           <button type="submit" className="btn-primary w-full mt-1" disabled={isSubmitting}>
-            {isSubmitting ? "Ingresando..." : "Ingresar"}
+            {isSubmitting ?"Ingresando..." :"Ingresar"}
           </button>
         </form>
 
         <p className="text-center text-sm text-text-secondary mt-5">
-          ¿No tenés cuenta?{" "}
+          ¿No tenés cuenta?{""}
           <Link href="/register" className="text-accent-green font-medium hover:underline">
             Registrate gratis
           </Link>
         </p>
       </div>
-    </div>
-  );
+    </div>);
 }

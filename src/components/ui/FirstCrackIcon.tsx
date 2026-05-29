@@ -1,6 +1,5 @@
 export function FirstCrackIcon({ className }: { className?: string }) {
-  return (
-    <svg
+  return (<svg
       viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -55,6 +54,5 @@ export function FirstCrackIcon({ className }: { className?: string }) {
       <circle cx="23" cy="6.5" r="1.1" fill="currentColor" opacity="0.75" />
       <circle cx="26" cy="10" r="0.85" fill="currentColor" opacity="0.6" />
       <circle cx="21.5" cy="4.5" r="0.7" fill="currentColor" opacity="0.5" />
-    </svg>
-  );
+    </svg>);
 }

@@ -1,12 +1,12 @@
-import { createClient } from "@/lib/supabase/server";
-import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, BookOpen } from "lucide-react";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ShrinkageIndicator } from "@/components/ui/ShrinkageIndicator";
-import { formatCurrency, formatWeight, formatDate, formatPct } from "@/lib/utils";
-import { calculateMargin, ROAST_LEVEL_LABELS } from "@/lib/costs";
-import { PricingTable } from "./PricingTable";
+import { createClient } from"@/lib/supabase/server";
+import { notFound, redirect } from"next/navigation";
+import Link from"next/link";
+import { ArrowLeft, BookOpen } from"lucide-react";
+import { StatusBadge } from"@/components/ui/StatusBadge";
+import { ShrinkageIndicator } from"@/components/ui/ShrinkageIndicator";
+import { formatCurrency, formatWeight, formatDate, formatPct } from"@/lib/utils";
+import { calculateMargin, ROAST_LEVEL_LABELS } from"@/lib/costs";
+import { PricingTable } from"./PricingTable";
 
 export default async function RoastDetailPage({
   params,
@@ -43,32 +43,29 @@ export default async function RoastDetailPage({
     .order("weight_grams");
 
   const defaultWeights = [250, 500, 1000];
-  const priceMap = Object.fromEntries(
-    (prices ?? []).map((p: { weight_grams: number; price: number }) => [p.weight_grams, p.price])
-  );
+  const priceMap = Object.fromEntries((prices ?? []).map((p: { weight_grams: number; price: number }) => [p.weight_grams, p.price]));
 
   const costPerKg = batch.total_cost_per_kg_roasted ?? 0;
 
   const coffee = batch.green_coffees;
 
   const detailFields = [
-    { label: "Nivel de tueste", value: batch.roast_level ? ROAST_LEVEL_LABELS[batch.roast_level] : null },
-    { label: "Tiempo total", value: batch.roast_duration_min ? `${batch.roast_duration_min} min` : null },
-    { label: "Temp. de carga", value: batch.charge_temp_celsius ? `${batch.charge_temp_celsius}°C` : null },
-    { label: "1er crack", value: batch.first_crack_time_min ? `${batch.first_crack_time_min} min` : null },
-    { label: "Desarrollo", value: batch.development_time_min ? `${batch.development_time_min} min` : null },
-    { label: "% Desarrollo", value: batch.development_pct ? formatPct(batch.development_pct) : null },
+    { label:"Nivel de tueste", value: batch.roast_level ? ROAST_LEVEL_LABELS[batch.roast_level] : null },
+    { label:"Tiempo total", value: batch.roast_duration_min ? `${batch.roast_duration_min} min` : null },
+    { label:"Temp. de carga", value: batch.charge_temp_celsius ? `${batch.charge_temp_celsius}°C` : null },
+    { label:"1er crack", value: batch.first_crack_time_min ? `${batch.first_crack_time_min} min` : null },
+    { label:"Desarrollo", value: batch.development_time_min ? `${batch.development_time_min} min` : null },
+    { label:"% Desarrollo", value: batch.development_pct ? formatPct(batch.development_pct) : null },
   ].filter((f) => f.value);
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/roasts" className="btn-ghost p-2">
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h1 className="page-title">{coffee?.name ?? "Tueste"}</h1>
+            <h1 className="page-title">{coffee?.name ??"Tueste"}</h1>
             <p className="text-sm text-text-secondary">
               {formatDate(batch.roast_date)} · <StatusBadge status={batch.status} />
             </p>
@@ -108,29 +105,21 @@ export default async function RoastDetailPage({
               <p className="text-xs text-text-secondary">Merma</p>
               <ShrinkageIndicator pct={batch.shrinkage_pct} />
             </div>
-            {detailFields.slice(0, 5).map((f) => (
-              <div key={f.label}>
+            {detailFields.slice(0, 5).map((f) => (<div key={f.label}>
                 <p className="text-xs text-text-secondary">{f.label}</p>
                 <p className="font-mono font-medium text-text-primary">{f.value}</p>
-              </div>
-            ))}
+              </div>))}
           </div>
-          {(batch.sensory_result || batch.roaster_notes) && (
-            <div className="mt-4 pt-4 border-t border-border-default flex flex-col gap-2">
-              {batch.sensory_result && (
-                <div>
+          {(batch.sensory_result || batch.roaster_notes) && (<div className="mt-4 pt-4 border-t border-border-default flex flex-col gap-2">
+              {batch.sensory_result && (<div>
                   <p className="text-xs text-text-secondary mb-0.5">Resultado sensorial</p>
                   <p className="text-sm text-text-primary">{batch.sensory_result}</p>
-                </div>
-              )}
-              {batch.roaster_notes && (
-                <div>
+                </div>)}
+              {batch.roaster_notes && (<div>
                   <p className="text-xs text-text-secondary mb-0.5">Notas del tostador</p>
                   <p className="text-sm text-text-primary">{batch.roaster_notes}</p>
-                </div>
-              )}
-            </div>
-          )}
+                </div>)}
+            </div>)}
         </div>
 
         {/* Costo real por kg */}
@@ -143,10 +132,8 @@ export default async function RoastDetailPage({
                 Café verde ({formatWeight(batch.green_weight_kg)})
               </span>
               <span className="font-mono">
-                {formatCurrency(
-                  (coffee?.purchase_price_per_kg ?? 0) * batch.green_weight_kg,
-                  roaster.currency
-                )}
+                {formatCurrency((coffee?.purchase_price_per_kg ?? 0) * batch.green_weight_kg,
+                  roaster.currency)}
               </span>
             </div>
             <div className="flex justify-between text-xs text-text-secondary">
@@ -154,13 +141,11 @@ export default async function RoastDetailPage({
                 Costo efectivo c/merma ({formatPct(batch.shrinkage_pct)})
               </span>
               <span className="font-mono">
-                {formatCurrency(
-                  costPerKg -
+                {formatCurrency(costPerKg -
                     batch.packaging_cost_per_kg -
                     batch.energy_cost_per_kg -
                     batch.labor_cost_per_kg,
-                  roaster.currency
-                )}
+                  roaster.currency)}
                 /kg
               </span>
             </div>
@@ -176,14 +161,12 @@ export default async function RoastDetailPage({
                 +{formatCurrency(batch.energy_cost_per_kg, roaster.currency)}/kg
               </span>
             </div>
-            {batch.labor_cost_per_kg > 0 && (
-              <div className="flex justify-between">
+            {batch.labor_cost_per_kg > 0 && (<div className="flex justify-between">
                 <span className="text-text-secondary">Mano de obra</span>
                 <span className="font-mono">
                   +{formatCurrency(batch.labor_cost_per_kg, roaster.currency)}/kg
                 </span>
-              </div>
-            )}
+              </div>)}
             <div className="border-t border-border-default pt-3 mt-1 flex justify-between">
               <span className="font-semibold text-text-primary">Costo total / kg</span>
               <span className="font-mono font-bold text-accent-terra text-lg">
@@ -212,6 +195,5 @@ export default async function RoastDetailPage({
           savedPrices={priceMap}
         />
       </div>
-    </div>
-  );
+    </div>);
 }

@@ -1,15 +1,15 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, CheckCircle, Clock, AlertTriangle } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { formatCurrency, formatDate, todayISO } from "@/lib/utils";
-import { differenceInDays, parseISO } from "date-fns";
-import { toast } from "sonner";
-import type { Sale, Roaster } from "@/types";
+import { useEffect, useState } from"react";
+import Link from"next/link";
+import { ArrowLeft, CheckCircle, Clock, AlertTriangle } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { formatCurrency, formatDate, todayISO } from"@/lib/utils";
+import { differenceInDays, parseISO } from"date-fns";
+import { toast } from"sonner";
+import type { Sale, Roaster } from"@/types";
 
-const weightLabels: Record<number, string> = { 250: "250g", 500: "500g", 1000: "1kg" };
+const weightLabels: Record<number, string> = { 250:"250g", 500:"500g", 1000:"1kg" };
 
 export default function PendingPaymentsPage() {
   const supabase = createClient();
@@ -22,7 +22,7 @@ export default function PendingPaymentsPage() {
       .from("sales")
       .select("*, clients(name), roast_batches(green_coffees(name)), green_coffees(name)")
       .eq("roaster_id", roasterId)
-      .in("payment_status", ["pending", "partial"])
+      .in("payment_status", ["pending","partial"])
       .order("sale_date", { ascending: true });
     setSales(data ?? []);
     setLoading(false);
@@ -55,7 +55,7 @@ export default function PendingPaymentsPage() {
     if (payError) { toast.error("Error al registrar pago"); return; }
 
     await supabase.from("sales").update({
-      payment_status: "paid",
+      payment_status:"paid",
       amount_paid: sale.final_price,
       paid_at: new Date().toISOString(),
     }).eq("id", sale.id);
@@ -67,7 +67,7 @@ export default function PendingPaymentsPage() {
   async function markPartial(sale: Sale, amount: number, paymentType: string) {
     if (!roaster || amount <= 0) return;
     const newPaid = sale.amount_paid + amount;
-    const status = newPaid >= sale.final_price ? "paid" : "partial";
+    const status = newPaid >= sale.final_price ?"paid" :"partial";
 
     await supabase.from("payments").insert({
       roaster_id: roaster.id,
@@ -80,7 +80,7 @@ export default function PendingPaymentsPage() {
     await supabase.from("sales").update({
       payment_status: status,
       amount_paid: Math.min(newPaid, sale.final_price),
-      paid_at: status === "paid" ? new Date().toISOString() : null,
+      paid_at: status ==="paid" ? new Date().toISOString() : null,
     }).eq("id", sale.id);
 
     toast.success("Pago parcial registrado");
@@ -90,84 +90,68 @@ export default function PendingPaymentsPage() {
   const totalPending = sales.reduce((s, x) => s + (x.final_price - x.amount_paid), 0);
   const overdue = sales.filter(s => s.due_date && parseISO(s.due_date) < new Date());
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[300px]">
+  if (loading) return (<div className="flex items-center justify-center min-h-[300px]">
       <div className="w-6 h-6 border-2 border-border-default border-t-accent-green rounded-full animate-spin" />
-    </div>
-  );
+    </div>);
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/finances" className="btn-ghost p-2"><ArrowLeft className="w-4 h-4" /></Link>
           <div>
             <h1 className="page-title">Pagos pendientes</h1>
-            {sales.length > 0 && (
-              <p className="text-sm text-text-secondary">
-                {sales.length} venta{sales.length > 1 ? "s" : ""} · Total pendiente:{" "}
+            {sales.length > 0 && (<p className="text-sm text-text-secondary">
+                {sales.length} venta{sales.length > 1 ?"s" :""} · Total pendiente:{""}
                 <span className="font-mono font-semibold text-status-danger">
                   {formatCurrency(totalPending, roaster?.currency)}
                 </span>
-              </p>
-            )}
+              </p>)}
           </div>
         </div>
       </div>
 
-      {overdue.length > 0 && (
-        <div className="mb-5 bg-red-50 border border-red-200 rounded-xl p-4">
+      {overdue.length > 0 && (<div className="mb-5 bg-red-50 border border-red-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle className="w-4 h-4 text-status-danger" />
             <span className="text-sm font-semibold text-status-danger">
-              {overdue.length} pago{overdue.length > 1 ? "s" : ""} vencido{overdue.length > 1 ? "s" : ""}
+              {overdue.length} pago{overdue.length > 1 ?"s" :""} vencido{overdue.length > 1 ?"s" :""}
             </span>
           </div>
-          {overdue.map(s => (
-            <p key={s.id} className="text-xs text-status-danger ml-6">
-              · {(s as any).clients?.name ?? "Sin cliente"} â€” vencido hace{" "}
+          {overdue.map(s => (<p key={s.id} className="text-xs text-status-danger ml-6">
+              · {(s as any).clients?.name ??"Sin cliente"} â€” vencido hace{""}
               {differenceInDays(new Date(), parseISO(s.due_date!))} días
-            </p>
-          ))}
-        </div>
-      )}
+            </p>))}
+        </div>)}
 
-      {sales.length === 0 ? (
-        <div className="card p-12 text-center">
+      {sales.length === 0 ? (<div className="card p-12 text-center">
           <CheckCircle className="w-12 h-12 text-status-success mx-auto mb-3" />
           <p className="text-base font-semibold text-text-primary">Todo al día</p>
           <p className="text-sm text-text-secondary mt-1">No hay pagos pendientes</p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
+        </div>) : (<div className="flex flex-col gap-4">
           {sales.map(s => {
             const remaining = s.final_price - s.amount_paid;
             const isOverdue = s.due_date && parseISO(s.due_date) < new Date();
             const daysUntilDue = s.due_date
               ? differenceInDays(parseISO(s.due_date), new Date())
               : null;
-            const productName = s.product_type === "roasted"
-              ? `${(s as any).roast_batches?.green_coffees?.name} ${weightLabels[s.weight_grams!] ?? ""}`
+            const productName = s.product_type ==="roasted"
+              ? `${(s as any).roast_batches?.green_coffees?.name} ${weightLabels[s.weight_grams!] ??""}`
               : `${(s as any).green_coffees?.name} (verde)`;
 
-            return (
-              <PartialPayCard
+            return (<PartialPayCard
                 key={s.id}
                 sale={s}
                 productName={productName}
                 remaining={remaining}
                 isOverdue={!!isOverdue}
                 daysUntilDue={daysUntilDue}
-                currency={roaster?.currency ?? "USD"}
+                currency={roaster?.currency ??"USD"}
                 onMarkPaid={markAsPaid}
                 onPartialPay={markPartial}
-              />
-            );
+              />);
           })}
-        </div>
-      )}
-    </div>
-  );
+        </div>)}
+    </div>);
 }
 
 function PartialPayCard({
@@ -187,8 +171,7 @@ function PartialPayCard({
   const [payType, setPayType] = useState("cash");
   const paidPct = sale.final_price > 0 ? (sale.amount_paid / sale.final_price) * 100 : 0;
 
-  return (
-    <div className={`card p-5 ${isOverdue ? "border-red-200 bg-red-50/30" : ""}`}>
+  return (<div className={`card p-5 ${isOverdue ?"border-red-200 bg-red-50/30" :""}`}>
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
@@ -196,26 +179,21 @@ function PartialPayCard({
               ? <AlertTriangle className="w-4 h-4 text-status-danger shrink-0" />
               : <Clock className="w-4 h-4 text-status-warning shrink-0" />
             }
-            <span className="font-semibold text-text-primary">{(sale as any).clients?.name ?? "Sin cliente"}</span>
-            {sale.payment_status === "partial" && (
-              <span className="text-xs bg-yellow-100 text-yellow-700 border border-yellow-200 px-1.5 py-0.5 rounded">
+            <span className="font-semibold text-text-primary">{(sale as any).clients?.name ??"Sin cliente"}</span>
+            {sale.payment_status ==="partial" && (<span className="text-xs bg-yellow-100 text-yellow-700 border border-yellow-200 px-1.5 py-0.5 rounded">
                 Pago parcial
-              </span>
-            )}
+              </span>)}
           </div>
           <p className="text-sm text-text-secondary ml-6">{productName} · {formatDate(sale.sale_date)}</p>
-          {sale.due_date && (
-            <p className={`text-xs ml-6 mt-0.5 font-medium ${isOverdue ? "text-status-danger" : "text-status-warning"}`}>
+          {sale.due_date && (<p className={`text-xs ml-6 mt-0.5 font-medium ${isOverdue ?"text-status-danger" :"text-status-warning"}`}>
               {isOverdue
                 ? `Vencido hace ${Math.abs(daysUntilDue ?? 0)} días`
                 : `Vence en ${daysUntilDue} días (${formatDate(sale.due_date)})`
               }
-            </p>
-          )}
+            </p>)}
 
           {/* Barra de progreso */}
-          {sale.amount_paid > 0 && (
-            <div className="ml-6 mt-2">
+          {sale.amount_paid > 0 && (<div className="ml-6 mt-2">
               <div className="flex justify-between text-xs text-text-secondary mb-1">
                 <span>Pagado: {formatCurrency(sale.amount_paid, currency)}</span>
                 <span>Pendiente: {formatCurrency(remaining, currency)}</span>
@@ -223,8 +201,7 @@ function PartialPayCard({
               <div className="h-1.5 bg-border-default rounded-full overflow-hidden">
                 <div className="h-full bg-accent-olive rounded-full" style={{ width: `${paidPct}%` }} />
               </div>
-            </div>
-          )}
+            </div>)}
         </div>
 
         <div className="text-right shrink-0">
@@ -261,8 +238,7 @@ function PartialPayCard({
           </button>
         </div>
 
-        {showPartial && (
-          <div className="flex gap-2 items-center bg-[#F5EFE6] rounded-lg p-3">
+        {showPartial && (<div className="flex gap-2 items-center bg-[#F5EFE6] rounded-lg p-3">
             <span className="text-xs text-text-secondary shrink-0">Monto a cobrar:</span>
             <input
               type="number"
@@ -287,10 +263,8 @@ function PartialPayCard({
             >
               Registrar
             </button>
-          </div>
-        )}
+          </div>)}
       </div>
-    </div>
-  );
+    </div>);
 }
 

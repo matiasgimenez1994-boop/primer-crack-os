@@ -1,31 +1,31 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { PROCESS_OPTIONS } from "@/lib/costs";
-import { todayISO } from "@/lib/utils";
-import { useEffect, useState } from "react";
-import type { Roaster } from "@/types";
+import { useRouter } from"next/navigation";
+import { useForm } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import { ArrowLeft } from"lucide-react";
+import Link from"next/link";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import { PROCESS_OPTIONS } from"@/lib/costs";
+import { todayISO } from"@/lib/utils";
+import { useEffect, useState } from"react";
+import type { Roaster } from"@/types";
 
 const schema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
+  name: z.string().min(1,"El nombre es requerido"),
   origin_country: z.string().optional(),
   farm_producer: z.string().optional(),
   variety: z.string().optional(),
   process: z.string().optional(),
   score: z.coerce.number().min(0).max(100).optional().or(z.literal("")),
   purchase_price_per_kg: z.coerce.number().positive("El precio debe ser mayor a 0"),
-  initial_stock_kg: z.coerce.number().min(0, "El stock no puede ser negativo"),
+  initial_stock_kg: z.coerce.number().min(0,"El stock no puede ser negativo"),
   purchase_date: z.string().optional(),
   supplier: z.string().optional(),
   tasting_notes: z.string().optional(),
-  status: z.enum(["active", "depleted", "reserved"]),
+  status: z.enum(["active","depleted","reserved"]),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -54,7 +54,7 @@ export default function NewCoffeePage() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      status: "active",
+      status:"active",
       purchase_date: todayISO(),
     },
   });
@@ -65,7 +65,7 @@ export default function NewCoffeePage() {
     const { error } = await supabase.from("green_coffees").insert({
       roaster_id: roaster.id,
       ...data,
-      score: data.score === "" ? null : data.score,
+      score: data.score ==="" ? null : data.score,
       current_stock_kg: data.initial_stock_kg,
     });
 
@@ -78,8 +78,7 @@ export default function NewCoffeePage() {
     router.push("/inventory");
   }
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/inventory" className="btn-ghost p-2">
@@ -103,11 +102,9 @@ export default function NewCoffeePage() {
                 placeholder="Ej: Etiopía Yirgacheffe G2"
                 {...register("name")}
               />
-              {errors.name && (
-                <p className="text-xs text-status-danger mt-1">
+              {errors.name && (<p className="text-xs text-status-danger mt-1">
                   {errors.name.message}
-                </p>
-              )}
+                </p>)}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -146,11 +143,9 @@ export default function NewCoffeePage() {
                 <label className="label-base">Proceso</label>
                 <select className="input-base" {...register("process")}>
                   <option value="">Seleccionar...</option>
-                  {PROCESS_OPTIONS.map((p) => (
-                    <option key={p} value={p}>
+                  {PROCESS_OPTIONS.map((p) => (<option key={p} value={p}>
                       {p}
-                    </option>
-                  ))}
+                    </option>))}
                 </select>
               </div>
               <div>
@@ -196,11 +191,9 @@ export default function NewCoffeePage() {
                     placeholder="6.50"
                     {...register("purchase_price_per_kg")}
                   />
-                  {errors.purchase_price_per_kg && (
-                    <p className="text-xs text-status-danger mt-1">
+                  {errors.purchase_price_per_kg && (<p className="text-xs text-status-danger mt-1">
                       {errors.purchase_price_per_kg.message}
-                    </p>
-                  )}
+                    </p>)}
                 </div>
                 <div>
                   <label className="label-base">Stock inicial (kg) *</label>
@@ -212,11 +205,9 @@ export default function NewCoffeePage() {
                     placeholder="20.000"
                     {...register("initial_stock_kg")}
                   />
-                  {errors.initial_stock_kg && (
-                    <p className="text-xs text-status-danger mt-1">
+                  {errors.initial_stock_kg && (<p className="text-xs text-status-danger mt-1">
                       {errors.initial_stock_kg.message}
-                    </p>
-                  )}
+                    </p>)}
                 </div>
               </div>
 
@@ -259,12 +250,11 @@ export default function NewCoffeePage() {
                 className="btn-primary flex-1 justify-center"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Guardando..." : "Guardar café"}
+                {isSubmitting ?"Guardando..." :"Guardar café"}
               </button>
             </div>
           </div>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }

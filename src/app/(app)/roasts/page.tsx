@@ -1,12 +1,12 @@
-﻿import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Plus, Flame } from "lucide-react";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ShrinkageIndicator } from "@/components/ui/ShrinkageIndicator";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { formatCurrency, formatWeight, formatDate } from "@/lib/utils";
-import type { RoastBatch } from "@/types";
+﻿import { createClient } from"@/lib/supabase/server";
+import { redirect } from"next/navigation";
+import Link from"next/link";
+import { Plus, Flame } from"lucide-react";
+import { StatusBadge } from"@/components/ui/StatusBadge";
+import { ShrinkageIndicator } from"@/components/ui/ShrinkageIndicator";
+import { EmptyState } from"@/components/ui/EmptyState";
+import { formatCurrency, formatWeight, formatDate } from"@/lib/utils";
+import type { RoastBatch } from"@/types";
 
 export default async function RoastsPage() {
   const supabase = await createClient();
@@ -27,8 +27,7 @@ export default async function RoastsPage() {
     .eq("roaster_id", roaster.id)
     .order("roast_date", { ascending: false });
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <h1 className="page-title">Tuestes</h1>
         <Link href="/roasts/new" className="btn-primary">
@@ -36,8 +35,7 @@ export default async function RoastsPage() {
         </Link>
       </div>
 
-      {(batches ?? []).length === 0 ? (
-        <div className="card">
+      {(batches ?? []).length === 0 ? (<div className="card">
           <EmptyState
             icon={Flame}
             title="No hay tuestes registrados"
@@ -45,9 +43,7 @@ export default async function RoastsPage() {
             actionLabel="+ Registrar tueste"
             actionHref="/roasts/new"
           />
-        </div>
-      ) : (
-        <div className="card overflow-hidden">
+        </div>) : (<div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -76,8 +72,7 @@ export default async function RoastsPage() {
                 </tr>
               </thead>
               <tbody>
-                {(batches ?? []).map((b: RoastBatch) => (
-                  <tr
+                {(batches ?? []).map((b: RoastBatch) => (<tr
                     key={b.id}
                     className="border-b border-border-default last:border-0 hover:bg-[#F5EFE6]/50 transition-colors group"
                   >
@@ -86,7 +81,7 @@ export default async function RoastsPage() {
                         href={`/roasts/${b.id}`}
                         className="font-medium text-text-primary group-hover:text-accent-green transition-colors"
                       >
-                        {b.green_coffees?.name ?? "â€”"}
+                        {b.green_coffees?.name ??"â€”"}
                       </Link>
                     </td>
                     <td className="px-5 py-3.5 text-text-secondary hidden sm:table-cell">
@@ -104,19 +99,16 @@ export default async function RoastsPage() {
                     <td className="px-5 py-3.5 text-right font-mono text-text-primary">
                       {b.total_cost_per_kg_roasted
                         ? formatCurrency(b.total_cost_per_kg_roasted, roaster.currency)
-                        : "â€”"}
+                        :"â€”"}
                     </td>
                     <td className="px-5 py-3.5 text-right hidden sm:table-cell">
                       <StatusBadge status={b.status} />
                     </td>
-                  </tr>
-                ))}
+                  </tr>))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        </div>)}
+    </div>);
 }
 

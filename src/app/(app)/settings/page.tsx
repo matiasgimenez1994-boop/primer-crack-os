@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import type { Roaster } from "@/types";
+import { useEffect, useState } from"react";
+import { useForm } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import type { Roaster } from"@/types";
 
 const schema = z.object({
   business_name: z.string().min(2),
@@ -62,8 +62,7 @@ export default function SettingsPage() {
     reset(data);
   }
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <h1 className="page-title">Ajustes</h1>
       </div>
@@ -163,10 +162,9 @@ export default function SettingsPage() {
             className="btn-primary"
             disabled={isSubmitting || !isDirty}
           >
-            {isSubmitting ? "Guardando..." : "Guardar ajustes"}
+            {isSubmitting ?"Guardando..." :"Guardar ajustes"}
           </button>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }

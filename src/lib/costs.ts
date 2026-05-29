@@ -1,13 +1,11 @@
-import type { CostBreakdown, MarginResult } from "@/types";
+import type { CostBreakdown, MarginResult } from"@/types";
 
-export function calculateCosts(
-  greenWeightKg: number,
+export function calculateCosts(greenWeightKg: number,
   roastedWeightKg: number,
   purchasePricePerKg: number,
   packagingCostPerKg: number,
   energyCostPerKg: number,
-  laborCostPerKg: number
-): CostBreakdown {
+  laborCostPerKg: number): CostBreakdown {
   const shrinkagePct =
     greenWeightKg > 0
       ? ((greenWeightKg - roastedWeightKg) / greenWeightKg) * 100
@@ -34,11 +32,9 @@ export function calculateCosts(
   };
 }
 
-export function calculateMargin(
-  sellingPrice: number,
+export function calculateMargin(sellingPrice: number,
   weightGrams: number,
-  totalCostPerKg: number
-): MarginResult {
+  totalCostPerKg: number): MarginResult {
   const costForUnit = totalCostPerKg * (weightGrams / 1000);
   const profit = sellingPrice - costForUnit;
   const marginPct = sellingPrice > 0 ? (profit / sellingPrice) * 100 : 0;
@@ -53,41 +49,35 @@ export function calculateMargin(
 }
 
 export function getShrinkageColor(pct: number): string {
-  if (pct < 13) return "text-status-success";
-  if (pct <= 18) return "text-status-warning";
-  return "text-status-danger";
+  if (pct < 13) return"text-status-success";
+  if (pct <= 18) return"text-status-warning";
+  return"text-status-danger";
 }
 
 export function getShrinkageBg(pct: number): string {
-  if (pct < 13) return "bg-green-50 text-status-success border-green-200";
-  if (pct <= 18) return "bg-orange-50 text-status-warning border-orange-200";
-  return "bg-red-50 text-status-danger border-red-200";
+  if (pct < 13) return"bg-green-50 text-status-success border-green-200";
+  if (pct <= 18) return"bg-orange-50 text-status-warning border-orange-200";
+  return"bg-red-50 text-status-danger border-red-200";
 }
 
 export const ROAST_LEVEL_LABELS: Record<string, string> = {
-  light: "Claro",
-  medium: "Medio",
-  medium_dark: "Medio Oscuro",
-  dark: "Oscuro",
+  light:"Claro",
+  medium:"Medio",
+  medium_dark:"Medio Oscuro",
+  dark:"Oscuro",
 };
 
 export const ROAST_STATUS_LABELS: Record<string, string> = {
-  trial: "Prueba",
-  production: "Producción",
-  discarded: "Descartado",
+  trial:"Prueba",
+  production:"Producción",
+  discarded:"Descartado",
 };
 
 export const COFFEE_STATUS_LABELS: Record<string, string> = {
-  active: "Activo",
-  depleted: "Agotado",
-  reserved: "Reservado",
+  active:"Activo",
+  depleted:"Agotado",
+  reserved:"Reservado",
 };
 
-export const PROCESS_OPTIONS = [
-  "Lavado",
-  "Natural",
-  "Honey",
-  "Anaeróbico",
-  "Wet-hulled",
-  "Otro",
+export const PROCESS_OPTIONS = ["Lavado","Natural","Honey","Anaeróbico","Wet-hulled","Otro",
 ];

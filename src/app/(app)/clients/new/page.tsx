@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import type { Roaster } from "@/types";
+import { useEffect, useState } from"react";
+import { useRouter } from"next/navigation";
+import { useForm } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import Link from"next/link";
+import { ArrowLeft } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import type { Roaster } from"@/types";
 
 const schema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
-  type: z.enum(["cafe", "individual", "restaurant", "distributor", "other"]),
+  name: z.string().min(1,"El nombre es requerido"),
+  type: z.enum(["cafe","individual","restaurant","distributor","other"]),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
   phone: z.string().optional(),
   notes: z.string().optional(),
@@ -37,7 +37,7 @@ export default function NewClientPage() {
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { type: "individual", inactive_alert_days: 30 },
+    defaultValues: { type:"individual", inactive_alert_days: 30 },
   });
 
   async function onSubmit(data: FormData) {
@@ -54,8 +54,7 @@ export default function NewClientPage() {
     router.push("/clients");
   }
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/clients" className="btn-ghost p-2"><ArrowLeft className="w-4 h-4" /></Link>
@@ -120,12 +119,11 @@ export default function NewClientPage() {
             <div className="flex gap-3">
               <Link href="/clients" className="btn-secondary flex-1 justify-center">Cancelar</Link>
               <button type="submit" className="btn-primary flex-1 justify-center" disabled={isSubmitting}>
-                {isSubmitting ? "Guardando..." : "Guardar cliente"}
+                {isSubmitting ?"Guardando..." :"Guardar cliente"}
               </button>
             </div>
           </div>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }

@@ -1,19 +1,17 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
+import { clsx, type ClassValue } from"clsx";
+import { twMerge } from"tailwind-merge";
+import { format, parseISO } from"date-fns";
+import { es } from"date-fns/locale";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(
-  value: number,
-  currency = "USD",
-  decimals = 2
-): string {
+export function formatCurrency(value: number,
+  currency ="USD",
+  decimals = 2): string {
   return new Intl.NumberFormat("es-UY", {
-    style: "currency",
+    style:"currency",
     currency,
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -30,7 +28,7 @@ export function formatPct(pct: number, decimals = 1): string {
 
 export function formatDate(dateStr: string): string {
   try {
-    return format(parseISO(dateStr), "d MMM yyyy", { locale: es });
+    return format(parseISO(dateStr),"d MMM yyyy", { locale: es });
   } catch {
     return dateStr;
   }
@@ -38,7 +36,7 @@ export function formatDate(dateStr: string): string {
 
 export function formatDateShort(dateStr: string): string {
   try {
-    return format(parseISO(dateStr), "d/MM", { locale: es });
+    return format(parseISO(dateStr),"d/MM", { locale: es });
   } catch {
     return dateStr;
   }

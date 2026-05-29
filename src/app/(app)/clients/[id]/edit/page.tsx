@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { ArrowLeft, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import type { Roaster } from "@/types";
+import { useEffect, useState } from"react";
+import { useRouter, useParams } from"next/navigation";
+import { useForm } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import Link from"next/link";
+import { ArrowLeft, Trash2 } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import type { Roaster } from"@/types";
 
 const schema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
-  type: z.enum(["cafe", "individual", "restaurant", "distributor", "other"]),
+  name: z.string().min(1,"El nombre es requerido"),
+  type: z.enum(["cafe","individual","restaurant","distributor","other"]),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
   phone: z.string().optional(),
   notes: z.string().optional(),
@@ -44,7 +44,7 @@ export default function EditClientPage() {
           supabase.from("clients").select("*").eq("id", id).eq("roaster_id", r.id).single()
             .then(({ data: c }) => {
               if (!c) return;
-              reset({ ...c, email: c.email ?? "", phone: c.phone ?? "", notes: c.notes ?? "" });
+              reset({ ...c, email: c.email ??"", phone: c.phone ??"", notes: c.notes ??"" });
               setLoading(false);
             });
         });
@@ -71,14 +71,11 @@ export default function EditClientPage() {
     router.push("/clients");
   }
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[300px]">
+  if (loading) return (<div className="flex items-center justify-center min-h-[300px]">
       <div className="w-6 h-6 border-2 border-border-default border-t-accent-terra rounded-full animate-spin" />
-    </div>
-  );
+    </div>);
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href={`/clients/${id}`} className="btn-ghost p-2"><ArrowLeft className="w-4 h-4" /></Link>
@@ -133,12 +130,11 @@ export default function EditClientPage() {
             <div className="flex gap-3">
               <Link href={`/clients/${id}`} className="btn-secondary flex-1 justify-center">Cancelar</Link>
               <button type="submit" className="btn-primary flex-1 justify-center" disabled={isSubmitting || !isDirty}>
-                {isSubmitting ? "Guardando..." : "Guardar cambios"}
+                {isSubmitting ?"Guardando..." :"Guardar cambios"}
               </button>
             </div>
           </div>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }

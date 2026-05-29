@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { ArrowLeft, Star } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { RoastCurve } from "@/components/ui/RoastCurve";
-import type { GreenCoffee, Roaster } from "@/types";
+import { useEffect, useState } from"react";
+import { useRouter, useSearchParams } from"next/navigation";
+import { useForm, useWatch } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import Link from"next/link";
+import { ArrowLeft, Star } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import { RoastCurve } from"@/components/ui/RoastCurve";
+import type { GreenCoffee, Roaster } from"@/types";
 
 const schema = z.object({
-  name: z.string().min(1, "El nombre es requerido"),
+  name: z.string().min(1,"El nombre es requerido"),
   green_coffee_id: z.string().optional(),
   roaster_machine: z.string().optional(),
   charge_kg: z.coerce.number().positive().optional().or(z.literal("")),
@@ -77,12 +77,12 @@ export default function NewProfilePage() {
     if (!b) return;
     setValue("green_coffee_id", b.green_coffee_id);
     setValue("charge_kg", b.green_weight_kg);
-    setValue("charge_temp_celsius", b.charge_temp_celsius ?? "");
-    setValue("total_time_min", b.roast_duration_min ?? "");
-    setValue("first_crack_time_min", b.first_crack_time_min ?? "");
-    setValue("development_time_min", b.development_time_min ?? "");
-    setValue("roast_level", b.roast_level ?? "");
-    setValue("cup_result", b.sensory_result ?? "");
+    setValue("charge_temp_celsius", b.charge_temp_celsius ??"");
+    setValue("total_time_min", b.roast_duration_min ??"");
+    setValue("first_crack_time_min", b.first_crack_time_min ??"");
+    setValue("development_time_min", b.development_time_min ??"");
+    setValue("roast_level", b.roast_level ??"");
+    setValue("cup_result", b.sensory_result ??"");
     setValue("name", `Perfil ${new Date(b.roast_date).toLocaleDateString("es-UY")}`);
   }
 
@@ -110,16 +110,15 @@ export default function NewProfilePage() {
 
   const isFavorite = watch("is_favorite");
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/profiles" className="btn-ghost p-2"><ArrowLeft className="w-4 h-4" /></Link>
           <h1 className="text-xl font-semibold text-text-primary">Nuevo perfil de tueste</h1>
         </div>
-        <label className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border transition-colors ${isFavorite ? "border-yellow-300 bg-yellow-50" : "border-border-default hover:bg-[#F5EFE6]"}`}>
+        <label className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border transition-colors ${isFavorite ?"border-yellow-300 bg-yellow-50" :"border-border-default hover:bg-[#F5EFE6]"}`}>
           <input type="checkbox" className="sr-only" {...register("is_favorite")} />
-          <Star className={`w-4 h-4 ${isFavorite ? "text-yellow-500 fill-yellow-500" : "text-text-secondary"}`} />
+          <Star className={`w-4 h-4 ${isFavorite ?"text-yellow-500 fill-yellow-500" :"text-text-secondary"}`} />
           <span className="text-sm font-medium text-text-secondary">Favorito</span>
         </label>
       </div>
@@ -140,9 +139,7 @@ export default function NewProfilePage() {
                 <label className="label-base">Café verde asociado</label>
                 <select className="input-base" {...register("green_coffee_id")}>
                   <option value="">Ninguno / genérico</option>
-                  {coffees.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
+                  {coffees.map(c => (<option key={c.id} value={c.id}>{c.name}</option>))}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -251,14 +248,13 @@ export default function NewProfilePage() {
             <div className="flex gap-3">
               <Link href="/profiles" className="btn-secondary flex-1 justify-center">Cancelar</Link>
               <button type="submit" className="btn-primary flex-1 justify-center" disabled={isSubmitting}>
-                {isSubmitting ? "Guardando..." : "Guardar perfil"}
+                {isSubmitting ?"Guardando..." :"Guardar perfil"}
               </button>
             </div>
           </div>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -266,11 +262,9 @@ function RoastCurvePreview({ totalTime, firstCrackTime, developmentTime, chargeT
   totalTime: number; firstCrackTime: number; developmentTime: number; chargeTemp: number;
 }) {
   if (!totalTime || !firstCrackTime) {
-    return (
-      <div className="h-24 flex items-center justify-center">
+    return (<div className="h-24 flex items-center justify-center">
         <p className="text-xs text-text-secondary">Ingresá tiempo total y 1er crack para ver la curva</p>
-      </div>
-    );
+      </div>);
   }
 
   const w = 260; const h = 80;
@@ -293,20 +287,16 @@ function RoastCurvePreview({ totalTime, firstCrackTime, developmentTime, chargeT
   const toY = (temp: number) => h - pad - ((temp - minTemp) / tempRange) * (h - pad * 2);
 
   const pathD = points.map((p, i) =>
-    `${i === 0 ? "M" : "L"} ${toX(p.t)} ${toY(p.temp)}`
-  ).join(" ");
+    `${i === 0 ?"M" :"L"} ${toX(p.t)} ${toY(p.temp)}`).join("");
 
   const firstCrackX = toX(firstCrackTime);
   const endX = toX(totalTime);
   const devStartX = totalTime > 0 ? toX(totalTime - developmentTime) : endX;
 
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ height: 80 }}>
+  return (<svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ height: 80 }}>
       {/* Zona de desarrollo */}
-      {developmentTime > 0 && (
-        <rect x={devStartX} y={pad} width={endX - devStartX} height={h - pad * 2}
-          fill="#C17B4E" opacity="0.12" rx="2" />
-      )}
+      {developmentTime > 0 && (<rect x={devStartX} y={pad} width={endX - devStartX} height={h - pad * 2}
+          fill="#C17B4E" opacity="0.12" rx="2" />)}
       {/* Línea de 1er crack */}
       <line x1={firstCrackX} y1={pad} x2={firstCrackX} y2={h - pad}
         stroke="#C17B4E" strokeWidth="1.2" strokeDasharray="3,2" opacity="0.6" />
@@ -314,10 +304,7 @@ function RoastCurvePreview({ totalTime, firstCrackTime, developmentTime, chargeT
       {/* Curva */}
       <path d={pathD} stroke="#2C1810" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       {/* Puntos */}
-      {points.map((p, i) => (
-        <circle key={i} cx={toX(p.t)} cy={toY(p.temp)} r="2.5"
-          fill={i === 0 ? "#6B7C5C" : i === points.length - 1 ? "#B04A3A" : "#2C1810"} />
-      ))}
-    </svg>
-  );
+      {points.map((p, i) => (<circle key={i} cx={toX(p.t)} cy={toY(p.temp)} r="2.5"
+          fill={i === 0 ?"#6B7C5C" : i === points.length - 1 ?"#B04A3A" :"#2C1810"} />))}
+    </svg>);
 }

@@ -1,17 +1,17 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Plus, ShoppingBag, TrendingUp, DollarSign, Package } from "lucide-react";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { StatsCard } from "@/components/ui/StatsCard";
-import { formatCurrency, formatDate, formatWeight } from "@/lib/utils";
-import { currentMonthRange } from "@/lib/utils";
-import type { Sale } from "@/types";
+import { createClient } from"@/lib/supabase/server";
+import { redirect } from"next/navigation";
+import Link from"next/link";
+import { Plus, ShoppingBag, TrendingUp, DollarSign, Package } from"lucide-react";
+import { EmptyState } from"@/components/ui/EmptyState";
+import { StatsCard } from"@/components/ui/StatsCard";
+import { formatCurrency, formatDate, formatWeight } from"@/lib/utils";
+import { currentMonthRange } from"@/lib/utils";
+import type { Sale } from"@/types";
 
 const weightLabels: Record<number, string> = {
-  250: "250 g",
-  500: "500 g",
-  1000: "1 kg",
+  250:"250 g",
+  500:"500 g",
+  1000:"1 kg",
 };
 
 export default async function SalesPage() {
@@ -47,8 +47,7 @@ export default async function SalesPage() {
   const totalUnits = (monthSales ?? []).reduce((s: number, x: MonthlySale) => s + x.quantity, 0);
   const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <h1 className="page-title">Ventas</h1>
         <Link href="/sales/new" className="btn-primary">
@@ -84,8 +83,7 @@ export default async function SalesPage() {
       </div>
 
       {/* Tabla */}
-      {(sales ?? []).length === 0 ? (
-        <div className="card">
+      {(sales ?? []).length === 0 ? (<div className="card">
           <EmptyState
             icon={ShoppingBag}
             title="No hay ventas registradas"
@@ -93,9 +91,7 @@ export default async function SalesPage() {
             actionLabel="+ Registrar venta"
             actionHref="/sales/new"
           />
-        </div>
-      ) : (
-        <div className="card overflow-hidden">
+        </div>) : (<div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -113,47 +109,41 @@ export default async function SalesPage() {
               <tbody>
                 {(sales ?? []).map((s: Sale) => {
                   const coffeeName =
-                    s.product_type === "roasted"
+                    s.product_type ==="roasted"
                       ? s.roast_batches?.green_coffees?.name
                       : s.green_coffees?.name;
                   const productLabel =
-                    s.product_type === "roasted"
-                      ? `${coffeeName} · ${weightLabels[s.weight_grams!] ?? s.weight_grams + "g"}`
+                    s.product_type ==="roasted"
+                      ? `${coffeeName} · ${weightLabels[s.weight_grams!] ?? s.weight_grams +"g"}`
                       : `${coffeeName} · Verde ${formatWeight(s.green_weight_kg ?? 0)}`;
 
-                  return (
-                    <tr key={s.id} className="border-b border-border-default last:border-0 hover:bg-[#F5EFE6]/50 transition-colors">
+                  return (<tr key={s.id} className="border-b border-border-default last:border-0 hover:bg-[#F5EFE6]/50 transition-colors">
                       <td className="px-5 py-3.5 text-text-secondary">{formatDate(s.sale_date)}</td>
                       <td className="px-5 py-3.5">
                         <span className="font-medium text-text-primary">{productLabel}</span>
-                        {s.product_type === "green" && (
-                          <span className="ml-2 text-xs bg-green-50 text-status-success border border-green-200 px-1.5 py-0.5 rounded">
+                        {s.product_type ==="green" && (<span className="ml-2 text-xs bg-green-50 text-status-success border border-green-200 px-1.5 py-0.5 rounded">
                             Verde
-                          </span>
-                        )}
+                          </span>)}
                       </td>
                       <td className="px-5 py-3.5 text-text-secondary hidden md:table-cell">
-                        {s.client_name ?? "—"}
+                        {s.client_name ??"—"}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono">{s.quantity}</td>
                       <td className="px-5 py-3.5 text-right font-mono">
                         {formatCurrency(s.unit_price, roaster.currency)}
                       </td>
                       <td className="px-5 py-3.5 text-right text-text-secondary hidden sm:table-cell">
-                        {s.discount_pct > 0 ? (
-                          <span className="text-status-warning font-mono">-{s.discount_pct}%</span>
-                        ) : "—"}
+                        {s.discount_pct > 0 ? (<span className="text-status-warning font-mono">-{s.discount_pct}%</span>) :"—"}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary">
                         {formatCurrency(s.final_price, roaster.currency)}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono">
-                        <span className={s.profit >= 0 ? "text-status-success" : "text-status-danger"}>
+                        <span className={s.profit >= 0 ?"text-status-success" :"text-status-danger"}>
                           {formatCurrency(s.profit, roaster.currency)}
                         </span>
                       </td>
-                    </tr>
-                  );
+                    </tr>);
                 })}
               </tbody>
               <tfoot className="border-t-2 border-border-default bg-[#FDFAF6]">
@@ -162,23 +152,17 @@ export default async function SalesPage() {
                     Total histórico
                   </td>
                   <td className="px-5 py-3 text-right font-mono font-semibold text-text-primary">
-                    {formatCurrency(
-                      (sales ?? []).reduce((s: number, x: Sale) => s + x.final_price, 0),
-                      roaster.currency
-                    )}
+                    {formatCurrency((sales ?? []).reduce((s: number, x: Sale) => s + x.final_price, 0),
+                      roaster.currency)}
                   </td>
                   <td className="px-5 py-3 text-right font-mono font-semibold text-status-success">
-                    {formatCurrency(
-                      (sales ?? []).reduce((s: number, x: Sale) => s + x.profit, 0),
-                      roaster.currency
-                    )}
+                    {formatCurrency((sales ?? []).reduce((s: number, x: Sale) => s + x.profit, 0),
+                      roaster.currency)}
                   </td>
                 </tr>
               </tfoot>
             </table>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        </div>)}
+    </div>);
 }

@@ -1,29 +1,29 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { ArrowLeft, ShoppingBag } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { formatCurrency, todayISO } from "@/lib/utils";
-import type { GreenCoffee, Roaster, RoastBatch, Client } from "@/types";
+import { useEffect, useState, useCallback } from"react";
+import { useRouter } from"next/navigation";
+import { useForm, useWatch } from"react-hook-form";
+import { zodResolver } from"@hookform/resolvers/zod";
+import { z } from"zod";
+import Link from"next/link";
+import { ArrowLeft, ShoppingBag } from"lucide-react";
+import { createClient } from"@/lib/supabase/client";
+import { toast } from"sonner";
+import { formatCurrency, todayISO } from"@/lib/utils";
+import type { GreenCoffee, Roaster, RoastBatch, Client } from"@/types";
 
 const schema = z.object({
-  product_type: z.enum(["roasted", "green"]),
+  product_type: z.enum(["roasted","green"]),
   roast_batch_id: z.string().optional(),
   weight_grams: z.coerce.number().optional(),
   green_coffee_id: z.string().optional(),
   green_weight_kg: z.coerce.number().positive().optional(),
   quantity: z.coerce.number().int().positive(),
   unit_price: z.coerce.number().positive("El precio debe ser mayor a 0"),
-  discount_type: z.enum(["pct", "fixed"]),
+  discount_type: z.enum(["pct","fixed"]),
   discount_value: z.coerce.number().min(0),
   client_id: z.string().optional(),
-  payment_type: z.enum(["cash", "transfer", "credit"]),
+  payment_type: z.enum(["cash","transfer","credit"]),
   due_date: z.string().optional(),
   notes: z.string().optional(),
   sale_date: z.string().min(1),
@@ -37,9 +37,9 @@ interface BatchOption {
 }
 
 const weightOptions = [
-  { value: 250, label: "250 g" },
-  { value: 500, label: "500 g" },
-  { value: 1000, label: "1 kg" },
+  { value: 250, label:"250 g" },
+  { value: 500, label:"500 g" },
+  { value: 1000, label:"1 kg" },
 ];
 
 export default function NewSalePage() {
@@ -62,11 +62,11 @@ export default function NewSalePage() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      product_type: "roasted",
+      product_type:"roasted",
       quantity: 1,
-      discount_type: "pct",
+      discount_type:"pct",
       discount_value: 0,
-      payment_type: "cash",
+      payment_type:"cash",
       sale_date: todayISO(),
       weight_grams: 250,
     },
@@ -80,7 +80,7 @@ export default function NewSalePage() {
       .from("roast_batches")
       .select("*, green_coffees(*)")
       .eq("roaster_id", roasterId)
-      .eq("status", "production")
+      .eq("status","production")
       .order("roast_date", { ascending: false });
 
     if (!batches) return;
@@ -90,7 +90,7 @@ export default function NewSalePage() {
       .from("sales")
       .select("roast_batch_id, weight_grams, quantity")
       .eq("roaster_id", roasterId)
-      .eq("product_type", "roasted");
+      .eq("product_type","roasted");
 
     const soldByBatch: Record<string, number> = {};
     (salesData ?? []).forEach((s: { roast_batch_id: string; weight_grams: number; quantity: number }) => {
@@ -122,7 +122,7 @@ export default function NewSalePage() {
             .from("green_coffees")
             .select("*")
             .eq("roaster_id", r.id)
-            .neq("status", "depleted")
+            .neq("status","depleted")
             .order("name")
             .then(({ data: c }) => setGreenCoffees(c ?? []));
           supabase
@@ -169,9 +169,9 @@ export default function NewSalePage() {
   const unitPrice = Number(watched.unit_price) || 0;
   const qty = Number(watched.quantity) || 1;
   const subtotal = unitPrice * qty;
-  const discountType = watched.discount_type ?? "pct";
+  const discountType = watched.discount_type ??"pct";
   const discountValue = Number(watched.discount_value) || 0;
-  const discountAmount = discountType === "pct"
+  const discountAmount = discountType ==="pct"
     ? subtotal * (discountValue / 100)
     : Math.min(discountValue, subtotal);
   const discountPct = subtotal > 0 ? (discountAmount / subtotal) * 100 : 0;
@@ -179,9 +179,9 @@ export default function NewSalePage() {
   const totalFinal = Math.max(0, subtotal - discountAmount);
 
   let costPerUnit = 0;
-  if (productType === "roasted" && selectedBatch && watched.weight_grams) {
+  if (productType ==="roasted" && selectedBatch && watched.weight_grams) {
     costPerUnit = selectedBatch.batch.total_cost_per_kg_roasted * (Number(watched.weight_grams) / 1000);
-  } else if (productType === "green" && selectedGreen && watched.green_weight_kg) {
+  } else if (productType ==="green" && selectedGreen && watched.green_weight_kg) {
     costPerUnit = selectedGreen.purchase_price_per_kg * Number(watched.green_weight_kg);
   }
   const totalCost = costPerUnit * qty;
@@ -191,17 +191,17 @@ export default function NewSalePage() {
   async function onSubmit(data: FormData) {
     if (!roaster) return;
 
-    if (data.product_type === "roasted" && !data.roast_batch_id) {
+    if (data.product_type ==="roasted" && !data.roast_batch_id) {
       toast.error("Seleccioná un lote de tueste");
       return;
     }
-    if (data.product_type === "green" && !data.green_coffee_id) {
+    if (data.product_type ==="green" && !data.green_coffee_id) {
       toast.error("Seleccioná un café verde");
       return;
     }
 
     const sub = data.unit_price * data.quantity;
-    const dAmount = data.discount_type === "pct"
+    const dAmount = data.discount_type ==="pct"
       ? sub * (data.discount_value / 100)
       : Math.min(data.discount_value, sub);
     const dPct = sub > 0 ? (dAmount / sub) * 100 : 0;
@@ -212,10 +212,10 @@ export default function NewSalePage() {
       roaster_id: roaster.id,
       sale_date: data.sale_date,
       product_type: data.product_type,
-      roast_batch_id: data.product_type === "roasted" ? data.roast_batch_id : null,
-      weight_grams: data.product_type === "roasted" ? data.weight_grams : null,
-      green_coffee_id: data.product_type === "green" ? data.green_coffee_id : null,
-      green_weight_kg: data.product_type === "green" ? data.green_weight_kg : null,
+      roast_batch_id: data.product_type ==="roasted" ? data.roast_batch_id : null,
+      weight_grams: data.product_type ==="roasted" ? data.weight_grams : null,
+      green_coffee_id: data.product_type ==="green" ? data.green_coffee_id : null,
+      green_weight_kg: data.product_type ==="green" ? data.green_weight_kg : null,
       quantity: data.quantity,
       unit_price: data.unit_price,
       discount_pct: dPct,
@@ -225,10 +225,10 @@ export default function NewSalePage() {
       client_id: data.client_id || null,
       client_name: null,
       payment_type: data.payment_type,
-      payment_status: data.payment_type === "credit" ? "pending" : "paid",
-      amount_paid: data.payment_type === "credit" ? 0 : finalPrice,
+      payment_status: data.payment_type ==="credit" ?"pending" :"paid",
+      amount_paid: data.payment_type ==="credit" ? 0 : finalPrice,
       due_date: data.due_date || null,
-      paid_at: data.payment_type !== "credit" ? new Date().toISOString() : null,
+      paid_at: data.payment_type !=="credit" ? new Date().toISOString() : null,
       notes: data.notes || null,
     });
 
@@ -238,14 +238,14 @@ export default function NewSalePage() {
     }
 
     // Descontar stock verde si es venta de verde
-    if (data.product_type === "green" && selectedGreen && data.green_weight_kg) {
+    if (data.product_type ==="green" && selectedGreen && data.green_weight_kg) {
       const totalKgSold = data.green_weight_kg * data.quantity;
       const newStock = Math.max(0, selectedGreen.current_stock_kg - totalKgSold);
       await supabase
         .from("green_coffees")
         .update({
           current_stock_kg: newStock,
-          status: newStock === 0 ? "depleted" : selectedGreen.status,
+          status: newStock === 0 ?"depleted" : selectedGreen.status,
         })
         .eq("id", selectedGreen.id);
     }
@@ -254,8 +254,7 @@ export default function NewSalePage() {
     router.push("/sales");
   }
 
-  return (
-    <div>
+  return (<div>
       <div className="page-header">
         <div className="flex items-center gap-3">
           <Link href="/sales" className="btn-ghost p-2">
@@ -274,14 +273,14 @@ export default function NewSalePage() {
             <div className="card p-6">
               <p className="section-title">Tipo de venta</p>
               <div className="grid grid-cols-2 gap-3">
-                <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${productType === "roasted" ? "border-accent-green bg-[#FDF5EE]" : "border-border-default hover:border-accent-green/40"}`}>
+                <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${productType ==="roasted" ?"border-accent-green bg-[#FDF5EE]" :"border-border-default hover:border-accent-green/40"}`}>
                   <input type="radio" value="roasted" className="accent-accent-green" {...register("product_type")} />
                   <div>
                     <p className="text-sm font-semibold text-text-primary">â˜• Café tostado</p>
                     <p className="text-xs text-text-secondary">Bolsas de 250g, 500g, 1kg</p>
                   </div>
                 </label>
-                <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${productType === "green" ? "border-accent-olive bg-[#F2F5EE]" : "border-border-default hover:border-accent-olive/40"}`}>
+                <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${productType ==="green" ?"border-accent-olive bg-[#F2F5EE]" :"border-border-default hover:border-accent-olive/40"}`}>
                   <input type="radio" value="green" className="accent-accent-olive" {...register("product_type")} />
                   <div>
                     <p className="text-sm font-semibold text-text-primary">ðŸŒ± Café verde</p>
@@ -294,42 +293,34 @@ export default function NewSalePage() {
             {/* Selección de producto */}
             <div className="card p-6">
               <p className="section-title">
-                {productType === "roasted" ? "Seleccioná el lote y presentación" : "Seleccioná el café verde"}
+                {productType ==="roasted" ?"Seleccioná el lote y presentación" :"Seleccioná el café verde"}
               </p>
 
-              {productType === "roasted" ? (
-                <div className="flex flex-col gap-4">
+              {productType ==="roasted" ? (<div className="flex flex-col gap-4">
                   <div>
                     <label className="label-base">Lote de tueste *</label>
                     <select className="input-base" {...register("roast_batch_id")}>
                       <option value="">Seleccionar lote...</option>
-                      {batchOptions.map(({ batch, remainingKg }) => (
-                        <option key={batch.id} value={batch.id}>
+                      {batchOptions.map(({ batch, remainingKg }) => (<option key={batch.id} value={batch.id}>
                           {batch.green_coffees?.name} · {new Date(batch.roast_date).toLocaleDateString("es-UY")} · {remainingKg.toFixed(2)} kg disponibles
-                        </option>
-                      ))}
+                        </option>))}
                     </select>
-                    {batchOptions.length === 0 && (
-                      <p className="text-xs text-status-warning mt-1">
+                    {batchOptions.length === 0 && (<p className="text-xs text-status-warning mt-1">
                         No hay lotes de producción con stock disponible
-                      </p>
-                    )}
+                      </p>)}
                   </div>
 
                   <div>
                     <label className="label-base">Presentación *</label>
                     <div className="flex gap-3">
-                      {weightOptions.map((w) => (
-                        <label key={w.value} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-colors ${Number(watched.weight_grams) === w.value ? "border-accent-green bg-[#FDF5EE]" : "border-border-default hover:border-accent-green/40"}`}>
+                      {weightOptions.map((w) => (<label key={w.value} className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-colors ${Number(watched.weight_grams) === w.value ?"border-accent-green bg-[#FDF5EE]" :"border-border-default hover:border-accent-green/40"}`}>
                           <input type="radio" value={w.value} className="sr-only" {...register("weight_grams")} />
                           <span className="text-sm font-semibold">{w.label}</span>
-                        </label>
-                      ))}
+                        </label>))}
                     </div>
                   </div>
 
-                  {selectedBatch && (
-                    <div className="p-3 bg-[#F5EFE6] rounded-lg text-xs grid grid-cols-3 gap-3">
+                  {selectedBatch && (<div className="p-3 bg-[#F5EFE6] rounded-lg text-xs grid grid-cols-3 gap-3">
                       <div>
                         <p className="text-text-secondary">Costo/unidad</p>
                         <p className="font-mono font-medium">
@@ -346,20 +337,15 @@ export default function NewSalePage() {
                           {formatCurrency(selectedBatch.batch.total_cost_per_kg_roasted, roaster?.currency)}
                         </p>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
+                    </div>)}
+                </div>) : (<div className="flex flex-col gap-4">
                   <div>
                     <label className="label-base">Café verde *</label>
                     <select className="input-base" {...register("green_coffee_id")}>
                       <option value="">Seleccionar café...</option>
-                      {greenCoffees.map((c) => (
-                        <option key={c.id} value={c.id}>
+                      {greenCoffees.map((c) => (<option key={c.id} value={c.id}>
                           {c.name} · {c.current_stock_kg.toFixed(2)} kg disponibles
-                        </option>
-                      ))}
+                        </option>))}
                     </select>
                   </div>
 
@@ -372,14 +358,11 @@ export default function NewSalePage() {
                       placeholder="5.000"
                       {...register("green_weight_kg")}
                     />
-                    {selectedGreen && (
-                      <p className="text-xs text-text-secondary mt-1">
+                    {selectedGreen && (<p className="text-xs text-text-secondary mt-1">
                         Stock disponible: {selectedGreen.current_stock_kg.toFixed(3)} kg · Precio compra: {formatCurrency(selectedGreen.purchase_price_per_kg, roaster?.currency)}/kg
-                      </p>
-                    )}
+                      </p>)}
                   </div>
-                </div>
-              )}
+                </div>)}
             </div>
 
             {/* Precio y cliente */}
@@ -389,7 +372,7 @@ export default function NewSalePage() {
                 <div>
                   <label className="label-base">
                     Precio de venta *
-                    {productType === "roasted" ? ` (por ${weightOptions.find(w => w.value === Number(watched.weight_grams))?.label ?? "unidad"})` : " (por kg)"}
+                    {productType ==="roasted" ? ` (por ${weightOptions.find(w => w.value === Number(watched.weight_grams))?.label ??"unidad"})` :" (por kg)"}
                   </label>
                   <input
                     type="number"
@@ -398,9 +381,7 @@ export default function NewSalePage() {
                     placeholder="0.00"
                     {...register("unit_price")}
                   />
-                  {errors.unit_price && (
-                    <p className="text-xs text-status-danger mt-1">{errors.unit_price.message}</p>
-                  )}
+                  {errors.unit_price && (<p className="text-xs text-status-danger mt-1">{errors.unit_price.message}</p>)}
                 </div>
 
                 <div>
@@ -408,11 +389,11 @@ export default function NewSalePage() {
                   <div className="flex gap-2">
                     {/* Selector tipo */}
                     <div className="flex rounded-lg border border-border-default overflow-hidden shrink-0">
-                      <label className={`px-3 py-2 text-xs font-medium cursor-pointer transition-colors ${discountType === "pct" ? "bg-brand-dark text-white" : "bg-white text-text-secondary hover:bg-[#F5EFE6]"}`}>
+                      <label className={`px-3 py-2 text-xs font-medium cursor-pointer transition-colors ${discountType ==="pct" ?"bg-brand-dark text-white" :"bg-white text-text-secondary hover:bg-[#F5EFE6]"}`}>
                         <input type="radio" value="pct" className="sr-only" {...register("discount_type")} />
                         %
                       </label>
-                      <label className={`px-3 py-2 text-xs font-medium cursor-pointer transition-colors border-l border-border-default ${discountType === "fixed" ? "bg-brand-dark text-white" : "bg-white text-text-secondary hover:bg-[#F5EFE6]"}`}>
+                      <label className={`px-3 py-2 text-xs font-medium cursor-pointer transition-colors border-l border-border-default ${discountType ==="fixed" ?"bg-brand-dark text-white" :"bg-white text-text-secondary hover:bg-[#F5EFE6]"}`}>
                         <input type="radio" value="fixed" className="sr-only" {...register("discount_type")} />
                         $
                       </label>
@@ -420,19 +401,17 @@ export default function NewSalePage() {
                     {/* Valor */}
                     <input
                       type="number"
-                      step={discountType === "pct" ? "0.5" : "0.01"}
+                      step={discountType ==="pct" ?"0.5" :"0.01"}
                       min="0"
-                      max={discountType === "pct" ? "100" : undefined}
+                      max={discountType ==="pct" ?"100" : undefined}
                       className="input-base font-mono flex-1"
                       placeholder="0"
                       {...register("discount_value")}
                     />
                   </div>
-                  {discountAmount > 0 && subtotal > 0 && (
-                    <p className="text-xs text-status-warning mt-1">
+                  {discountAmount > 0 && subtotal > 0 && (<p className="text-xs text-status-warning mt-1">
                       -{formatCurrency(discountAmount, roaster?.currency)} sobre el total · Total: {formatCurrency(totalFinal, roaster?.currency)}
-                    </p>
-                  )}
+                    </p>)}
                 </div>
 
                 <div>
@@ -454,9 +433,7 @@ export default function NewSalePage() {
                   <label className="label-base">Cliente</label>
                   <select className="input-base" {...register("client_id")}>
                     <option value="">Sin cliente asignado</option>
-                    {clients.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
+                    {clients.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
                   </select>
                   <Link href="/clients/new" className="text-xs text-accent-green hover:underline mt-1 inline-block">
                     + Crear nuevo cliente
@@ -467,28 +444,25 @@ export default function NewSalePage() {
                   <label className="label-base">Tipo de pago</label>
                   <div className="flex gap-2">
                     {[
-                      { value: "cash", label: "ðŸ’µ Efectivo" },
-                      { value: "transfer", label: "ðŸ¦ Transferencia" },
-                      { value: "credit", label: "ðŸ“‹ A crédito" },
-                    ].map((opt) => (
-                      <label key={opt.value}
+                      { value:"cash", label:"ðŸ’µ Efectivo" },
+                      { value:"transfer", label:"ðŸ¦ Transferencia" },
+                      { value:"credit", label:"ðŸ“‹ A crédito" },
+                    ].map((opt) => (<label key={opt.value}
                         className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-colors text-sm font-medium ${
                           watch("payment_type") === opt.value
-                            ? opt.value === "credit"
-                              ? "border-orange-400 bg-orange-50 text-orange-700"
-                              : "border-accent-olive bg-green-50 text-status-success"
-                            : "border-border-default hover:border-text-secondary/30 text-text-secondary"
+                            ? opt.value ==="credit"
+                              ?"border-orange-400 bg-orange-50 text-orange-700"
+                              :"border-accent-olive bg-green-50 text-status-success"
+                            :"border-border-default hover:border-text-secondary/30 text-text-secondary"
                         }`}
                       >
                         <input type="radio" value={opt.value} className="sr-only" {...register("payment_type")} />
                         {opt.label}
-                      </label>
-                    ))}
+                      </label>))}
                   </div>
                 </div>
 
-                {watch("payment_type") === "credit" && (
-                  <div className="col-span-2">
+                {watch("payment_type") ==="credit" && (<div className="col-span-2">
                     <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                       <p className="text-xs font-medium text-orange-700 mb-2">
                         âš ï¸ Esta venta quedará como pago pendiente
@@ -496,8 +470,7 @@ export default function NewSalePage() {
                       <label className="label-base">Fecha límite de pago (opcional)</label>
                       <input type="date" className="input-base bg-white" {...register("due_date")} />
                     </div>
-                  </div>
-                )}
+                  </div>)}
 
                 <div>
                   <label className="label-base">Notas</label>
@@ -516,7 +489,7 @@ export default function NewSalePage() {
                 Cancelar
               </Link>
               <button type="submit" className="btn-primary flex-1 justify-center" disabled={isSubmitting}>
-                {isSubmitting ? "Guardando..." : "Registrar venta"}
+                {isSubmitting ?"Guardando..." :"Registrar venta"}
               </button>
             </div>
           </div>
@@ -529,12 +502,9 @@ export default function NewSalePage() {
                 <p className="text-sm font-semibold text-text-primary">Resumen</p>
               </div>
 
-              {unitPrice === 0 ? (
-                <p className="text-xs text-text-secondary">
+              {unitPrice === 0 ? (<p className="text-xs text-text-secondary">
                   Completá el precio para ver el resumen.
-                </p>
-              ) : (
-                <div className="flex flex-col gap-3">
+                </p>) : (<div className="flex flex-col gap-3">
                   <div className="flex justify-between text-xs">
                     <span className="text-text-secondary">Precio unitario</span>
                     <span className="font-mono">{formatCurrency(unitPrice, roaster?.currency)}</span>
@@ -547,16 +517,14 @@ export default function NewSalePage() {
                     <span className="text-text-secondary">Subtotal</span>
                     <span className="font-mono">{formatCurrency(subtotal, roaster?.currency)}</span>
                   </div>
-                  {discountAmount > 0 && (
-                    <div className="flex justify-between text-xs">
+                  {discountAmount > 0 && (<div className="flex justify-between text-xs">
                       <span className="text-text-secondary">
-                        Descuento {discountType === "pct" ? `(${discountValue}% del total)` : "fijo sobre total"}
+                        Descuento {discountType ==="pct" ? `(${discountValue}% del total)` :"fijo sobre total"}
                       </span>
                       <span className="font-mono text-status-warning">
                         -{formatCurrency(discountAmount, roaster?.currency)}
                       </span>
-                    </div>
-                  )}
+                    </div>)}
 
                   <div className="border-t border-border-default pt-3 flex justify-between">
                     <span className="text-sm font-semibold">Total venta</span>
@@ -565,33 +533,29 @@ export default function NewSalePage() {
                     </span>
                   </div>
 
-                  {costPerUnit > 0 && (
-                    <>
+                  {costPerUnit > 0 && (<>
                       <div className="flex justify-between text-xs">
                         <span className="text-text-secondary">Costo total</span>
                         <span className="font-mono">{formatCurrency(totalCost, roaster?.currency)}</span>
                       </div>
                       <div className="border-t border-border-default pt-3 flex justify-between">
                         <span className="text-sm font-semibold">Ganancia</span>
-                        <span className={`text-sm font-mono font-bold ${totalProfit >= 0 ? "text-status-success" : "text-status-danger"}`}>
+                        <span className={`text-sm font-mono font-bold ${totalProfit >= 0 ?"text-status-success" :"text-status-danger"}`}>
                           {formatCurrency(totalProfit, roaster?.currency)}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-text-secondary">Margen</span>
-                        <span className={`font-mono font-semibold ${marginPct >= 40 ? "text-status-success" : marginPct >= 20 ? "text-status-warning" : "text-status-danger"}`}>
+                        <span className={`font-mono font-semibold ${marginPct >= 40 ?"text-status-success" : marginPct >= 20 ?"text-status-warning" :"text-status-danger"}`}>
                           {marginPct.toFixed(1)}%
                         </span>
                       </div>
-                    </>
-                  )}
-                </div>
-              )}
+                    </>)}
+                </div>)}
             </div>
           </div>
         </div>
       </form>
-    </div>
-  );
+    </div>);
 }
 
