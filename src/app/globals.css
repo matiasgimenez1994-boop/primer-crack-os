@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: #FFFFFF;
+    color: #0F172A;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+}
+
+@layer components {
+  .input-base {
+    @apply w-full px-3 py-2 text-sm bg-white border border-border-default rounded-lg
+      text-text-primary placeholder-text-secondary/50
+      focus:outline-none focus:ring-2 focus:ring-accent-green/25 focus:border-accent-green
+      transition-colors;
+  }
+
+  .label-base {
+    @apply block text-xs font-medium text-text-secondary mb-1.5;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-brand-dark text-white text-sm font-medium
+      px-4 py-2 rounded-lg hover:bg-brand-medium active:scale-[0.98] transition-all
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 bg-white text-text-primary text-sm font-medium
+      px-4 py-2 rounded-lg border border-border-default hover:bg-bg-subtle active:scale-[0.98] transition-all;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 text-text-secondary text-sm font-medium
+      px-3 py-2 rounded-lg hover:bg-bg-subtle hover:text-text-primary transition-colors;
+  }
+
+  .card {
+    @apply bg-bg-card rounded-xl border border-border-default shadow-card;
+  }
+
+  .page-header {
+    @apply flex items-center justify-between mb-6;
+  }
+
+  .page-title {
+    @apply text-xl font-semibold text-text-primary;
+  }
+
+  .section-title {
+    @apply text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3;
+  }
+}
