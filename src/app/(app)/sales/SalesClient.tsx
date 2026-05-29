@@ -35,6 +35,23 @@ export function SalesClient({ sales: initialSales, currency, totalRevenue, total
   async function handleDelete(saleId: string) {
     if (!confirm("¿Eliminar esta venta? Esta acción no se puede deshacer.")) return;
     setDeleting(saleId);
+
+    const sale = sales.find(s => s.id === saleId);
+
+    // Si es venta de café verde, devolver stock
+    if (sale?.product_type === "green" && sale.green_coffee_id && sale.green_weight_kg) {
+      const totalKgToRestore = sale.green_weight_kg * sale.quantity;
+      const { data: coffee } = await supabase
+        .from("green_coffees").select("current_stock_kg, status").eq("id", sale.green_coffee_id).single();
+      if (coffee) {
+        const newStock = coffee.current_stock_kg + totalKgToRestore;
+        await supabase.from("green_coffees").update({
+          current_stock_kg: newStock,
+          status: coffee.status === "depleted" ? "active" : coffee.status,
+        }).eq("id", sale.green_coffee_id);
+      }
+    }
+
     const { error } = await supabase.from("sales").delete().eq("id", saleId);
     if (error) {
       toast.error("Error al eliminar la venta");
@@ -42,7 +59,11 @@ export function SalesClient({ sales: initialSales, currency, totalRevenue, total
       return;
     }
     setSales(prev => prev.filter(s => s.id !== saleId));
-    toast.success("Venta eliminada");
+    toast.success(
+      sale?.product_type === "green"
+        ? "Venta eliminada y stock restaurado"
+        : "Venta eliminada"
+    );
     setDeleting(null);
     router.refresh();
   }
