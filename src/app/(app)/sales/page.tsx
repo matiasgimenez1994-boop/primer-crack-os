@@ -139,7 +139,7 @@ export default async function SalesPage() {
                         {formatCurrency(s.final_price, roaster.currency)}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono">
-                        <span className={s.profit >= 0 ?"text-status-success" :"text-status-danger"}>
+                        <span className={`whitespace-nowrap ${s.profit >= 0 ?"text-status-success" :"text-status-danger"}`}>
                           {formatCurrency(s.profit, roaster.currency)}
                         </span>
                       </td>
