@@ -4,8 +4,21 @@ import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Primer crack OS · Para tostadores de especialidad",
-  description:
-    "Gestión de inventario, tuestes y rentabilidad para tostadores de café de especialidad.",
+  description: "Gestión de inventario, tuestes y rentabilidad para tostadores de café de especialidad.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Primer crack OS",
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
+  icons: {
+    apple: "/icon-192.png",
+  },
 };
 
 export default function RootLayout({
