@@ -14,10 +14,10 @@ interface Props {
 }
 
 const SIZE_OPTIONS = [
-  { id:"small",  label:"Pequeña",  w: 60,  h: 40,  desc:"60í—40mm" },
-  { id:"medium", label:"Mediana",  w: 80,  h: 55,  desc:"80í—55mm" },
-  { id:"large",  label:"Grande",   w: 100, h: 70,  desc:"100í—70mm" },
-  { id:"tall",   label:"Alta",     w: 60,  h: 90,  desc:"60í—90mm" },
+  { id:"small",  label:"Pequeña",  w: 60,  h: 40,  desc:"60×40mm" },
+  { id:"medium", label:"Mediana",  w: 80,  h: 55,  desc:"80×55mm" },
+  { id:"large",  label:"Grande",   w: 100, h: 70,  desc:"100×70mm" },
+  { id:"tall",   label:"Alta",     w: 60,  h: 90,  desc:"60×90mm" },
 ];
 
 const WEIGHT_OPTIONS = [100, 200, 250, 500, 1000];
@@ -210,7 +210,7 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
         </div>
       </div>
 
-      {/* Zona de impresión â€” solo visible al imprimir */}
+      {/* Zona de impresión "” solo visible al imprimir */}
       {selectedBatch && (<div className="print-only">
           <div className="print-labels-grid">
             {Array.from({ length: copies }).map((_, i) => (<LabelPreview

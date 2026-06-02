@@ -133,7 +133,7 @@ export default async function ExpensesPage() {
                     <td className="px-5 py-3.5 text-right font-mono text-text-secondary hidden md:table-cell">
                       {e.frequency !=="once"
                         ? formatCurrency(toMonthlyAmount(e.amount, e.frequency), roaster.currency)
-                        :"â€”"}
+                        :""”"}
                     </td>
                     <td className="px-3 py-3.5 text-right">
                       <Link href={`/expenses/${e.id}/edit`}

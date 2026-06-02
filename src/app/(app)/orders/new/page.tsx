@@ -275,7 +275,7 @@ export default function NewOrderPage() {
                   if (!coffee) return null;
                   return (<div key={idx} className="flex justify-between text-xs">
                       <span className="text-text-secondary truncate max-w-[140px]">
-                        {item?.quantity}í— {coffee?.name}
+                        {item?.quantity}× {coffee?.name}
                         {item?.product_type ==="roasted" && item?.weight_grams ? ` ${item.weight_grams}g` :""}
                       </span>
                       <span className="font-mono shrink-0 ml-2">

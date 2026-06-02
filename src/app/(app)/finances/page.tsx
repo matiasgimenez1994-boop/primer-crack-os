@@ -43,7 +43,7 @@ export default async function FinancesPage() {
       .gte("expense_date", monthStart).lte("expense_date", monthEnd),
   ]);
 
-  // â”€â”€ Mes actual â”€â”€
+  //  Mes actual 
   const monthRevenue = (monthSales ?? []).reduce((s: number, x: Sale) => s + x.final_price, 0);
   const monthGrossProfit = (monthSales ?? []).reduce((s: number, x: Sale) => s + x.profit, 0);
   const monthExpenseTotal = (monthExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
@@ -55,25 +55,25 @@ export default async function FinancesPage() {
   const monthTransfer = (monthSales ?? []).filter((s: Sale) => s.payment_type ==="transfer")
     .reduce((s: number, x: Sale) => s + x.final_price, 0);
 
-  // â”€â”€ Pendiente de cobro â”€â”€
+  //  Pendiente de cobro 
   const totalPending = (pendingSales ?? []).reduce((s: number, x: Sale) => s + (x.final_price - x.amount_paid), 0);
 
-  // â”€â”€ Inventario valorizado â”€â”€
+  //  Inventario valorizado 
   const inventoryValue = (greenCoffees ?? []).reduce((s: number, c: { current_stock_kg: number; purchase_price_per_kg: number }) =>
       s + c.current_stock_kg * c.purchase_price_per_kg, 0);
 
-  // â”€â”€ Histórico â”€â”€
+  //  Histórico 
   const totalRevenue = (allSales ?? []).reduce((s: number, x: Sale) => s + x.final_price, 0);
   const totalGrossProfit = (allSales ?? []).reduce((s: number, x: Sale) => s + x.profit, 0);
   const totalExpenses = (allExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
   const totalNetProfit = totalGrossProfit - totalExpenses;
 
-  // â”€â”€ Gastos recurrentes estimados por mes â”€â”€
+  //  Gastos recurrentes estimados por mes 
   const monthlyExpenseEstimate = (allExpenses ?? [])
     .filter((e: Expense) => e.frequency !=="once")
     .reduce((s: number, e: Expense) => s + toMonthlyAmount(e.amount, e.frequency), 0);
 
-  // â”€â”€ íšltimos 6 meses â”€â”€
+  //  íšltimos 6 meses 
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const d = subMonths(new Date(), 5 - i);
     const start = format(startOfMonth(d),"yyyy-MM-dd");
@@ -94,7 +94,7 @@ export default async function FinancesPage() {
 
   const maxRevenue = Math.max(...monthlyData.map(m => m.revenue), 1);
 
-  // â”€â”€ Gastos por categoría este mes â”€â”€
+  //  Gastos por categoría este mes 
   const expenseByCategory: Record<string, number> = {};
   (monthExpenses ?? []).forEach((e: Expense) => {
     expenseByCategory[e.category] = (expenseByCategory[e.category] ?? 0) + e.amount;
@@ -124,7 +124,7 @@ export default async function FinancesPage() {
               </span>
             </div>
             <Link href="/finances/pending" className="text-xs text-accent-green hover:underline font-medium">
-              Ver y cobrar â†’
+              Ver y cobrar 
             </Link>
           </div>
         </div>)}
@@ -165,7 +165,7 @@ export default async function FinancesPage() {
             </div>))}
         </div>
         {monthlyExpenseEstimate > 0 && (<p className="text-xs text-text-secondary mt-4 pt-3 border-t border-border-default">
-            ðŸ’¡ Estimado de gastos recurrentes: {formatCurrency(monthlyExpenseEstimate, roaster.currency)}/mes
+            Ÿ’¡ Estimado de gastos recurrentes: {formatCurrency(monthlyExpenseEstimate, roaster.currency)}/mes
           </p>)}
       </div>
 
@@ -200,7 +200,7 @@ export default async function FinancesPage() {
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="section-title mb-0">Gastos por categoría (mes)</p>
-            <Link href="/expenses" className="text-xs text-accent-green hover:underline">Ver todos â†’</Link>
+            <Link href="/expenses" className="text-xs text-accent-green hover:underline">Ver todos </Link>
           </div>
           {Object.keys(expenseByCategory).length === 0 ? (<div className="text-center py-6">
               <p className="text-sm text-text-secondary">Sin gastos este mes</p>
@@ -235,13 +235,13 @@ export default async function FinancesPage() {
               { label:"Ganancia neta", value: formatCurrency(totalNetProfit, roaster.currency), highlight: true },
               {
                 label:"Margen neto promedio",
-                value: totalRevenue > 0 ? `${((totalNetProfit / totalRevenue) * 100).toFixed(1)}%` :"â€”",
+                value: totalRevenue > 0 ? `${((totalNetProfit / totalRevenue) * 100).toFixed(1)}%` :""”",
               },
               { label:"Valor inventario", value: formatCurrency(inventoryValue, roaster.currency) },
               {
                 label:"Ticket promedio",
                 value: (allSales ?? []).length > 0
-                  ? formatCurrency(totalRevenue / (allSales ?? []).length, roaster.currency) :"â€”",
+                  ? formatCurrency(totalRevenue / (allSales ?? []).length, roaster.currency) :""”",
               },
               { label:"Total ventas", value: `${(allSales ?? []).length}` },
             ].map(({ label, value, highlight }) => (<div key={label}>

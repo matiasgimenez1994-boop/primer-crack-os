@@ -196,7 +196,7 @@ export default function NewRoastPage() {
                 >
                   <option value="">Seleccionar café...</option>
                   {coffees.map((c) => (<option key={c.id} value={c.id}>
-                      {c.name} â€” {c.current_stock_kg.toFixed(1)} kg disponibles
+                      {c.name} "” {c.current_stock_kg.toFixed(1)} kg disponibles
                     </option>))}
                 </select>
                 {errors.green_coffee_id && (<p className="text-xs text-status-danger mt-1">
@@ -220,7 +220,7 @@ export default function NewRoastPage() {
                   <div>
                     <p className="text-text-secondary">Origen</p>
                     <p className="font-medium text-text-primary">
-                      {selectedCoffee.origin_country ??"â€”"}
+                      {selectedCoffee.origin_country ??""”"}
                     </p>
                   </div>
                 </div>)}
@@ -403,7 +403,7 @@ export default function NewRoastPage() {
                 className="btn-primary flex-1 justify-center"
                 disabled={isSubmitting}
               >
-                {isSubmitting ?"Guardando..." :"Guardar y ver costos â†’"}
+                {isSubmitting ?"Guardando..." :"Guardar y ver costos "}
               </button>
             </div>
           </div>

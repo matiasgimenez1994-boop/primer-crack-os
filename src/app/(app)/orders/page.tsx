@@ -72,7 +72,7 @@ export default async function OrdersPage() {
           </div>
           {overdue.map((o: Order) => (<Link key={o.id} href={`/orders/${o.id}`}
               className="block text-xs text-status-danger ml-6 hover:underline">
-              · {(o as any).clients?.name ?? o.client_name ??"Sin cliente"} â€”
+              · {(o as any).clients?.name ?? o.client_name ??"Sin cliente"} "”
               vencido hace {differenceInDays(new Date(), parseISO(o.delivery_date!))} días
             </Link>))}
         </div>)}
@@ -113,14 +113,14 @@ export default async function OrdersPage() {
                       <td className="px-5 py-3.5 hidden md:table-cell">
                         {o.delivery_date ? (<span className={isOverdue ?"text-status-danger font-medium" :"text-text-secondary"}>
                             {formatDate(o.delivery_date)}
-                            {isOverdue &&" âš ï¸"}
-                          </span>) : <span className="text-text-secondary">â€”</span>}
+                            {isOverdue &&" š ï¸"}
+                          </span>) : <span className="text-text-secondary">"”</span>}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono text-text-secondary hidden md:table-cell">
                         {itemCount}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary">
-                        {o.total_amount > 0 ? formatCurrency(o.total_amount, roaster.currency) :"â€”"}
+                        {o.total_amount > 0 ? formatCurrency(o.total_amount, roaster.currency) :""”"}
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium border ${cfg.bg} ${cfg.color} ${cfg.border}`}>

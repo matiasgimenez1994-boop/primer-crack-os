@@ -170,7 +170,7 @@ export default async function DashboardPage() {
                 href={`/inventory/${c.id}`}
                 className="text-sm text-text-secondary hover:text-text-primary transition-colors"
               >
-                · {c.name} â€”{""}
+                · {c.name} "”{""}
                 <span className="font-mono font-medium">
                   {formatWeight(c.current_stock_kg)} restantes
                 </span>
@@ -193,7 +193,7 @@ export default async function DashboardPage() {
               return (<Link key={c.id} href={`/clients/${c.id}`}
                   className="text-sm text-blue-700 hover:text-blue-900 transition-colors"
                 >
-                  · <span className="font-medium">{c.name}</span> â€”{""}
+                  · <span className="font-medium">{c.name}</span> "”{""}
                   {days !== null ? `hace ${days} días sin comprar` :"sin compras registradas"}
                 </Link>);
             })}
@@ -253,7 +253,7 @@ export default async function DashboardPage() {
                       {(o as any).clients?.name ?? o.client_name ??"Sin cliente"}
                     </p>
                     {o.delivery_date && (<p className={`text-xs mt-0.5 ${isOverdue ?"text-status-danger font-medium" :"text-text-secondary"}`}>
-                        Entrega: {formatDate(o.delivery_date)}{isOverdue ?" âš ï¸" :""}
+                        Entrega: {formatDate(o.delivery_date)}{isOverdue ?" š ï¸" :""}
                       </p>)}
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-md border font-medium ${STATUS_COLORS[o.status]}`}>
@@ -320,7 +320,7 @@ export default async function DashboardPage() {
                         href={`/roasts/${b.id}`}
                         className="font-medium text-text-primary hover:text-accent-green transition-colors"
                       >
-                        {b.green_coffees?.name ??"â€”"}
+                        {b.green_coffees?.name ??""”"}
                       </Link>
                     </td>
                     <td className="px-5 py-3 text-text-secondary hidden sm:table-cell">
@@ -336,7 +336,7 @@ export default async function DashboardPage() {
                       {b.total_cost_per_kg_roasted
                         ? formatCurrency(b.total_cost_per_kg_roasted,
                             roaster.currency)
-                        :"â€”"}
+                        :""”"}
                     </td>
                     <td className="px-5 py-3 text-right hidden sm:table-cell">
                       <StatusBadge status={b.status} />
@@ -392,7 +392,7 @@ export default async function DashboardPage() {
                       </Link>
                     </td>
                     <td className="px-5 py-3 text-text-secondary hidden sm:table-cell">
-                      {c.origin_country ??"â€”"}
+                      {c.origin_country ??""”"}
                     </td>
                     <td className="px-5 py-3 text-right font-mono text-text-primary">
                       {formatWeight(c.current_stock_kg)}

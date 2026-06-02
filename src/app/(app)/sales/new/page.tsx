@@ -276,14 +276,14 @@ export default function NewSalePage() {
                 <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${productType ==="roasted" ?"border-accent-green bg-[#FDF5EE]" :"border-border-default hover:border-accent-green/40"}`}>
                   <input type="radio" value="roasted" className="accent-accent-green" {...register("product_type")} />
                   <div>
-                    <p className="text-sm font-semibold text-text-primary">â˜• Café tostado</p>
+                    <p className="text-sm font-semibold text-text-primary">Café tostado</p>
                     <p className="text-xs text-text-secondary">Bolsas de 250g, 500g, 1kg</p>
                   </div>
                 </label>
                 <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${productType ==="green" ?"border-accent-olive bg-[#F2F5EE]" :"border-border-default hover:border-accent-olive/40"}`}>
                   <input type="radio" value="green" className="accent-accent-olive" {...register("product_type")} />
                   <div>
-                    <p className="text-sm font-semibold text-text-primary">ðŸŒ± Café verde</p>
+                    <p className="text-sm font-semibold text-text-primary">Café verde</p>
                     <p className="text-xs text-text-secondary">Venta por kg en verde</p>
                   </div>
                 </label>
@@ -444,9 +444,9 @@ export default function NewSalePage() {
                   <label className="label-base">Tipo de pago</label>
                   <div className="flex gap-2">
                     {[
-                      { value:"cash", label:"ðŸ’µ Efectivo" },
-                      { value:"transfer", label:"ðŸ¦ Transferencia" },
-                      { value:"credit", label:"ðŸ“‹ A crédito" },
+                      { value:"cash", label:"Ÿ’µ Efectivo" },
+                      { value:"transfer", label:"Ÿ¦ Transferencia" },
+                      { value:"credit", label:"Ÿ“‹ A crédito" },
                     ].map((opt) => (<label key={opt.value}
                         className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-colors text-sm font-medium ${
                           watch("payment_type") === opt.value
@@ -465,7 +465,7 @@ export default function NewSalePage() {
                 {watch("payment_type") ==="credit" && (<div className="col-span-2">
                     <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                       <p className="text-xs font-medium text-orange-700 mb-2">
-                        âš ï¸ Esta venta quedará como pago pendiente
+                        š ï¸ Esta venta quedará como pago pendiente
                       </p>
                       <label className="label-base">Fecha límite de pago (opcional)</label>
                       <input type="date" className="input-base bg-white" {...register("due_date")} />
@@ -511,7 +511,7 @@ export default function NewSalePage() {
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-text-secondary">Cantidad</span>
-                    <span className="font-mono">í— {qty}</span>
+                    <span className="font-mono">× {qty}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-text-secondary">Subtotal</span>

@@ -237,7 +237,7 @@ export default function OnboardingPage() {
                     className="btn-primary flex-1"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ?"Guardando..." :"Empezar â†’"}
+                    {isSubmitting ?"Guardando..." :"Empezar "}
                   </button>
                 </div>
               </div>)}

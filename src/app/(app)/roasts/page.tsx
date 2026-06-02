@@ -81,7 +81,7 @@ export default async function RoastsPage() {
                         href={`/roasts/${b.id}`}
                         className="font-medium text-text-primary group-hover:text-accent-green transition-colors"
                       >
-                        {b.green_coffees?.name ??"â€”"}
+                        {b.green_coffees?.name ??""”"}
                       </Link>
                     </td>
                     <td className="px-5 py-3.5 text-text-secondary hidden sm:table-cell">
@@ -99,7 +99,7 @@ export default async function RoastsPage() {
                     <td className="px-5 py-3.5 text-right font-mono text-text-primary">
                       {b.total_cost_per_kg_roasted
                         ? formatCurrency(b.total_cost_per_kg_roasted, roaster.currency)
-                        :"â€”"}
+                        :""”"}
                     </td>
                     <td className="px-5 py-3.5 text-right hidden sm:table-cell">
                       <StatusBadge status={b.status} />

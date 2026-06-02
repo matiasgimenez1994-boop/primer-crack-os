@@ -94,7 +94,7 @@ export default async function ClientsPage() {
               return (<Link key={c.id} href={`/clients/${c.id}`}
                   className="text-sm text-text-secondary hover:text-text-primary transition-colors"
                 >
-                  · <span className="font-medium">{c.name}</span> â€”{""}
+                  · <span className="font-medium">{c.name}</span> "”{""}
                   {daysSince !== null
                     ? `hace ${daysSince} días sin comprar`
                     :"nunca registró una compra"}
@@ -151,12 +151,12 @@ export default async function ClientsPage() {
                         {stats?.count ?? 0}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary">
-                        {stats ? formatCurrency(stats.total, roaster.currency) :"â€”"}
+                        {stats ? formatCurrency(stats.total, roaster.currency) :""”"}
                       </td>
                       <td className="px-5 py-3.5 text-right text-text-secondary hidden sm:table-cell">
                         {stats ? (<span className={daysSince !== null && daysSince >= c.inactive_alert_days ?"text-status-warning font-medium" :""}>
                             {formatDate(stats.lastDate)}
-                          </span>) :"â€”"}
+                          </span>) :""”"}
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         {isInactive ? (<span className="inline-flex items-center gap-1 text-xs text-status-warning font-medium">
