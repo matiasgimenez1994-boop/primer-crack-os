@@ -126,16 +126,25 @@ export default async function DashboardPage() {
   return (<div>
       {/* Header */}
       <div className="page-header">
-        <div>
-          <h1 className="page-title">{roaster.business_name}</h1>
-          <p className="text-sm text-text-secondary">
-            {new Date().toLocaleDateString("es-UY", {
-              weekday:"long",
-              day:"numeric",
-              month:"long",
-              year:"numeric",
-            })}
-          </p>
+        <div className="flex items-center gap-4">
+          {roaster.logo_url && (
+            <img
+              src={roaster.logo_url}
+              alt={roaster.business_name}
+              className="w-12 h-12 rounded-xl object-contain border border-border-default bg-white p-1"
+            />
+          )}
+          <div>
+            <h1 className="page-title">{roaster.business_name}</h1>
+            <p className="text-sm text-text-secondary">
+              {new Date().toLocaleDateString("es-UY", {
+                weekday:"long",
+                day:"numeric",
+                month:"long",
+                year:"numeric",
+              })}
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Link href="/inventory/new" className="btn-secondary hidden sm:flex">

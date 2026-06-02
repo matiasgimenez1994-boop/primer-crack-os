@@ -12,6 +12,7 @@ export interface Roaster {
   default_energy_cost_per_kg: number;
   default_packaging_cost_per_kg: number;
   default_labor_cost_per_kg: number;
+  logo_url: string | null;
   created_at: string;
   updated_at: string;
 }
