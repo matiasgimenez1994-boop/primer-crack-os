@@ -196,7 +196,7 @@ export default function NewRoastPage() {
                 >
                   <option value="">Seleccionar café...</option>
                   {coffees.map((c) => (<option key={c.id} value={c.id}>
-                      {c.name} "” {c.current_stock_kg.toFixed(1)} kg disponibles
+                      {c.name} "" {c.current_stock_kg.toFixed(1)} kg disponibles
                     </option>))}
                 </select>
                 {errors.green_coffee_id && (<p className="text-xs text-status-danger mt-1">
@@ -220,7 +220,7 @@ export default function NewRoastPage() {
                   <div>
                     <p className="text-text-secondary">Origen</p>
                     <p className="font-medium text-text-primary">
-                      {selectedCoffee.origin_country ??""”"}
+                      {selectedCoffee.origin_country ?? "-"}
                     </p>
                   </div>
                 </div>)}

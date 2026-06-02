@@ -1,4 +1,4 @@
-﻿import { createClient } from"@/lib/supabase/server";
+import { createClient } from"@/lib/supabase/server";
 import { redirect } from"next/navigation";
 import Link from"next/link";
 import { Plus, Leaf } from"lucide-react";
@@ -124,10 +124,10 @@ export default async function InventoryPage({
                         </p>)}
                     </td>
                     <td className="px-5 py-3.5 text-text-secondary hidden md:table-cell">
-                      {c.origin_country ??""”"}
+                      {c.origin_country ?? "-"}
                     </td>
                     <td className="px-5 py-3.5 text-text-secondary hidden lg:table-cell">
-                      {c.process ??""”"}
+                      {c.process ?? "-"}
                     </td>
                     <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary">
                       {formatWeight(c.current_stock_kg)}

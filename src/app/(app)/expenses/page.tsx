@@ -1,4 +1,4 @@
-﻿import { createClient } from"@/lib/supabase/server";
+import { createClient } from"@/lib/supabase/server";
 import { redirect } from"next/navigation";
 import Link from"next/link";
 import { Plus, Receipt } from"lucide-react";
@@ -133,7 +133,7 @@ export default async function ExpensesPage() {
                     <td className="px-5 py-3.5 text-right font-mono text-text-secondary hidden md:table-cell">
                       {e.frequency !=="once"
                         ? formatCurrency(toMonthlyAmount(e.amount, e.frequency), roaster.currency)
-                        :""”"}
+                        : "-"}
                     </td>
                     <td className="px-3 py-3.5 text-right">
                       <Link href={`/expenses/${e.id}/edit`}

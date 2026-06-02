@@ -210,7 +210,7 @@ export function LabelsClient({ roasterName, batches, currency }: Props) {
         </div>
       </div>
 
-      {/* Zona de impresión "” solo visible al imprimir */}
+      {/* Zona de impresión "" solo visible al imprimir */}
       {selectedBatch && (<div className="print-only">
           <div className="print-labels-grid">
             {Array.from({ length: copies }).map((_, i) => (<LabelPreview

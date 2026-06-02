@@ -1,4 +1,4 @@
-﻿import { createClient } from"@/lib/supabase/server";
+import { createClient } from"@/lib/supabase/server";
 import { redirect } from"next/navigation";
 import Link from"next/link";
 import {
@@ -165,7 +165,7 @@ export default async function FinancesPage() {
             </div>))}
         </div>
         {monthlyExpenseEstimate > 0 && (<p className="text-xs text-text-secondary mt-4 pt-3 border-t border-border-default">
-            Ÿ’¡ Estimado de gastos recurrentes: {formatCurrency(monthlyExpenseEstimate, roaster.currency)}/mes
+            Ÿ"¡ Estimado de gastos recurrentes: {formatCurrency(monthlyExpenseEstimate, roaster.currency)}/mes
           </p>)}
       </div>
 
@@ -235,13 +235,13 @@ export default async function FinancesPage() {
               { label:"Ganancia neta", value: formatCurrency(totalNetProfit, roaster.currency), highlight: true },
               {
                 label:"Margen neto promedio",
-                value: totalRevenue > 0 ? `${((totalNetProfit / totalRevenue) * 100).toFixed(1)}%` :""”",
+                value: totalRevenue > 0 ? `${((totalNetProfit / totalRevenue) * 100).toFixed(1)}%` : "-",
               },
               { label:"Valor inventario", value: formatCurrency(inventoryValue, roaster.currency) },
               {
                 label:"Ticket promedio",
                 value: (allSales ?? []).length > 0
-                  ? formatCurrency(totalRevenue / (allSales ?? []).length, roaster.currency) :""”",
+                  ? formatCurrency(totalRevenue / (allSales ?? []).length, roaster.currency) : "-",
               },
               { label:"Total ventas", value: `${(allSales ?? []).length}` },
             ].map(({ label, value, highlight }) => (<div key={label}>

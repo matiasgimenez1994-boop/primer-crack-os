@@ -60,7 +60,7 @@ export default function PendingPaymentsPage() {
       paid_at: new Date().toISOString(),
     }).eq("id", sale.id);
 
-    toast.success("Pago registrado œ“");
+    toast.success("Pago registrado");
     load(roaster.id);
   }
 
@@ -118,7 +118,7 @@ export default function PendingPaymentsPage() {
             </span>
           </div>
           {overdue.map(s => (<p key={s.id} className="text-xs text-status-danger ml-6">
-              · {(s as any).clients?.name ??"Sin cliente"} "” vencido hace{""}
+              · {(s as any).clients?.name ??"Sin cliente"} "" vencido hace{""}
               {differenceInDays(new Date(), parseISO(s.due_date!))} días
             </p>))}
         </div>)}
@@ -221,7 +221,7 @@ function PartialPayCard({
             onChange={e => setPayType(e.target.value)}
             className="input-base text-xs py-1.5 flex-1"
           >
-            <option value="cash">Ÿ’µ Efectivo</option>
+            <option value="cash">Ÿ"µ Efectivo</option>
             <option value="transfer">Ÿ¦ Transferencia</option>
           </select>
           <button

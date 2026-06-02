@@ -1,4 +1,4 @@
-﻿import { createClient } from"@/lib/supabase/server";
+import { createClient } from"@/lib/supabase/server";
 import { redirect } from"next/navigation";
 import Link from"next/link";
 import {
@@ -170,7 +170,7 @@ export default async function DashboardPage() {
                 href={`/inventory/${c.id}`}
                 className="text-sm text-text-secondary hover:text-text-primary transition-colors"
               >
-                · {c.name} "”{""}
+                · {c.name} ""{""}
                 <span className="font-mono font-medium">
                   {formatWeight(c.current_stock_kg)} restantes
                 </span>
@@ -193,7 +193,7 @@ export default async function DashboardPage() {
               return (<Link key={c.id} href={`/clients/${c.id}`}
                   className="text-sm text-blue-700 hover:text-blue-900 transition-colors"
                 >
-                  · <span className="font-medium">{c.name}</span> "”{""}
+                  · <span className="font-medium">{c.name}</span> ""{""}
                   {days !== null ? `hace ${days} días sin comprar` :"sin compras registradas"}
                 </Link>);
             })}
@@ -320,7 +320,7 @@ export default async function DashboardPage() {
                         href={`/roasts/${b.id}`}
                         className="font-medium text-text-primary hover:text-accent-green transition-colors"
                       >
-                        {b.green_coffees?.name ??""”"}
+                        {b.green_coffees?.name ?? "-"}
                       </Link>
                     </td>
                     <td className="px-5 py-3 text-text-secondary hidden sm:table-cell">
@@ -334,9 +334,8 @@ export default async function DashboardPage() {
                     </td>
                     <td className="px-5 py-3 text-right font-mono text-text-primary">
                       {b.total_cost_per_kg_roasted
-                        ? formatCurrency(b.total_cost_per_kg_roasted,
-                            roaster.currency)
-                        :""”"}
+                        ? formatCurrency(b.total_cost_per_kg_roasted, roaster.currency)
+                        : "-"}
                     </td>
                     <td className="px-5 py-3 text-right hidden sm:table-cell">
                       <StatusBadge status={b.status} />
@@ -392,7 +391,7 @@ export default async function DashboardPage() {
                       </Link>
                     </td>
                     <td className="px-5 py-3 text-text-secondary hidden sm:table-cell">
-                      {c.origin_country ??""”"}
+                      {c.origin_country ?? "-"}
                     </td>
                     <td className="px-5 py-3 text-right font-mono text-text-primary">
                       {formatWeight(c.current_stock_kg)}

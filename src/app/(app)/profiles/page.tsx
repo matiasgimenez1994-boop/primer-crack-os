@@ -1,4 +1,4 @@
-﻿import { createClient } from"@/lib/supabase/server";
+import { createClient } from"@/lib/supabase/server";
 import { redirect } from"next/navigation";
 import Link from"next/link";
 import { Plus, BookOpen, Star } from"lucide-react";
@@ -83,9 +83,9 @@ function ProfileCard({ profile: p }: { profile: RoastProfile }) {
       {/* Parámetros clave */}
       <div className="grid grid-cols-3 gap-2 text-center">
         {[
-          { label:"Carga", value: p.charge_temp_celsius ? `${p.charge_temp_celsius}°C` :""”" },
-          { label:"Tiempo", value: p.total_time_min ? `${p.total_time_min}'` :""”" },
-          { label:"Desarrollo", value: p.development_pct ? `${p.development_pct}%` :""”" },
+          { label: "Carga", value: p.charge_temp_celsius ? `${p.charge_temp_celsius}°C` : "-" },
+          { label: "Tiempo", value: p.total_time_min ? `${p.total_time_min}'` : "-" },
+          { label: "Desarrollo", value: p.development_pct ? `${p.development_pct}%` : "-" },
         ].map(({ label, value }) => (<div key={label} className="bg-[#FDFAF6] rounded-lg py-2 px-1">
             <p className="text-xs font-mono font-semibold text-text-primary">{value}</p>
             <p className="text-xs text-text-secondary mt-0.5">{label}</p>

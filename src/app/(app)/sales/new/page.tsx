@@ -444,9 +444,9 @@ export default function NewSalePage() {
                   <label className="label-base">Tipo de pago</label>
                   <div className="flex gap-2">
                     {[
-                      { value:"cash", label:"Ÿ’µ Efectivo" },
-                      { value:"transfer", label:"Ÿ¦ Transferencia" },
-                      { value:"credit", label:"Ÿ“‹ A crédito" },
+                      { value: "cash", label: "Efectivo" },
+                      { value: "transfer", label: "Transferencia" },
+                      { value: "credit", label: "A credito" },
                     ].map((opt) => (<label key={opt.value}
                         className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-colors text-sm font-medium ${
                           watch("payment_type") === opt.value
