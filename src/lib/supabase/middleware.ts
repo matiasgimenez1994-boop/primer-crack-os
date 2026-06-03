@@ -27,10 +27,12 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  const publicRoutes = ["/login", "/register", "/auth/confirm", "/share"];
   const authRoutes = ["/login","/register"];
   const isAuthRoute = authRoutes.some((r) => pathname.startsWith(r));
+  const isPublicRoute = publicRoutes.some((r) => pathname.startsWith(r));
 
-  if (!user && !isAuthRoute && pathname !=="/") {
+  if (!user && !isPublicRoute && pathname !=="/") {
     const url = request.nextUrl.clone();
     url.pathname ="/login";
     return NextResponse.redirect(url);
