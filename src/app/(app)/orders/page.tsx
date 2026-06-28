@@ -8,14 +8,18 @@ import { differenceInDays, parseISO } from"date-fns";
 import type { Order } from"@/types";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  pending:   { label:"Pendiente",  color:"text-yellow-700",  bg:"bg-yellow-50",  border:"border-yellow-200" },
-  roasting:  { label:"Tostando",   color:"text-orange-700",  bg:"bg-orange-50",  border:"border-orange-200" },
-  ready:     { label:"Listo",      color:"text-status-success", bg:"bg-green-50", border:"border-green-200" },
-  delivered: { label:"Entregado",  color:"text-text-secondary", bg:"bg-gray-100", border:"border-gray-200" },
+  draft:     { label:"Borrador",   color:"text-text-secondary", bg:"bg-gray-100",   border:"border-gray-200" },
+  proforma:  { label:"Proforma",   color:"text-blue-700",      bg:"bg-blue-50",   border:"border-blue-200" },
+  pending:   { label:"Pendiente",  color:"text-yellow-700",    bg:"bg-yellow-50", border:"border-yellow-200" },
+  confirmed: { label:"Confirmado", color:"text-status-success", bg:"bg-green-50",  border:"border-green-200" },
+  roasting:  { label:"Tostando",   color:"text-orange-700",    bg:"bg-orange-50", border:"border-orange-200" },
+  ready:     { label:"Listo",      color:"text-status-success", bg:"bg-green-50",  border:"border-green-200" },
+  delivered: { label:"Entregado",  color:"text-text-secondary", bg:"bg-gray-100",  border:"border-gray-200" },
   cancelled: { label:"Cancelado",  color:"text-status-danger",  bg:"bg-red-50",   border:"border-red-200" },
 };
 
-const STATUS_ORDER = ["pending","roasting","ready","delivered","cancelled"];
+const FALLBACK_STATUS = STATUS_CONFIG.pending;
+const STATUS_ORDER = ["draft","proforma","pending","confirmed","roasting","ready","delivered","cancelled"];
 
 export default async function OrdersPage() {
   const supabase = await createClient();
@@ -33,7 +37,7 @@ export default async function OrdersPage() {
     .order("order_date", { ascending: false });
 
   const active = (orders ?? []).filter((o: Order) =>
-    !["delivered","cancelled"].includes(o.status));
+    !["delivered","cancelled","draft","proforma"].includes(o.status));
   const today = todayISO();
   const overdue = active.filter((o: Order) =>
     o.delivery_date && o.delivery_date < today && o.status !=="delivered");
@@ -55,7 +59,7 @@ export default async function OrdersPage() {
       {/* Stats rápidas */}
       <div className="flex gap-2 flex-wrap mb-5">
         {STATUS_ORDER.filter(s => counts[s]).map(s => {
-          const cfg = STATUS_CONFIG[s];
+          const cfg = STATUS_CONFIG[s] ?? FALLBACK_STATUS;
           return (<div key={s} className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${cfg.bg} ${cfg.color} ${cfg.border}`}>
               {cfg.label}: {counts[s]}
             </div>);
@@ -96,7 +100,7 @@ export default async function OrdersPage() {
               </thead>
               <tbody>
                 {(orders ?? []).map((o: Order) => {
-                  const cfg = STATUS_CONFIG[o.status];
+                  const cfg = STATUS_CONFIG[o.status] ?? FALLBACK_STATUS;
                   const isOverdue = o.delivery_date && o.delivery_date < today && !["delivered","cancelled"].includes(o.status);
                   const itemCount = (o as any).order_items?.length ?? 0;
                   return (<tr key={o.id}
