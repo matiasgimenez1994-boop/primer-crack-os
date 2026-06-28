@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, ShoppingBag, DollarSign, Package, Trash2, FileText, Download } from "lucide-react";
+import { Plus, ShoppingBag, DollarSign, Package, Trash2, FileText, Download, Pencil } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatsCard } from "@/components/ui/StatsCard";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -60,6 +60,20 @@ function itemLabel(item: any) {
 
 function documentFilename(order: Order) {
   return documentLabel(order).toLowerCase() + "-" + order.id.slice(0, 8) + ".pdf";
+}
+
+function paymentLabel(order: Order) {
+  const status = (order as any).payment_status ?? "paid";
+  if (status === "pending") return "Pendiente";
+  if (status === "partial") return "Parcial";
+  return "Pagado";
+}
+
+function paymentClass(order: Order) {
+  const status = (order as any).payment_status ?? "paid";
+  if (status === "pending") return "bg-orange-50 text-orange-700 border-orange-200";
+  if (status === "partial") return "bg-blue-50 text-blue-700 border-blue-200";
+  return "bg-green-50 text-status-success border-green-200";
 }
 
 export function SalesClient({ orders: initialOrders, currency, businessName, totalRevenue, totalUnits }: Props) {
@@ -203,7 +217,8 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Subtotal</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">IVA</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Total</th>
-                  <th className="px-3 py-3 w-20" />
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Pago</th>
+                  <th className="px-3 py-3 w-24" />
                 </tr>
               </thead>
               <tbody>
@@ -225,8 +240,14 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
                     <td className="px-5 py-3.5 text-right font-mono whitespace-nowrap">{formatCurrency(order.subtotal_amount ?? 0, currency)}</td>
                     <td className="px-5 py-3.5 text-right font-mono whitespace-nowrap">{formatCurrency(order.tax_amount ?? 0, currency)}</td>
                     <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary whitespace-nowrap">{formatCurrency(order.total_amount ?? 0, currency)}</td>
+                    <td className="px-5 py-3.5 text-right">
+                      <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium border ${paymentClass(order)}`}>{paymentLabel(order)}</span>
+                    </td>
                     <td className="px-3 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <Link href={`/sales/${order.id}/edit`} className="p-1.5 rounded-lg text-text-secondary hover:text-accent-green hover:bg-green-50 transition-all" title="Editar venta">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Link>
                         <button onClick={() => handleDownload(order)} disabled={downloading === order.id} className="p-1.5 rounded-lg text-text-secondary hover:text-accent-green hover:bg-green-50 transition-all" title="Descargar documento">
                           {downloading === order.id ? <div className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                         </button>
