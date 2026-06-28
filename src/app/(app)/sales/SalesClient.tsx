@@ -69,6 +69,10 @@ function paymentLabel(order: Order) {
   return "Pagado";
 }
 
+function paymentCurrency(order: Order, fallback: string) {
+  return (order as any).payment_currency ?? fallback;
+}
+
 function paymentClass(order: Order) {
   const status = (order as any).payment_status ?? "paid";
   if (status === "pending") return "bg-orange-50 text-orange-700 border-orange-200";
@@ -241,7 +245,10 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
                     <td className="px-5 py-3.5 text-right font-mono whitespace-nowrap">{formatCurrency(order.tax_amount ?? 0, currency)}</td>
                     <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary whitespace-nowrap">{formatCurrency(order.total_amount ?? 0, currency)}</td>
                     <td className="px-5 py-3.5 text-right">
-                      <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium border ${paymentClass(order)}`}>{paymentLabel(order)}</span>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium border ${paymentClass(order)}`}>{paymentLabel(order)}</span>
+                        {(order as any).amount_paid != null && <span className="text-[11px] text-text-secondary">{formatCurrency(Number((order as any).amount_paid ?? 0), paymentCurrency(order, currency))}</span>}
+                      </div>
                     </td>
                     <td className="px-3 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1">
