@@ -131,6 +131,11 @@ export interface Order {
   total_amount: number;
   inventory_committed_at: string | null;
   confirmed_at: string | null;
+  payment_type: PaymentType | null;
+  payment_status: PaymentStatus | null;
+  amount_paid: number | null;
+  due_date: string | null;
+  paid_at: string | null;
   created_at: string;
   updated_at: string;
   clients?: Client;
