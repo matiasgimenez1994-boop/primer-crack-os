@@ -10,7 +10,7 @@ export default async function SalesPage() {
 
   const { data: roaster } = await supabase
     .from("roasters")
-    .select("id, currency")
+    .select("id, currency, business_name")
     .eq("user_id", user.id)
     .single();
   if (!roaster) redirect("/onboarding");
