@@ -9,33 +9,37 @@ export default async function SalesPage() {
   if (!user) redirect("/login");
 
   const { data: roaster } = await supabase
-    .from("roasters").select("id, currency").eq("user_id", user.id).single();
+    .from("roasters")
+    .select("id, currency")
+    .eq("user_id", user.id)
+    .single();
   if (!roaster) redirect("/onboarding");
 
   const { start } = currentMonthRange();
 
-  const [{ data: sales }, { data: monthSales }] = await Promise.all([
+  const [{ data: orders }, { data: monthOrders }] = await Promise.all([
     supabase
-      .from("sales")
-      .select("*, roast_batches(green_coffees(name)), green_coffees(name), clients(name)")
+      .from("orders")
+      .select("*, clients(name), order_items(*, green_coffees(name), roast_batches(roast_date, green_coffees(name)))")
       .eq("roaster_id", roaster.id)
-      .order("sale_date", { ascending: false }),
+      .order("order_date", { ascending: false }),
     supabase
-      .from("sales")
-      .select("final_price, profit, quantity")
+      .from("orders")
+      .select("total_amount")
       .eq("roaster_id", roaster.id)
-      .gte("sale_date", start),
+      .gte("order_date", start)
+      .in("status", ["confirmed", "ready", "delivered"]),
   ]);
 
-  type MonthlySale = { final_price: number; profit: number; quantity: number };
-  const totalRevenue = (monthSales ?? []).reduce((s: number, x: MonthlySale) => s + x.final_price, 0);
-  const totalProfit = (monthSales ?? []).reduce((s: number, x: MonthlySale) => s + x.profit, 0);
-  const totalUnits = (monthSales ?? []).reduce((s: number, x: MonthlySale) => s + x.quantity, 0);
-  const avgMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+  type MonthlyOrder = { total_amount: number };
+  const totalRevenue = (monthOrders ?? []).reduce((sum: number, order: MonthlyOrder) => sum + Number(order.total_amount ?? 0), 0);
+  const totalProfit = 0;
+  const totalUnits = (orders ?? []).reduce((sum: number, order: any) => sum + (order.order_items?.length ?? 0), 0);
+  const avgMargin = 0;
 
   return (
     <SalesClient
-      sales={sales ?? []}
+      orders={orders ?? []}
       currency={roaster.currency}
       totalRevenue={totalRevenue}
       totalProfit={totalProfit}
