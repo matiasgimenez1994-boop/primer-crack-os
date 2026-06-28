@@ -133,6 +133,7 @@ export interface Order {
   confirmed_at: string | null;
   payment_type: PaymentType | null;
   payment_status: PaymentStatus | null;
+  payment_currency: PaymentCurrency | null;
   amount_paid: number | null;
   due_date: string | null;
   paid_at: string | null;
@@ -184,6 +185,7 @@ export interface Expense {
 }
 export type PaymentType ="cash" |"transfer" |"credit";
 export type PaymentStatus ="paid" |"pending" |"partial";
+export type PaymentCurrency = "USD" | "UYU";
 
 export interface Payment {
   id: string;
@@ -216,6 +218,7 @@ export interface Sale {
   client_id: string | null;
   payment_type: PaymentType;
   payment_status: PaymentStatus;
+  payment_currency: PaymentCurrency;
   amount_paid: number;
   due_date: string | null;
   paid_at: string | null;
