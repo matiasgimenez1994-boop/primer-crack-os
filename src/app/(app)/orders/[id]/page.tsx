@@ -5,7 +5,7 @@ import { useParams, useRouter } from"next/navigation";
 import Link from"next/link";
 import {
   ArrowLeft, CheckCircle, Flame, Package,
-  Truck, XCircle, ShoppingBag, Clock, AlertTriangle,
+  Truck, XCircle, ShoppingBag, Clock, AlertTriangle, FileText,
 } from"lucide-react";
 import { createClient } from"@/lib/supabase/client";
 import { formatCurrency, formatDate, todayISO } from"@/lib/utils";
@@ -14,12 +14,17 @@ import { differenceInDays, parseISO } from"date-fns";
 import type { Order, OrderItem, Roaster } from"@/types";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: React.FC<{className?:string}> }> = {
-  pending:   { label:"Pendiente",  color:"text-yellow-700",     bg:"bg-yellow-50",  border:"border-yellow-200", icon: Clock },
-  roasting:  { label:"Tostando",   color:"text-orange-700",     bg:"bg-orange-50",  border:"border-orange-200", icon: Flame },
-  ready:     { label:"Listo",      color:"text-status-success",  bg:"bg-green-50",   border:"border-green-200",  icon: Package },
-  delivered: { label:"Entregado",  color:"text-text-secondary",  bg:"bg-gray-100",   border:"border-gray-200",   icon: Truck },
-  cancelled: { label:"Cancelado",  color:"text-status-danger",   bg:"bg-red-50",     border:"border-red-200",    icon: XCircle },
+  draft:     { label:"Borrador",   color:"text-text-secondary",  bg:"bg-gray-100",   border:"border-gray-200",    icon: FileText },
+  proforma:  { label:"Proforma",   color:"text-blue-700",       bg:"bg-blue-50",    border:"border-blue-200",    icon: FileText },
+  pending:   { label:"Pendiente",  color:"text-yellow-700",     bg:"bg-yellow-50",  border:"border-yellow-200",  icon: Clock },
+  confirmed: { label:"Confirmado", color:"text-status-success",  bg:"bg-green-50",   border:"border-green-200",   icon: CheckCircle },
+  roasting:  { label:"Tostando",   color:"text-orange-700",     bg:"bg-orange-50",  border:"border-orange-200",  icon: Flame },
+  ready:     { label:"Listo",      color:"text-status-success",  bg:"bg-green-50",   border:"border-green-200",   icon: Package },
+  delivered: { label:"Entregado",  color:"text-text-secondary",  bg:"bg-gray-100",   border:"border-gray-200",    icon: Truck },
+  cancelled: { label:"Cancelado",  color:"text-status-danger",   bg:"bg-red-50",     border:"border-red-200",     icon: XCircle },
 };
+
+const FALLBACK_STATUS = STATUS_CONFIG.pending;
 
 const NEXT_STATUS: Record<string, string> = {
   pending:"roasting",
@@ -66,7 +71,7 @@ export default function OrderDetailPage() {
     const { error } = await supabase.from("orders")
       .update({ status: next }).eq("id", id);
     if (error) { toast.error("Error al actualizar"); return; }
-    toast.success(`Pedido marcado como: ${STATUS_CONFIG[next].label}`);
+    toast.success(`Pedido marcado como: ${(STATUS_CONFIG[next] ?? FALLBACK_STATUS).label}`);
     load();
   }
 
@@ -112,7 +117,7 @@ export default function OrderDetailPage() {
 
   if (!order) return <p className="text-text-secondary p-8">Pedido no encontrado</p>;
 
-  const cfg = STATUS_CONFIG[order.status];
+  const cfg = STATUS_CONFIG[order.status] ?? FALLBACK_STATUS;
   const StatusIcon = cfg.icon;
   const isActive = !["delivered","cancelled"].includes(order.status);
   const isOverdue = order.delivery_date && order.delivery_date < todayISO() && isActive;
@@ -163,11 +168,11 @@ export default function OrderDetailPage() {
       {/* Timeline de estado */}
       <div className="card p-5 mb-5">
         <div className="flex items-center gap-0">
-          {["pending","roasting","ready","delivered"].map((s, i, arr) => {
+          {["pending","confirmed","roasting","ready","delivered"].map((s, i, arr) => {
             const scfg = STATUS_CONFIG[s];
             const SIcon = scfg.icon;
-            const isCurrentOrPast = ["pending","roasting","ready","delivered"].indexOf(order.status) >= i
-              && order.status !=="cancelled";
+            const flowIndex = ["pending","confirmed","roasting","ready","delivered"].indexOf(order.status);
+            const isCurrentOrPast = flowIndex >= 0 && flowIndex >= i && order.status !=="cancelled";
             const isCurrent = order.status === s;
             return (<div key={s} className="flex items-center flex-1 last:flex-none">
                 <div className={`flex flex-col items-center gap-1 ${isCurrent ?"scale-110" :""}`}>
