@@ -68,6 +68,10 @@ export default function NewSalePage() {
   const [documentType, setDocumentType] = useState<DocumentType>("boleta");
   const [defaultTaxRate, setDefaultTaxRate] = useState(19);
   const [notes, setNotes] = useState("");
+  const [paymentType, setPaymentType] = useState<"cash" | "transfer" | "credit">("cash");
+  const [paymentStatus, setPaymentStatus] = useState<"paid" | "pending" | "partial">("paid");
+  const [amountPaid, setAmountPaid] = useState(0);
+  const [dueDate, setDueDate] = useState("");
   const [items, setItems] = useState<SaleItemForm[]>([makeItem("green")]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -187,6 +191,11 @@ export default function NewSalePage() {
       subtotal_amount: totals.subtotal,
       tax_amount: totals.tax,
       total_amount: totals.total,
+      payment_type: paymentType,
+      payment_status: paymentStatus,
+      amount_paid: paymentStatus === "paid" ? totals.total : paymentStatus === "pending" ? 0 : amountPaid,
+      due_date: paymentStatus === "paid" ? null : dueDate || null,
+      paid_at: paymentStatus === "paid" ? new Date().toISOString() : null,
       notes: notes || null,
     }).select("id").single();
 
@@ -250,7 +259,7 @@ export default function NewSalePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col gap-6">
           <div className="card p-6">
-            <p className="section-title">Documento</p>
+            <p className="section-title">Documento y pago</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="label-base">Tipo</label>
@@ -271,6 +280,24 @@ export default function NewSalePage() {
                 </select>
               </div>
               <div><label className="label-base">Entrega</label><input type="date" className="input-base" value={deliveryDate} onChange={(event) => setDeliveryDate(event.target.value)} /></div>
+              <div>
+                <label className="label-base">Estado de pago</label>
+                <select className="input-base" value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value as "paid" | "pending" | "partial")}>
+                  <option value="paid">Pagado</option>
+                  <option value="pending">Pendiente de pago</option>
+                  <option value="partial">Pago parcial</option>
+                </select>
+              </div>
+              <div>
+                <label className="label-base">Medio de pago</label>
+                <select className="input-base" value={paymentType} onChange={(event) => setPaymentType(event.target.value as "cash" | "transfer" | "credit")}>
+                  <option value="cash">Efectivo</option>
+                  <option value="transfer">Transferencia</option>
+                  <option value="credit">Credito</option>
+                </select>
+              </div>
+              {paymentStatus === "partial" && <div><label className="label-base">Monto pagado</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={amountPaid} onChange={(event) => setAmountPaid(Number(event.target.value))} /></div>}
+              {paymentStatus !== "paid" && <div><label className="label-base">Vencimiento pago</label><input type="date" className="input-base" value={dueDate} onChange={(event) => setDueDate(event.target.value)} /></div>}
               <div><label className="label-base">Notas</label><input className="input-base" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Observaciones..." /></div>
             </div>
           </div>
