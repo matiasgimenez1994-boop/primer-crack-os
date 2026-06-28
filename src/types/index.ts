@@ -58,6 +58,7 @@ export interface RoastBatch {
   energy_cost_per_kg: number;
   labor_cost_per_kg: number;
   total_cost_per_kg_roasted: number;
+  current_stock_kg?: number;
   created_at: string;
   updated_at: string;
   green_coffees?: GreenCoffee;
@@ -91,7 +92,8 @@ export interface MarginResult {
 }
 
 export type ClientType ="cafe" |"individual" |"restaurant" |"distributor" |"other";
-export type OrderStatus ="pending" |"roasting" |"ready" |"delivered" |"cancelled";
+export type OrderStatus = "draft" | "proforma" | "pending" | "confirmed" | "roasting" | "ready" | "delivered" | "cancelled";
+export type DocumentType = "draft" | "proforma" | "boleta";
 
 export interface OrderItem {
   id: string;
@@ -103,9 +105,14 @@ export interface OrderItem {
   green_weight_kg: number | null;
   quantity: number;
   unit_price: number;
+  tax_rate?: number;
+  subtotal_amount?: number;
+  tax_amount?: number;
+  total_amount?: number;
   notes: string | null;
   created_at: string;
   green_coffees?: GreenCoffee;
+  roast_batches?: RoastBatch & { green_coffees?: GreenCoffee };
 }
 
 export interface Order {
@@ -116,8 +123,14 @@ export interface Order {
   order_date: string;
   delivery_date: string | null;
   status: OrderStatus;
+  document_type: DocumentType;
+  tax_rate: number;
+  subtotal_amount: number;
+  tax_amount: number;
   notes: string | null;
   total_amount: number;
+  inventory_committed_at: string | null;
+  confirmed_at: string | null;
   created_at: string;
   updated_at: string;
   clients?: Client;
