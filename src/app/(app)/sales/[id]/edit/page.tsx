@@ -382,7 +382,7 @@ export default function EditSalePage() {
                 </select>
               </div>
               <div>
-                <label className="label-base">Moneda del pago</label>
+                <label className="label-base">Moneda de la venta</label>
                 <select className="input-base" value={paymentCurrency} onChange={(event) => setPaymentCurrency(event.target.value as PaymentCurrency)}>
                   <option value="USD">Dolares (USD)</option>
                   <option value="UYU">Pesos uruguayos (UYU)</option>
@@ -456,7 +456,7 @@ export default function EditSalePage() {
                             </select>
                           </div>
                           <div><label className="label-base">Kg</label><input type="number" min="0" step="0.001" className="input-base font-mono" value={item.green_weight_kg} onChange={(event) => updateItem(item.id, { green_weight_kg: Number(event.target.value) })} /></div>
-                          <div><label className="label-base">Precio por kg</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={item.unit_price} onChange={(event) => updateItem(item.id, { unit_price: Number(event.target.value) })} /></div>
+                          <div><label className="label-base">Precio por kg ({paymentCurrency})</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={item.unit_price} onChange={(event) => updateItem(item.id, { unit_price: Number(event.target.value) })} /></div>
                         </>
                       ) : (
                         <>
@@ -469,7 +469,7 @@ export default function EditSalePage() {
                           </div>
                           <div><label className="label-base">Presentacion</label><select className="input-base" value={item.weight_grams} onChange={(event) => updateItem(item.id, { weight_grams: Number(event.target.value) })}>{weightOptions.map((weight) => <option key={weight.value} value={weight.value}>{weight.label}</option>)}</select></div>
                           <div><label className="label-base">Cantidad</label><input type="number" min="1" step="1" className="input-base font-mono" value={item.quantity} onChange={(event) => updateItem(item.id, { quantity: Number(event.target.value) })} /></div>
-                          <div><label className="label-base">Precio unitario</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={item.unit_price} onChange={(event) => updateItem(item.id, { unit_price: Number(event.target.value) })} /></div>
+                          <div><label className="label-base">Precio unitario ({paymentCurrency})</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={item.unit_price} onChange={(event) => updateItem(item.id, { unit_price: Number(event.target.value) })} /></div>
                         </>
                       )}
 
@@ -477,9 +477,9 @@ export default function EditSalePage() {
                       <div><label className="label-base">Notas item</label><input className="input-base" value={item.notes} onChange={(event) => updateItem(item.id, { notes: event.target.value })} /></div>
                     </div>
                     <div className="mt-4 grid grid-cols-3 gap-3 text-xs bg-[#F8FAFC] rounded-lg p-3">
-                      <div><p className="text-text-secondary">Subtotal</p><p className="font-mono font-medium">{formatCurrency(subtotal, roaster?.currency)}</p></div>
-                      <div><p className="text-text-secondary">IVA</p><p className="font-mono font-medium">{formatCurrency(tax, roaster?.currency)}</p></div>
-                      <div><p className="text-text-secondary">Total</p><p className="font-mono font-semibold text-text-primary">{formatCurrency(subtotal + tax, roaster?.currency)}</p></div>
+                      <div><p className="text-text-secondary">Subtotal</p><p className="font-mono font-medium">{formatCurrency(subtotal, paymentCurrency)}</p></div>
+                      <div><p className="text-text-secondary">IVA</p><p className="font-mono font-medium">{formatCurrency(tax, paymentCurrency)}</p></div>
+                      <div><p className="text-text-secondary">Total</p><p className="font-mono font-semibold text-text-primary">{formatCurrency(subtotal + tax, paymentCurrency)}</p></div>
                     </div>
                   </div>
                 );
@@ -499,10 +499,10 @@ export default function EditSalePage() {
           <div className="card p-5 sticky top-6">
             <p className="text-sm font-semibold text-text-primary mb-4">Resumen</p>
             <div className="flex flex-col gap-3 text-sm">
-              <div className="flex justify-between"><span className="text-text-secondary">Subtotal</span><span className="font-mono">{formatCurrency(totals.subtotal, roaster?.currency)}</span></div>
-              <div className="flex justify-between"><span className="text-text-secondary">IVA</span><span className="font-mono">{formatCurrency(totals.tax, roaster?.currency)}</span></div>
-              <div className="border-t border-border-default pt-3 flex justify-between"><span className="font-semibold">Total</span><span className="font-mono font-bold text-text-primary">{formatCurrency(totals.total, roaster?.currency)}</span></div>
-              <div className="flex justify-between"><span className="text-text-secondary">Pagado</span><span className="font-mono">{formatCurrency(paymentStatus === "paid" ? totals.total : paymentStatus === "pending" ? 0 : amountPaid, roaster?.currency)}</span></div>
+              <div className="flex justify-between"><span className="text-text-secondary">Subtotal</span><span className="font-mono">{formatCurrency(totals.subtotal, paymentCurrency)}</span></div>
+              <div className="flex justify-between"><span className="text-text-secondary">IVA</span><span className="font-mono">{formatCurrency(totals.tax, paymentCurrency)}</span></div>
+              <div className="border-t border-border-default pt-3 flex justify-between"><span className="font-semibold">Total</span><span className="font-mono font-bold text-text-primary">{formatCurrency(totals.total, paymentCurrency)}</span></div>
+              <div className="flex justify-between"><span className="text-text-secondary">Pagado</span><span className="font-mono">{formatCurrency(paymentStatus === "paid" ? totals.total : paymentStatus === "pending" ? 0 : amountPaid, paymentCurrency)}</span></div>
             </div>
           </div>
         </div>
