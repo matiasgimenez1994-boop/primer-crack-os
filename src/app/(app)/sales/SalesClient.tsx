@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, ShoppingBag, DollarSign, Package, Trash2, FileText } from "lucide-react";
+import { Plus, ShoppingBag, DollarSign, Package, Trash2, FileText, Download } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatsCard } from "@/components/ui/StatsCard";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -20,6 +20,7 @@ const weightLabels: Record<number, string> = {
 interface Props {
   orders: Order[];
   currency: string;
+  businessName: string;
   totalRevenue: number;
   totalProfit: number;
   totalUnits: number;
@@ -57,9 +58,14 @@ function itemLabel(item: any) {
   return name + " - " + weight + " x " + item.quantity;
 }
 
-export function SalesClient({ orders: initialOrders, currency, totalRevenue, totalUnits }: Props) {
+function documentFilename(order: Order) {
+  return documentLabel(order).toLowerCase() + "-" + order.id.slice(0, 8) + ".pdf";
+}
+
+export function SalesClient({ orders: initialOrders, currency, businessName, totalRevenue, totalUnits }: Props) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
   const supabase = createClient();
   const router = useRouter();
 
@@ -86,6 +92,80 @@ export function SalesClient({ orders: initialOrders, currency, totalRevenue, tot
     toast.success("Venta eliminada");
     setDeleting(null);
     router.refresh();
+  }
+
+  async function handleDownload(order: Order) {
+    setDownloading(order.id);
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const clientName = (order as any).clients?.name ?? order.client_name ?? "Sin cliente";
+      const title = documentLabel(order);
+
+      doc.setFillColor(44, 24, 16);
+      doc.rect(0, 0, 210, 26, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(15);
+      doc.text(businessName || "Primer crack OS", 14, 11);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text("Primer crack OS", 14, 18);
+      doc.text(title, 196, 11, { align: "right" });
+      doc.text(formatDate(order.order_date), 196, 18, { align: "right" });
+
+      doc.setTextColor(28, 18, 8);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text(title + " #" + order.id.slice(0, 8), 14, 38);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text("Cliente: " + clientName, 14, 46);
+      doc.text("Estado: " + statusLabel(order.status), 14, 52);
+      if (order.delivery_date) doc.text("Entrega: " + formatDate(order.delivery_date), 14, 58);
+      if (order.notes) doc.text("Notas: " + order.notes, 14, order.delivery_date ? 64 : 58);
+
+      const rows = (order.order_items ?? []).map((item: any) => [
+        itemLabel(item),
+        item.product_type === "green" ? Number(item.green_weight_kg ?? 0).toFixed(3) + " kg" : String(item.quantity),
+        formatCurrency(Number(item.unit_price ?? 0), currency),
+        Number(item.tax_rate ?? order.tax_rate ?? 0).toFixed(2) + "%",
+        formatCurrency(Number(item.total_amount ?? 0), currency),
+      ]);
+
+      autoTable(doc, {
+        startY: order.notes ? 70 : 64,
+        head: [["Producto", "Cant.", "Precio", "IVA", "Total"]],
+        body: rows,
+        theme: "striped",
+        headStyles: { fillColor: [44, 24, 16], textColor: [255, 255, 255], fontSize: 8, fontStyle: "bold" },
+        bodyStyles: { fontSize: 8, textColor: [28, 18, 8] },
+        alternateRowStyles: { fillColor: [253, 250, 246] },
+        margin: { left: 14, right: 14 },
+      });
+
+      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(10);
+      doc.setTextColor(28, 18, 8);
+      doc.text("Subtotal", 150, finalY);
+      doc.text(formatCurrency(Number(order.subtotal_amount ?? 0), currency), 196, finalY, { align: "right" });
+      doc.text("IVA", 150, finalY + 7);
+      doc.text(formatCurrency(Number(order.tax_amount ?? 0), currency), 196, finalY + 7, { align: "right" });
+      doc.setFont("helvetica", "bold");
+      doc.text("Total", 150, finalY + 16);
+      doc.text(formatCurrency(Number(order.total_amount ?? 0), currency), 196, finalY + 16, { align: "right" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(160, 150, 140);
+      doc.setFontSize(7);
+      doc.text("Documento generado por Primer crack OS", 14, 290);
+      doc.save(documentFilename(order));
+    } catch (error) {
+      toast.error("No se pudo descargar el documento");
+    } finally {
+      setDownloading(null);
+    }
   }
 
   const totalHistRevenue = orders.reduce((sum, order) => sum + Number(order.total_amount ?? 0), 0);
@@ -123,7 +203,7 @@ export function SalesClient({ orders: initialOrders, currency, totalRevenue, tot
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Subtotal</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">IVA</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Total</th>
-                  <th className="px-3 py-3 w-10" />
+                  <th className="px-3 py-3 w-20" />
                 </tr>
               </thead>
               <tbody>
@@ -146,9 +226,14 @@ export function SalesClient({ orders: initialOrders, currency, totalRevenue, tot
                     <td className="px-5 py-3.5 text-right font-mono whitespace-nowrap">{formatCurrency(order.tax_amount ?? 0, currency)}</td>
                     <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary whitespace-nowrap">{formatCurrency(order.total_amount ?? 0, currency)}</td>
                     <td className="px-3 py-3.5 text-right">
-                      <button onClick={() => handleDelete(order.id)} disabled={deleting === order.id || Boolean(order.inventory_committed_at)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-text-secondary hover:text-status-danger hover:bg-red-50 transition-all disabled:opacity-30" title="Eliminar venta">
-                        {deleting === order.id ? <div className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => handleDownload(order)} disabled={downloading === order.id} className="p-1.5 rounded-lg text-text-secondary hover:text-accent-green hover:bg-green-50 transition-all" title="Descargar documento">
+                          {downloading === order.id ? <div className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                        </button>
+                        <button onClick={() => handleDelete(order.id)} disabled={deleting === order.id || Boolean(order.inventory_committed_at)} className="p-1.5 rounded-lg text-text-secondary hover:text-status-danger hover:bg-red-50 transition-all disabled:opacity-30" title="Eliminar venta">
+                          {deleting === order.id ? <div className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
