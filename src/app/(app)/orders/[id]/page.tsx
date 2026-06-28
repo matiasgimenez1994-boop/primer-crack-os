@@ -6,6 +6,7 @@ import Link from"next/link";
 import {
   ArrowLeft, CheckCircle, Flame, Package,
   Truck, XCircle, ShoppingBag, Clock, AlertTriangle, FileText,
+  type LucideIcon,
 } from"lucide-react";
 import { createClient } from"@/lib/supabase/client";
 import { formatCurrency, formatDate, todayISO } from"@/lib/utils";
@@ -13,7 +14,7 @@ import { toast } from"sonner";
 import { differenceInDays, parseISO } from"date-fns";
 import type { Order, OrderItem, Roaster } from"@/types";
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: React.FC<{className?:string}> }> = {
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: LucideIcon }> = {
   draft:     { label:"Borrador",   color:"text-text-secondary",  bg:"bg-gray-100",   border:"border-gray-200",    icon: FileText },
   proforma:  { label:"Proforma",   color:"text-blue-700",       bg:"bg-blue-50",    border:"border-blue-200",    icon: FileText },
   pending:   { label:"Pendiente",  color:"text-yellow-700",     bg:"bg-yellow-50",  border:"border-yellow-200",  icon: Clock },
