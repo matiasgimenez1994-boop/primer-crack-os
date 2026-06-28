@@ -69,8 +69,12 @@ function paymentLabel(order: Order) {
   return "Pagado";
 }
 
-function paymentCurrency(order: Order, fallback: string) {
+function saleCurrency(order: Order, fallback: string) {
   return (order as any).payment_currency ?? fallback;
+}
+
+function paymentCurrency(order: Order, fallback: string) {
+  return saleCurrency(order, fallback);
 }
 
 function paymentClass(order: Order) {
@@ -147,9 +151,9 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
       const rows = (order.order_items ?? []).map((item: any) => [
         itemLabel(item),
         item.product_type === "green" ? Number(item.green_weight_kg ?? 0).toFixed(3) + " kg" : String(item.quantity),
-        formatCurrency(Number(item.unit_price ?? 0), currency),
+        formatCurrency(Number(item.unit_price ?? 0), saleCurrency(order, currency)),
         Number(item.tax_rate ?? order.tax_rate ?? 0).toFixed(2) + "%",
-        formatCurrency(Number(item.total_amount ?? 0), currency),
+        formatCurrency(Number(item.total_amount ?? 0), saleCurrency(order, currency)),
       ]);
 
       autoTable(doc, {
@@ -167,12 +171,12 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
       doc.setFontSize(10);
       doc.setTextColor(28, 18, 8);
       doc.text("Subtotal", 150, finalY);
-      doc.text(formatCurrency(Number(order.subtotal_amount ?? 0), currency), 196, finalY, { align: "right" });
+      doc.text(formatCurrency(Number(order.subtotal_amount ?? 0), saleCurrency(order, currency)), 196, finalY, { align: "right" });
       doc.text("IVA", 150, finalY + 7);
-      doc.text(formatCurrency(Number(order.tax_amount ?? 0), currency), 196, finalY + 7, { align: "right" });
+      doc.text(formatCurrency(Number(order.tax_amount ?? 0), saleCurrency(order, currency)), 196, finalY + 7, { align: "right" });
       doc.setFont("helvetica", "bold");
       doc.text("Total", 150, finalY + 16);
-      doc.text(formatCurrency(Number(order.total_amount ?? 0), currency), 196, finalY + 16, { align: "right" });
+      doc.text(formatCurrency(Number(order.total_amount ?? 0), saleCurrency(order, currency)), 196, finalY + 16, { align: "right" });
 
       doc.setFont("helvetica", "normal");
       doc.setTextColor(160, 150, 140);
@@ -241,9 +245,9 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-text-secondary hidden md:table-cell">{(order as any).clients?.name ?? order.client_name ?? "-"}</td>
-                    <td className="px-5 py-3.5 text-right font-mono whitespace-nowrap">{formatCurrency(order.subtotal_amount ?? 0, currency)}</td>
-                    <td className="px-5 py-3.5 text-right font-mono whitespace-nowrap">{formatCurrency(order.tax_amount ?? 0, currency)}</td>
-                    <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary whitespace-nowrap">{formatCurrency(order.total_amount ?? 0, currency)}</td>
+                    <td className="px-5 py-3.5 text-right font-mono whitespace-nowrap">{formatCurrency(order.subtotal_amount ?? 0, saleCurrency(order, currency))}</td>
+                    <td className="px-5 py-3.5 text-right font-mono whitespace-nowrap">{formatCurrency(order.tax_amount ?? 0, saleCurrency(order, currency))}</td>
+                    <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary whitespace-nowrap">{formatCurrency(order.total_amount ?? 0, saleCurrency(order, currency))}</td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex flex-col items-end gap-1">
                         <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium border ${paymentClass(order)}`}>{paymentLabel(order)}</span>
