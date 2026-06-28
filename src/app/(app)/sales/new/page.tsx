@@ -11,6 +11,7 @@ import type { Client, GreenCoffee, RoastBatch, Roaster } from "@/types";
 
 type DocumentType = "draft" | "proforma" | "boleta";
 type ProductType = "roasted" | "green";
+type PaymentCurrency = "USD" | "UYU";
 
 interface BatchOption {
   batch: RoastBatch & { green_coffees?: GreenCoffee; current_stock_kg?: number };
@@ -70,6 +71,7 @@ export default function NewSalePage() {
   const [notes, setNotes] = useState("");
   const [paymentType, setPaymentType] = useState<"cash" | "transfer" | "credit">("cash");
   const [paymentStatus, setPaymentStatus] = useState<"paid" | "pending" | "partial">("paid");
+  const [paymentCurrency, setPaymentCurrency] = useState<PaymentCurrency>((roaster?.currency === "UYU" ? "UYU" : "USD") as PaymentCurrency);
   const [amountPaid, setAmountPaid] = useState(0);
   const [dueDate, setDueDate] = useState("");
   const [items, setItems] = useState<SaleItemForm[]>([makeItem("green")]);
@@ -81,6 +83,7 @@ export default function NewSalePage() {
       supabase.from("roasters").select("*").eq("user_id", user.id).single().then(({ data: r }) => {
         if (!r) return;
         setRoaster(r);
+        setPaymentCurrency((r.currency === "UYU" ? "UYU" : "USD") as PaymentCurrency);
         loadBatches(r.id);
         supabase.from("green_coffees").select("*").eq("roaster_id", r.id).neq("status", "depleted").order("name").then(({ data }) => setGreenCoffees(data ?? []));
         supabase.from("clients").select("*").eq("roaster_id", r.id).order("name").then(({ data }) => setClients(data ?? []));
@@ -193,7 +196,8 @@ export default function NewSalePage() {
       total_amount: totals.total,
       payment_type: paymentType,
       payment_status: paymentStatus,
-      amount_paid: paymentStatus === "paid" ? totals.total : paymentStatus === "pending" ? 0 : amountPaid,
+      payment_currency: paymentCurrency,
+      amount_paid: paymentStatus === "pending" ? 0 : amountPaid > 0 ? amountPaid : totals.total,
       due_date: paymentStatus === "paid" ? null : dueDate || null,
       paid_at: paymentStatus === "paid" ? new Date().toISOString() : null,
       notes: notes || null,
@@ -296,7 +300,14 @@ export default function NewSalePage() {
                   <option value="credit">Credito</option>
                 </select>
               </div>
-              {paymentStatus === "partial" && <div><label className="label-base">Monto pagado</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={amountPaid} onChange={(event) => setAmountPaid(Number(event.target.value))} /></div>}
+              <div>
+                <label className="label-base">Moneda del pago</label>
+                <select className="input-base" value={paymentCurrency} onChange={(event) => setPaymentCurrency(event.target.value as PaymentCurrency)}>
+                  <option value="USD">Dolares (USD)</option>
+                  <option value="UYU">Pesos uruguayos (UYU)</option>
+                </select>
+              </div>
+              {paymentStatus !== "pending" && <div><label className="label-base">Monto cobrado</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={amountPaid} onChange={(event) => setAmountPaid(Number(event.target.value))} placeholder={String(totals.total)} /><p className="text-xs text-text-secondary mt-1">{formatCurrency(amountPaid || totals.total, paymentCurrency)}</p></div>}
               {paymentStatus !== "paid" && <div><label className="label-base">Vencimiento pago</label><input type="date" className="input-base" value={dueDate} onChange={(event) => setDueDate(event.target.value)} /></div>}
               <div><label className="label-base">Notas</label><input className="input-base" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Observaciones..." /></div>
             </div>
