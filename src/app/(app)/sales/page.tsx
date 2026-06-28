@@ -41,6 +41,7 @@ export default async function SalesPage() {
     <SalesClient
       orders={orders ?? []}
       currency={roaster.currency}
+      businessName={roaster.business_name}
       totalRevenue={totalRevenue}
       totalProfit={totalProfit}
       totalUnits={totalUnits}
