@@ -60,6 +60,9 @@ export default async function RoastsPage() {
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">
                     Tostado
                   </th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">
+                    Disponible
+                  </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary hidden md:table-cell">
                     Merma
                   </th>
@@ -90,8 +93,11 @@ export default async function RoastsPage() {
                     <td className="px-5 py-3.5 text-right font-mono text-text-secondary">
                       {formatWeight(b.green_weight_kg)}
                     </td>
-                    <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary">
+                    <td className="px-5 py-3.5 text-right font-mono text-text-secondary">
                       {formatWeight(b.roasted_weight_kg)}
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary">
+                      {formatWeight(b.current_stock_kg ?? b.roasted_weight_kg)}
                     </td>
                     <td className="px-5 py-3.5 text-right hidden md:table-cell">
                       <ShrinkageIndicator pct={b.shrinkage_pct} />
