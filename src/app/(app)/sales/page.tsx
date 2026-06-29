@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { SalesClient } from "./SalesClient";
-import { currentMonthRange } from "@/lib/utils";
+import { currentMonthRange, formatCurrency } from "@/lib/utils";
 
 export default async function SalesPage() {
   const supabase = await createClient();
