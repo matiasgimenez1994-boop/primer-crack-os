@@ -131,6 +131,7 @@ export default function NewRoastPage() {
         roast_date: data.roast_date,
         green_weight_kg: data.green_weight_kg,
         roasted_weight_kg: data.roasted_weight_kg,
+        current_stock_kg: data.roasted_weight_kg,
         roast_duration_min: data.roast_duration_min || null,
         charge_temp_celsius: data.charge_temp_celsius || null,
         first_crack_time_min: data.first_crack_time_min || null,
