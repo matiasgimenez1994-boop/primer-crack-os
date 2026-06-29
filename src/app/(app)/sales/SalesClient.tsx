@@ -21,7 +21,7 @@ interface Props {
   orders: Order[];
   currency: string;
   businessName: string;
-  totalRevenue: number;
+  totalRevenue: string;
   totalProfit: number;
   totalUnits: number;
   avgMargin: number;
@@ -190,7 +190,16 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
     }
   }
 
-  const totalHistRevenue = orders.reduce((sum, order) => sum + Number(order.total_amount ?? 0), 0);
+  const totalsByCurrency = orders.reduce<Record<string, number>>((acc, order) => {
+    const orderCurrency = saleCurrency(order, currency);
+    acc[orderCurrency] = (acc[orderCurrency] ?? 0) + Number(order.total_amount ?? 0);
+    return acc;
+  }, {});
+  const totalHistRevenueLabel = Object.entries(totalsByCurrency)
+    .filter(([, value]) => value !== 0)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([orderCurrency, value]) => formatCurrency(value, orderCurrency))
+    .join(" / ") || formatCurrency(0, currency);
 
   return (
     <div>
@@ -202,10 +211,10 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatsCard icon={DollarSign} label="Ingresos este mes" value={formatCurrency(totalRevenue, currency)} />
+        <StatsCard icon={DollarSign} label="Ingresos este mes" value={totalRevenue} />
         <StatsCard icon={FileText} label="Documentos" value={String(orders.length)} sub="historico" />
         <StatsCard icon={Package} label="Items vendidos" value={String(totalUnits)} sub="historico" />
-        <StatsCard icon={ShoppingBag} label="Total ventas" value={formatCurrency(totalHistRevenue, currency)} sub="historico" />
+        <StatsCard icon={ShoppingBag} label="Total ventas" value={totalHistRevenueLabel} sub="por moneda" />
       </div>
 
       {orders.length === 0 ? (
@@ -226,7 +235,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">IVA</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Total</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Pago</th>
-                  <th className="px-3 py-3 w-24" />
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -254,13 +263,15 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
                         {(order as any).amount_paid != null && <span className="text-[11px] text-text-secondary">{formatCurrency(Number((order as any).amount_paid ?? 0), paymentCurrency(order, currency))}</span>}
                       </div>
                     </td>
-                    <td className="px-3 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Link href={`/sales/${order.id}/edit`} className="p-1.5 rounded-lg text-text-secondary hover:text-accent-green hover:bg-green-50 transition-all" title="Editar venta">
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <Link href={`/sales/${order.id}/edit`} className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-2.5 py-1.5 text-xs font-medium text-text-primary hover:border-accent-green hover:text-accent-green hover:bg-green-50 transition-all" title="Editar venta">
                           <Pencil className="w-3.5 h-3.5" />
+                          Editar
                         </Link>
-                        <button onClick={() => handleDownload(order)} disabled={downloading === order.id} className="p-1.5 rounded-lg text-text-secondary hover:text-accent-green hover:bg-green-50 transition-all" title="Descargar documento">
+                        <button onClick={() => handleDownload(order)} disabled={downloading === order.id} className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-2.5 py-1.5 text-xs font-medium text-text-primary hover:border-accent-green hover:text-accent-green hover:bg-green-50 transition-all disabled:opacity-60" title="Descargar boleta o proforma">
                           {downloading === order.id ? <div className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                          Descargar
                         </button>
                         <button onClick={() => handleDelete(order.id)} disabled={deleting === order.id || Boolean(order.inventory_committed_at)} className="p-1.5 rounded-lg text-text-secondary hover:text-status-danger hover:bg-red-50 transition-all disabled:opacity-30" title="Eliminar venta">
                           {deleting === order.id ? <div className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
@@ -273,7 +284,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
               <tfoot className="border-t-2 border-border-default bg-[#F8FAFC]">
                 <tr>
                   <td colSpan={6} className="px-5 py-3 text-xs font-semibold text-text-secondary">Total historico</td>
-                  <td className="px-5 py-3 text-right font-mono font-semibold text-text-primary whitespace-nowrap">{formatCurrency(totalHistRevenue, currency)}</td>
+                  <td className="px-5 py-3 text-right font-mono font-semibold text-text-primary whitespace-nowrap">{totalHistRevenueLabel}</td>
                   <td />
                 </tr>
               </tfoot>
