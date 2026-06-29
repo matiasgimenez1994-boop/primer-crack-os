@@ -285,7 +285,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
                 <tr>
                   <td colSpan={6} className="px-5 py-3 text-xs font-semibold text-text-secondary">Total historico</td>
                   <td className="px-5 py-3 text-right font-mono font-semibold text-text-primary whitespace-nowrap">{totalHistRevenueLabel}</td>
-                  <td />
+                  <td colSpan={2} />
                 </tr>
               </tfoot>
             </table>
