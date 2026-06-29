@@ -25,14 +25,23 @@ export default async function SalesPage() {
       .order("order_date", { ascending: false }),
     supabase
       .from("orders")
-      .select("total_amount")
+      .select("total_amount, payment_currency")
       .eq("roaster_id", roaster.id)
       .gte("order_date", start)
       .in("status", ["confirmed", "ready", "delivered"]),
   ]);
 
-  type MonthlyOrder = { total_amount: number };
-  const totalRevenue = (monthOrders ?? []).reduce((sum: number, order: MonthlyOrder) => sum + Number(order.total_amount ?? 0), 0);
+  type MonthlyOrder = { total_amount: number; payment_currency?: string | null };
+  const monthlyTotalsByCurrency = (monthOrders ?? []).reduce<Record<string, number>>((acc: Record<string, number>, order: MonthlyOrder) => {
+    const orderCurrency = order.payment_currency ?? roaster.currency ?? "USD";
+    acc[orderCurrency] = (acc[orderCurrency] ?? 0) + Number(order.total_amount ?? 0);
+    return acc;
+  }, {});
+  const totalRevenue = Object.entries(monthlyTotalsByCurrency)
+    .filter(([, value]) => value !== 0)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([orderCurrency, value]) => formatCurrency(value, orderCurrency))
+    .join(" / ") || formatCurrency(0, roaster.currency ?? "USD");
   const totalProfit = 0;
   const totalUnits = (orders ?? []).reduce((sum: number, order: any) => sum + (order.order_items?.length ?? 0), 0);
   const avgMargin = 0;
