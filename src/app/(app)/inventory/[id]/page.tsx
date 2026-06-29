@@ -39,8 +39,8 @@ export default async function CoffeeDetailPage({
     .eq("green_coffee_id", id)
     .order("roast_date", { ascending: false });
 
-  const totalRoasted = (batches ?? []).reduce((sum: number, b: RoastBatch) => sum + b.roasted_weight_kg,
-    0);
+  const totalRoasted = (batches ?? []).reduce((sum: number, b: RoastBatch) => sum + b.roasted_weight_kg, 0);
+  const totalRoastedAvailable = (batches ?? []).reduce((sum: number, b: RoastBatch) => sum + Number(b.current_stock_kg ?? b.roasted_weight_kg ?? 0), 0);
 
   const fields = [
     { label:"País de origen", value: coffee.origin_country },
@@ -142,7 +142,7 @@ export default async function CoffeeDetailPage({
                 Historial de tuestes
               </h2>
               {(batches ?? []).length > 0 && (<span className="text-xs text-text-secondary font-mono">
-                  {formatWeight(totalRoasted)} tostados en total
+                  {formatWeight(totalRoastedAvailable)} disponibles / {formatWeight(totalRoasted)} tostados
                 </span>)}
             </div>
 
@@ -165,6 +165,9 @@ export default async function CoffeeDetailPage({
                       </th>
                       <th className="text-right px-5 py-3 text-xs font-medium text-text-secondary">
                         Lote
+                      </th>
+                      <th className="text-right px-5 py-3 text-xs font-medium text-text-secondary">
+                        Disponible
                       </th>
                       <th className="text-right px-5 py-3 text-xs font-medium text-text-secondary">
                         Merma
@@ -190,8 +193,11 @@ export default async function CoffeeDetailPage({
                             {formatDate(b.roast_date)}
                           </Link>
                         </td>
-                        <td className="px-5 py-3 text-right font-mono">
+                        <td className="px-5 py-3 text-right font-mono text-text-secondary">
                           {formatWeight(b.roasted_weight_kg)}
+                        </td>
+                        <td className="px-5 py-3 text-right font-mono font-medium text-text-primary">
+                          {formatWeight(b.current_stock_kg ?? b.roasted_weight_kg)}
                         </td>
                         <td className="px-5 py-3 text-right">
                           <ShrinkageIndicator pct={b.shrinkage_pct} />
