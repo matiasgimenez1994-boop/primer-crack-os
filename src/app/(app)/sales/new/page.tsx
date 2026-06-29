@@ -316,7 +316,15 @@ export default function NewSalePage() {
           <div className="card p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
               <p className="section-title mb-0">Productos</p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-text-secondary uppercase">Moneda</span>
+                  <select id="sale-currency-products" className="input-base w-28" value={paymentCurrency} onChange={(event) => setPaymentCurrency(event.target.value as PaymentCurrency)}>
+                    <option value="USD">USD</option>
+                    <option value="UYU">UYU</option>
+                  </select>
+                </div>
                 <button type="button" className="btn-secondary" onClick={() => addItem("green")}><Plus className="w-4 h-4" /> Cafe verde</button>
                 <button type="button" className="btn-secondary" onClick={() => addItem("roasted")}><Plus className="w-4 h-4" /> Cafe tostado</button>
               </div>
