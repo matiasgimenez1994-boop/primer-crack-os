@@ -43,6 +43,26 @@ function orderProfit(order: FinanceOrder) {
   return Number(order.total_amount ?? 0) - orderCost(order);
 }
 
+function totalsByCurrency(
+  orders: FinanceOrder[],
+  fallbackCurrency: string,
+  value: (order: FinanceOrder) => number = (order) => Number(order.total_amount ?? 0),
+) {
+  return orders.reduce<Record<string, number>>((totals, order) => {
+    const currency = order.payment_currency ?? fallbackCurrency;
+    totals[currency] = (totals[currency] ?? 0) + value(order);
+    return totals;
+  }, {});
+}
+
+function formatCurrencyTotals(totals: Record<string, number>, fallbackCurrency: string) {
+  const values = Object.entries(totals)
+    .filter(([, amount]) => amount !== 0)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([currency, amount]) => formatCurrency(amount, currency));
+  return values.join(" / ") || formatCurrency(0, fallbackCurrency);
+}
+
 export default async function FinancesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -79,29 +99,43 @@ export default async function FinancesPage() {
       .gte("expense_date", monthStart).lte("expense_date", monthEnd),
   ]);
 
-  //  Mes actual 
-  const monthRevenue = (monthSales ?? []).reduce((s: number, x: FinanceOrder) => s + Number(x.total_amount ?? 0), 0);
-  const monthGrossProfit = (monthSales ?? []).reduce((s: number, x: FinanceOrder) => s + orderProfit(x), 0);
+  const baseCurrency = roaster.currency ?? "USD";
+  const financeSales = (allSales ?? []) as FinanceOrder[];
+  const currentMonthSales = (monthSales ?? []) as FinanceOrder[];
+  const baseCurrencySales = financeSales.filter(order => (order.payment_currency ?? baseCurrency) === baseCurrency);
+  const baseCurrencyMonthSales = currentMonthSales.filter(order => (order.payment_currency ?? baseCurrency) === baseCurrency);
+
+  //  Mes actual: ingresos por moneda; rentabilidad solo en la moneda base.
+  const monthRevenueTotals = totalsByCurrency(currentMonthSales, baseCurrency);
+  const monthRevenueLabel = formatCurrencyTotals(monthRevenueTotals, baseCurrency);
+  const monthRevenue = baseCurrencyMonthSales.reduce((s, x) => s + Number(x.total_amount ?? 0), 0);
+  const monthGrossProfit = baseCurrencyMonthSales.reduce((s, x) => s + orderProfit(x), 0);
   const monthExpenseTotal = (monthExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
   const monthNetProfit = monthGrossProfit - monthExpenseTotal;
   const monthGrossMargin = monthRevenue > 0 ? (monthGrossProfit / monthRevenue) * 100 : 0;
   const monthNetMargin = monthRevenue > 0 ? (monthNetProfit / monthRevenue) * 100 : 0;
-  const monthCash = (monthSales ?? []).filter((s: FinanceOrder) => s.payment_type ==="cash")
-    .reduce((s: number, x: FinanceOrder) => s + Number(x.total_amount ?? 0), 0);
-  const monthTransfer = (monthSales ?? []).filter((s: FinanceOrder) => s.payment_type ==="transfer")
-    .reduce((s: number, x: FinanceOrder) => s + Number(x.total_amount ?? 0), 0);
+  const monthCash = baseCurrencyMonthSales.filter(s => s.payment_type ==="cash")
+    .reduce((s, x) => s + Number(x.total_amount ?? 0), 0);
+  const monthTransfer = baseCurrencyMonthSales.filter(s => s.payment_type ==="transfer")
+    .reduce((s, x) => s + Number(x.total_amount ?? 0), 0);
 
   //  Pendiente de cobro 
-  const totalPending = (pendingSales ?? []).reduce((s: number, x: FinanceOrder) =>
-    s + (Number(x.total_amount ?? 0) - Number(x.amount_paid ?? 0)), 0);
+  const pendingTotals = totalsByCurrency(
+    (pendingSales ?? []) as FinanceOrder[],
+    baseCurrency,
+    order => Number(order.total_amount ?? 0) - Number(order.amount_paid ?? 0),
+  );
+  const totalPendingLabel = formatCurrencyTotals(pendingTotals, baseCurrency);
 
   //  Inventario valorizado 
   const inventoryValue = (greenCoffees ?? []).reduce((s: number, c: { current_stock_kg: number; purchase_price_per_kg: number }) =>
       s + c.current_stock_kg * c.purchase_price_per_kg, 0);
 
   //  Histórico 
-  const totalRevenue = (allSales ?? []).reduce((s: number, x: FinanceOrder) => s + Number(x.total_amount ?? 0), 0);
-  const totalGrossProfit = (allSales ?? []).reduce((s: number, x: FinanceOrder) => s + orderProfit(x), 0);
+  const totalRevenueTotals = totalsByCurrency(financeSales, baseCurrency);
+  const totalRevenueLabel = formatCurrencyTotals(totalRevenueTotals, baseCurrency);
+  const totalRevenue = baseCurrencySales.reduce((s, x) => s + Number(x.total_amount ?? 0), 0);
+  const totalGrossProfit = baseCurrencySales.reduce((s, x) => s + orderProfit(x), 0);
   const totalExpenses = (allExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
   const totalNetProfit = totalGrossProfit - totalExpenses;
 
@@ -115,7 +149,7 @@ export default async function FinancesPage() {
     const d = subMonths(new Date(), 5 - i);
     const start = format(startOfMonth(d),"yyyy-MM-dd");
     const end = format(endOfMonth(d),"yyyy-MM-dd");
-    const ms = (allSales ?? []).filter((s: FinanceOrder) => s.order_date >= start && s.order_date <= end);
+    const ms = baseCurrencySales.filter(s => s.order_date >= start && s.order_date <= end);
     const me = (allExpenses ?? []).filter((e: Expense) => e.expense_date >= start && e.expense_date <= end);
     const revenue = ms.reduce((s: number, x: FinanceOrder) => s + Number(x.total_amount ?? 0), 0);
     const grossProfit = ms.reduce((s: number, x: FinanceOrder) => s + orderProfit(x), 0);
@@ -157,7 +191,7 @@ export default async function FinancesPage() {
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-status-warning" />
               <span className="text-sm font-semibold text-status-warning">
-                {formatCurrency(totalPending, roaster.currency)} por cobrar
+                {totalPendingLabel} por cobrar
               </span>
             </div>
             <Link href="/finances/pending" className="text-xs text-accent-green hover:underline font-medium">
@@ -169,10 +203,10 @@ export default async function FinancesPage() {
       {/* Stats del mes */}
       <p className="section-title">Este mes</p>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatsCard icon={DollarSign} label="Ingresos" value={formatCurrency(monthRevenue, roaster.currency)} />
+        <StatsCard icon={DollarSign} label="Ingresos" value={monthRevenueLabel} sub="separados por moneda" />
         <StatsCard icon={TrendingUp} label="Ganancia bruta"
           value={formatCurrency(monthGrossProfit, roaster.currency)}
-          sub={`${monthGrossMargin.toFixed(1)}% margen bruto`} />
+          sub={`${monthGrossMargin.toFixed(1)}% · solo ${baseCurrency}`} />
         <StatsCard icon={Receipt} label="Gastos"
           value={formatCurrency(monthExpenseTotal, roaster.currency)}
           sub="costos fijos + variables" />
@@ -184,9 +218,9 @@ export default async function FinancesPage() {
 
       {/* Rentabilidad real */}
       <div className="card p-5 mb-6">
-        <p className="text-sm font-semibold text-text-primary mb-1">Rentabilidad real del mes</p>
+        <p className="text-sm font-semibold text-text-primary mb-1">Rentabilidad real del mes ({baseCurrency})</p>
         <p className="text-xs text-text-secondary mb-4">
-          Ingresos - Costo de producción - Gastos operativos
+          Solo ventas en {baseCurrency}: ingresos - costo de producción - gastos operativos
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
           {[
@@ -266,7 +300,7 @@ export default async function FinancesPage() {
           <p className="section-title">Resumen histórico</p>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { label:"Ingresos totales", value: formatCurrency(totalRevenue, roaster.currency) },
+              { label:"Ingresos totales", value: totalRevenueLabel },
               { label:"Ganancia bruta", value: formatCurrency(totalGrossProfit, roaster.currency) },
               { label:"Gastos totales", value: formatCurrency(totalExpenses, roaster.currency) },
               { label:"Ganancia neta", value: formatCurrency(totalNetProfit, roaster.currency), highlight: true },
@@ -277,10 +311,10 @@ export default async function FinancesPage() {
               { label:"Valor inventario", value: formatCurrency(inventoryValue, roaster.currency) },
               {
                 label:"Ticket promedio",
-                value: (allSales ?? []).length > 0
-                  ? formatCurrency(totalRevenue / (allSales ?? []).length, roaster.currency) : "-",
+                value: baseCurrencySales.length > 0
+                  ? formatCurrency(totalRevenue / baseCurrencySales.length, roaster.currency) : "-",
               },
-              { label:"Total ventas", value: `${(allSales ?? []).length}` },
+              { label:"Total ventas", value: `${financeSales.length}` },
             ].map(({ label, value, highlight }) => (<div key={label}>
                 <p className="text-xs text-text-secondary">{label}</p>
                 <p className={`text-sm font-mono font-semibold mt-0.5 ${highlight
@@ -298,7 +332,7 @@ export default async function FinancesPage() {
         {[
           { href:"/finances/pending", icon: Clock, label:"Pagos pendientes", sub: `${(pendingSales ?? []).length} sin cobrar`, alert: (pendingSales ?? []).length > 0 },
           { href:"/expenses", icon: Receipt, label:"Ver gastos", sub: `${(allExpenses ?? []).length} registros` },
-          { href:"/sales", icon: ShoppingBag, label:"Ver ventas", sub: `${(allSales ?? []).length} ventas` },
+          { href:"/sales", icon: ShoppingBag, label:"Ver ventas", sub: `${financeSales.length} ventas` },
           { href:"/inventory", icon: Leaf, label:"Inventario", sub: formatCurrency(inventoryValue, roaster.currency) },
         ].map(({ href, icon: Icon, label, sub, alert }) => (<Link key={href} href={href}
             className={`card p-4 hover:shadow-card-hover transition-shadow flex items-start gap-3 ${alert ?"border-orange-200 bg-orange-50/50" :""}`}

@@ -11,6 +11,21 @@ import type { Order, Roaster } from"@/types";
 
 const weightLabels: Record<number, string> = { 250:"250g", 500:"500g", 1000:"1kg" };
 
+function pendingTotalLabel(orders: Order[], fallbackCurrency: string) {
+  const totals = orders.reduce<Record<string, number>>((result, order) => {
+    const currency = order.payment_currency ?? fallbackCurrency;
+    const remaining = Number(order.total_amount ?? 0) - Number(order.amount_paid ?? 0);
+    result[currency] = (result[currency] ?? 0) + remaining;
+    return result;
+  }, {});
+
+  return Object.entries(totals)
+    .filter(([, amount]) => amount !== 0)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([currency, amount]) => formatCurrency(amount, currency))
+    .join(" / ") || formatCurrency(0, fallbackCurrency);
+}
+
 export default function PendingPaymentsPage() {
   const supabase = createClient();
   const [roaster, setRoaster] = useState<Roaster | null>(null);
@@ -72,7 +87,7 @@ export default function PendingPaymentsPage() {
     load(roaster.id);
   }
 
-  const totalPending = sales.reduce((s, x) => s + (x.total_amount - Number(x.amount_paid ?? 0)), 0);
+  const totalPending = pendingTotalLabel(sales, roaster?.currency ?? "USD");
   const overdue = sales.filter(s => s.due_date && parseISO(s.due_date) < new Date());
 
   if (loading) return (<div className="flex items-center justify-center min-h-[300px]">
@@ -88,7 +103,7 @@ export default function PendingPaymentsPage() {
             {sales.length > 0 && (<p className="text-sm text-text-secondary">
                 {sales.length} venta{sales.length > 1 ?"s" :""} · Total pendiente:{""}
                 <span className="font-mono font-semibold text-status-danger">
-                  {formatCurrency(totalPending, roaster?.currency)}
+                  {totalPending}
                 </span>
               </p>)}
           </div>
