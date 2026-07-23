@@ -10,6 +10,7 @@ import { formatCurrency, formatDate, currentMonthRange } from"@/lib/utils";
 import { subMonths, startOfMonth, endOfMonth, format } from"date-fns";
 import { es } from"date-fns/locale";
 import { toMonthlyAmount, CATEGORY_LABELS, CATEGORY_ICONS } from"@/lib/expenses";
+import { convertUsdUyu, getBcuUsdUyuRate } from "@/lib/exchange-rate";
 import type { Order, Expense } from"@/types";
 
 type FinanceOrder = Order & {
@@ -39,28 +40,38 @@ function orderCost(order: FinanceOrder) {
   }, 0);
 }
 
-function orderProfit(order: FinanceOrder) {
-  return Number(order.total_amount ?? 0) - orderCost(order);
+type DualAmounts = { USD: number; UYU: number };
+
+function dualFromBase(amount: number, baseCurrency: string, usdUyu: number): DualAmounts {
+  return {
+    USD: convertUsdUyu(amount, baseCurrency, "USD", usdUyu),
+    UYU: convertUsdUyu(amount, baseCurrency, "UYU", usdUyu),
+  };
 }
 
-function totalsByCurrency(
-  orders: FinanceOrder[],
-  fallbackCurrency: string,
-  value: (order: FinanceOrder) => number = (order) => Number(order.total_amount ?? 0),
-) {
-  return orders.reduce<Record<string, number>>((totals, order) => {
-    const currency = order.payment_currency ?? fallbackCurrency;
-    totals[currency] = (totals[currency] ?? 0) + value(order);
-    return totals;
-  }, {});
+function revenueDual(orders: FinanceOrder[], baseCurrency: string, usdUyu: number): DualAmounts {
+  return orders.reduce<DualAmounts>((total, order) => {
+    const sourceCurrency = order.payment_currency ?? baseCurrency;
+    total.USD += convertUsdUyu(Number(order.total_amount ?? 0), sourceCurrency, "USD", usdUyu);
+    total.UYU += convertUsdUyu(Number(order.total_amount ?? 0), sourceCurrency, "UYU", usdUyu);
+    return total;
+  }, { USD: 0, UYU: 0 });
 }
 
-function formatCurrencyTotals(totals: Record<string, number>, fallbackCurrency: string) {
-  const values = Object.entries(totals)
-    .filter(([, amount]) => amount !== 0)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([currency, amount]) => formatCurrency(amount, currency));
-  return values.join(" / ") || formatCurrency(0, fallbackCurrency);
+function profitDual(orders: FinanceOrder[], baseCurrency: string, usdUyu: number): DualAmounts {
+  return orders.reduce<DualAmounts>((total, order) => {
+    const sourceCurrency = order.payment_currency ?? baseCurrency;
+    const cost = orderCost(order);
+    total.USD += convertUsdUyu(Number(order.total_amount ?? 0), sourceCurrency, "USD", usdUyu)
+      - convertUsdUyu(cost, baseCurrency, "USD", usdUyu);
+    total.UYU += convertUsdUyu(Number(order.total_amount ?? 0), sourceCurrency, "UYU", usdUyu)
+      - convertUsdUyu(cost, baseCurrency, "UYU", usdUyu);
+    return total;
+  }, { USD: 0, UYU: 0 });
+}
+
+function formatDual(amounts: DualAmounts) {
+  return `${formatCurrency(amounts.USD, "USD")} / ${formatCurrency(amounts.UYU, "UYU")}`;
 }
 
 export default async function FinancesPage() {
@@ -72,6 +83,7 @@ export default async function FinancesPage() {
     .from("roasters").select("*").eq("user_id", user.id).single();
   if (!roaster) redirect("/onboarding");
 
+  const exchangeRate = await getBcuUsdUyuRate();
   const { start: monthStart, end: monthEnd } = currentMonthRange();
 
   const [
@@ -102,68 +114,81 @@ export default async function FinancesPage() {
   const baseCurrency = roaster.currency ?? "USD";
   const financeSales = (allSales ?? []) as FinanceOrder[];
   const currentMonthSales = (monthSales ?? []) as FinanceOrder[];
-  const baseCurrencySales = financeSales.filter(order => (order.payment_currency ?? baseCurrency) === baseCurrency);
-  const baseCurrencyMonthSales = currentMonthSales.filter(order => (order.payment_currency ?? baseCurrency) === baseCurrency);
 
-  //  Mes actual: ingresos por moneda; rentabilidad solo en la moneda base.
-  const monthRevenueTotals = totalsByCurrency(currentMonthSales, baseCurrency);
-  const monthRevenueLabel = formatCurrencyTotals(monthRevenueTotals, baseCurrency);
-  const monthRevenue = baseCurrencyMonthSales.reduce((s, x) => s + Number(x.total_amount ?? 0), 0);
-  const monthGrossProfit = baseCurrencyMonthSales.reduce((s, x) => s + orderProfit(x), 0);
+  // Mes actual: todos los valores se expresan en paralelo en USD y UYU.
+  const monthRevenue = revenueDual(currentMonthSales, baseCurrency, exchangeRate.usdUyu);
+  const monthGrossProfit = profitDual(currentMonthSales, baseCurrency, exchangeRate.usdUyu);
   const monthExpenseTotal = (monthExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
-  const monthNetProfit = monthGrossProfit - monthExpenseTotal;
-  const monthGrossMargin = monthRevenue > 0 ? (monthGrossProfit / monthRevenue) * 100 : 0;
-  const monthNetMargin = monthRevenue > 0 ? (monthNetProfit / monthRevenue) * 100 : 0;
-  const monthCash = baseCurrencyMonthSales.filter(s => s.payment_type ==="cash")
-    .reduce((s, x) => s + Number(x.total_amount ?? 0), 0);
-  const monthTransfer = baseCurrencyMonthSales.filter(s => s.payment_type ==="transfer")
-    .reduce((s, x) => s + Number(x.total_amount ?? 0), 0);
+  const monthExpensesDual = dualFromBase(monthExpenseTotal, baseCurrency, exchangeRate.usdUyu);
+  const monthNetProfit: DualAmounts = {
+    USD: monthGrossProfit.USD - monthExpensesDual.USD,
+    UYU: monthGrossProfit.UYU - monthExpensesDual.UYU,
+  };
+  const monthGrossMargin = monthRevenue.USD > 0 ? (monthGrossProfit.USD / monthRevenue.USD) * 100 : 0;
+  const monthNetMargin = monthRevenue.USD > 0 ? (monthNetProfit.USD / monthRevenue.USD) * 100 : 0;
 
   //  Pendiente de cobro 
-  const pendingTotals = totalsByCurrency(
-    (pendingSales ?? []) as FinanceOrder[],
-    baseCurrency,
-    order => Number(order.total_amount ?? 0) - Number(order.amount_paid ?? 0),
-  );
-  const totalPendingLabel = formatCurrencyTotals(pendingTotals, baseCurrency);
+  const pendingTotals = ((pendingSales ?? []) as FinanceOrder[]).reduce<DualAmounts>((total, order) => {
+    const sourceCurrency = order.payment_currency ?? baseCurrency;
+    const remaining = Number(order.total_amount ?? 0) - Number(order.amount_paid ?? 0);
+    total.USD += convertUsdUyu(remaining, sourceCurrency, "USD", exchangeRate.usdUyu);
+    total.UYU += convertUsdUyu(remaining, sourceCurrency, "UYU", exchangeRate.usdUyu);
+    return total;
+  }, { USD: 0, UYU: 0 });
+  const totalPendingLabel = formatDual(pendingTotals);
 
   //  Inventario valorizado 
   const inventoryValue = (greenCoffees ?? []).reduce((s: number, c: { current_stock_kg: number; purchase_price_per_kg: number }) =>
       s + c.current_stock_kg * c.purchase_price_per_kg, 0);
+  const inventoryValueDual = dualFromBase(inventoryValue, baseCurrency, exchangeRate.usdUyu);
 
   //  Histórico 
-  const totalRevenueTotals = totalsByCurrency(financeSales, baseCurrency);
-  const totalRevenueLabel = formatCurrencyTotals(totalRevenueTotals, baseCurrency);
-  const totalRevenue = baseCurrencySales.reduce((s, x) => s + Number(x.total_amount ?? 0), 0);
-  const totalGrossProfit = baseCurrencySales.reduce((s, x) => s + orderProfit(x), 0);
+  const totalRevenue = revenueDual(financeSales, baseCurrency, exchangeRate.usdUyu);
+  const totalGrossProfit = profitDual(financeSales, baseCurrency, exchangeRate.usdUyu);
   const totalExpenses = (allExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
-  const totalNetProfit = totalGrossProfit - totalExpenses;
+  const totalExpensesDual = dualFromBase(totalExpenses, baseCurrency, exchangeRate.usdUyu);
+  const totalNetProfit: DualAmounts = {
+    USD: totalGrossProfit.USD - totalExpensesDual.USD,
+    UYU: totalGrossProfit.UYU - totalExpensesDual.UYU,
+  };
 
   //  Gastos recurrentes estimados por mes 
   const monthlyExpenseEstimate = (allExpenses ?? [])
     .filter((e: Expense) => e.frequency !=="once")
     .reduce((s: number, e: Expense) => s + toMonthlyAmount(e.amount, e.frequency), 0);
+  const monthlyExpenseEstimateDual = dualFromBase(monthlyExpenseEstimate, baseCurrency, exchangeRate.usdUyu);
+  const monthCostDual: DualAmounts = {
+    USD: monthRevenue.USD - monthGrossProfit.USD,
+    UYU: monthRevenue.UYU - monthGrossProfit.UYU,
+  };
+  const ticketAverageDual: DualAmounts = financeSales.length > 0
+    ? { USD: totalRevenue.USD / financeSales.length, UYU: totalRevenue.UYU / financeSales.length }
+    : { USD: 0, UYU: 0 };
 
   //  íšltimos 6 meses 
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const d = subMonths(new Date(), 5 - i);
     const start = format(startOfMonth(d),"yyyy-MM-dd");
     const end = format(endOfMonth(d),"yyyy-MM-dd");
-    const ms = baseCurrencySales.filter(s => s.order_date >= start && s.order_date <= end);
+    const ms = financeSales.filter(s => s.order_date >= start && s.order_date <= end);
     const me = (allExpenses ?? []).filter((e: Expense) => e.expense_date >= start && e.expense_date <= end);
-    const revenue = ms.reduce((s: number, x: FinanceOrder) => s + Number(x.total_amount ?? 0), 0);
-    const grossProfit = ms.reduce((s: number, x: FinanceOrder) => s + orderProfit(x), 0);
+    const revenue = revenueDual(ms, baseCurrency, exchangeRate.usdUyu);
+    const grossProfit = profitDual(ms, baseCurrency, exchangeRate.usdUyu);
     const expenses = me.reduce((s: number, e: Expense) => s + e.amount, 0);
+    const expensesDual = dualFromBase(expenses, baseCurrency, exchangeRate.usdUyu);
     return {
       month: format(d,"MMM", { locale: es }),
       revenue,
       grossProfit,
-      netProfit: grossProfit - expenses,
-      expenses,
+      netProfit: {
+        USD: grossProfit.USD - expensesDual.USD,
+        UYU: grossProfit.UYU - expensesDual.UYU,
+      },
+      expenses: expensesDual,
     };
   });
 
-  const maxRevenue = Math.max(...monthlyData.map(m => m.revenue), 1);
+  const maxRevenue = Math.max(...monthlyData.map(m => m.revenue.USD), 1);
 
   //  Gastos por categoría este mes 
   const expenseByCategory: Record<string, number> = {};
@@ -203,40 +228,48 @@ export default async function FinancesPage() {
       {/* Stats del mes */}
       <p className="section-title">Este mes</p>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatsCard icon={DollarSign} label="Ingresos" value={monthRevenueLabel} sub="separados por moneda" />
+        <StatsCard icon={DollarSign} label="Ingresos" value={formatDual(monthRevenue)} sub="USD / UYU" />
         <StatsCard icon={TrendingUp} label="Ganancia bruta"
-          value={formatCurrency(monthGrossProfit, roaster.currency)}
-          sub={`${monthGrossMargin.toFixed(1)}% · solo ${baseCurrency}`} />
+          value={formatDual(monthGrossProfit)}
+          sub={`${monthGrossMargin.toFixed(1)}% margen bruto`} />
         <StatsCard icon={Receipt} label="Gastos"
-          value={formatCurrency(monthExpenseTotal, roaster.currency)}
-          sub="costos fijos + variables" />
+          value={formatDual(monthExpensesDual)}
+          sub="USD / UYU" />
         <StatsCard icon={TrendingDown} label="Ganancia neta"
-          value={formatCurrency(monthNetProfit, roaster.currency)}
+          value={formatDual(monthNetProfit)}
           sub={`${monthNetMargin.toFixed(1)}% margen neto`}
-          alert={monthNetProfit < 0} />
+          alert={monthNetProfit.USD < 0} />
       </div>
 
       {/* Rentabilidad real */}
       <div className="card p-5 mb-6">
-        <p className="text-sm font-semibold text-text-primary mb-1">Rentabilidad real del mes ({baseCurrency})</p>
+        <p className="text-sm font-semibold text-text-primary mb-1">Rentabilidad real del mes</p>
         <p className="text-xs text-text-secondary mb-4">
-          Solo ventas en {baseCurrency}: ingresos - costo de producción - gastos operativos
+          Cotización BCU: 1 USD = {exchangeRate.usdUyu.toFixed(3)} UYU
+          {exchangeRate.date ? ` · cierre ${exchangeRate.date}` : " · valor de respaldo"}
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-sm">
-          {[
-            { label:"Ingresos", value: monthRevenue, color:"text-text-primary" },
-            { label:"- Costo producción", value: monthRevenue - monthGrossProfit, color:"text-status-danger" },
-            { label:"- Gastos operativos", value: monthExpenseTotal, color:"text-status-warning" },
-            { label:"= Ganancia neta", value: monthNetProfit, color: monthNetProfit >= 0 ?"text-status-success" :"text-status-danger", bold: true },
-          ].map(({ label, value, color, bold }) => (<div key={label} className="flex flex-col gap-1">
-              <p className="text-xs text-text-secondary">{label}</p>
-              <p className={`font-mono text-lg ${bold ?"font-bold" :"font-semibold"} ${color}`}>
-                {formatCurrency(value, roaster.currency)}
-              </p>
-            </div>))}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {(["USD", "UYU"] as const).map(currency => (
+            <div key={currency} className="rounded-xl border border-border-default p-4">
+              <p className="text-xs font-semibold text-text-secondary mb-3">{currency}</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                {[
+                  { label:"Ingresos", value: monthRevenue[currency], color:"text-text-primary" },
+                  { label:"- Costo producción", value: monthCostDual[currency], color:"text-status-danger" },
+                  { label:"- Gastos operativos", value: monthExpensesDual[currency], color:"text-status-warning" },
+                  { label:"= Ganancia neta", value: monthNetProfit[currency], color: monthNetProfit[currency] >= 0 ?"text-status-success" :"text-status-danger", bold: true },
+                ].map(({ label, value, color, bold }) => (<div key={label} className="flex flex-col gap-1">
+                    <p className="text-xs text-text-secondary">{label}</p>
+                    <p className={`font-mono text-base ${bold ?"font-bold" :"font-semibold"} ${color}`}>
+                      {formatCurrency(value, currency)}
+                    </p>
+                  </div>))}
+              </div>
+            </div>
+          ))}
         </div>
         {monthlyExpenseEstimate > 0 && (<p className="text-xs text-text-secondary mt-4 pt-3 border-t border-border-default">
-            Ÿ"¡ Estimado de gastos recurrentes: {formatCurrency(monthlyExpenseEstimate, roaster.currency)}/mes
+            Estimado de gastos recurrentes: {formatDual(monthlyExpenseEstimateDual)}/mes
           </p>)}
       </div>
 
@@ -254,14 +287,14 @@ export default async function FinancesPage() {
           {monthlyData.map((m) => (<div key={m.month} className="flex-1 flex flex-col items-center gap-1">
               <div className="w-full flex items-end gap-0.5 h-32">
                 <div className="flex-1 bg-accent-green/80 rounded-t-sm"
-                  style={{ height: `${Math.max(m.revenue > 0 ? 4 : 0, (m.revenue / maxRevenue) * 100)}%` }} />
-                <div className={`flex-1 rounded-t-sm ${m.netProfit >= 0 ?"bg-accent-olive/80" :"bg-red-300"}`}
-                  style={{ height: `${Math.max(Math.abs(m.netProfit) > 0 ? 4 : 0, (Math.abs(m.netProfit) / maxRevenue) * 100)}%` }} />
+                  style={{ height: `${Math.max(m.revenue.USD > 0 ? 4 : 0, (m.revenue.USD / maxRevenue) * 100)}%` }} />
+                <div className={`flex-1 rounded-t-sm ${m.netProfit.USD >= 0 ?"bg-accent-olive/80" :"bg-red-300"}`}
+                  style={{ height: `${Math.max(Math.abs(m.netProfit.USD) > 0 ? 4 : 0, (Math.abs(m.netProfit.USD) / maxRevenue) * 100)}%` }} />
                 <div className="flex-1 bg-red-200 rounded-t-sm"
-                  style={{ height: `${Math.max(m.expenses > 0 ? 4 : 0, (m.expenses / maxRevenue) * 100)}%` }} />
+                  style={{ height: `${Math.max(m.expenses.USD > 0 ? 4 : 0, (m.expenses.USD / maxRevenue) * 100)}%` }} />
               </div>
               <p className="text-xs text-text-secondary capitalize">{m.month}</p>
-              {m.revenue > 0 && (<p className="text-xs font-mono text-text-primary">{formatCurrency(m.revenue, roaster.currency)}</p>)}
+              {m.revenue.USD > 0 && (<p className="text-[10px] font-mono text-text-primary text-center">{formatDual(m.revenue)}</p>)}
             </div>))}
         </div>
       </div>
@@ -285,7 +318,9 @@ export default async function FinancesPage() {
                         {CATEGORY_ICONS[cat as keyof typeof CATEGORY_ICONS]}{""}
                         {CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS]}
                       </span>
-                      <span className="font-mono font-medium">{formatCurrency(amount, roaster.currency)}</span>
+                      <span className="font-mono text-xs font-medium">
+                        {formatDual(dualFromBase(amount, baseCurrency, exchangeRate.usdUyu))}
+                      </span>
                     </div>
                     <div className="h-1.5 bg-border-default rounded-full">
                       <div className="h-full bg-accent-green rounded-full" style={{ width: `${pct}%` }} />
@@ -300,25 +335,24 @@ export default async function FinancesPage() {
           <p className="section-title">Resumen histórico</p>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { label:"Ingresos totales", value: totalRevenueLabel },
-              { label:"Ganancia bruta", value: formatCurrency(totalGrossProfit, roaster.currency) },
-              { label:"Gastos totales", value: formatCurrency(totalExpenses, roaster.currency) },
-              { label:"Ganancia neta", value: formatCurrency(totalNetProfit, roaster.currency), highlight: true },
+              { label:"Ingresos totales", value: formatDual(totalRevenue) },
+              { label:"Ganancia bruta", value: formatDual(totalGrossProfit) },
+              { label:"Gastos totales", value: formatDual(totalExpensesDual) },
+              { label:"Ganancia neta", value: formatDual(totalNetProfit), highlight: true },
               {
                 label:"Margen neto promedio",
-                value: totalRevenue > 0 ? `${((totalNetProfit / totalRevenue) * 100).toFixed(1)}%` : "-",
+                value: totalRevenue.USD > 0 ? `${((totalNetProfit.USD / totalRevenue.USD) * 100).toFixed(1)}%` : "-",
               },
-              { label:"Valor inventario", value: formatCurrency(inventoryValue, roaster.currency) },
+              { label:"Valor inventario", value: formatDual(inventoryValueDual) },
               {
                 label:"Ticket promedio",
-                value: baseCurrencySales.length > 0
-                  ? formatCurrency(totalRevenue / baseCurrencySales.length, roaster.currency) : "-",
+                value: financeSales.length > 0 ? formatDual(ticketAverageDual) : "-",
               },
               { label:"Total ventas", value: `${financeSales.length}` },
             ].map(({ label, value, highlight }) => (<div key={label}>
                 <p className="text-xs text-text-secondary">{label}</p>
                 <p className={`text-sm font-mono font-semibold mt-0.5 ${highlight
-                  ? totalNetProfit >= 0 ?"text-status-success" :"text-status-danger"
+                  ? totalNetProfit.USD >= 0 ?"text-status-success" :"text-status-danger"
                   :"text-text-primary"}`}>
                   {value}
                 </p>
@@ -333,7 +367,7 @@ export default async function FinancesPage() {
           { href:"/finances/pending", icon: Clock, label:"Pagos pendientes", sub: `${(pendingSales ?? []).length} sin cobrar`, alert: (pendingSales ?? []).length > 0 },
           { href:"/expenses", icon: Receipt, label:"Ver gastos", sub: `${(allExpenses ?? []).length} registros` },
           { href:"/sales", icon: ShoppingBag, label:"Ver ventas", sub: `${financeSales.length} ventas` },
-          { href:"/inventory", icon: Leaf, label:"Inventario", sub: formatCurrency(inventoryValue, roaster.currency) },
+          { href:"/inventory", icon: Leaf, label:"Inventario", sub: formatDual(inventoryValueDual) },
         ].map(({ href, icon: Icon, label, sub, alert }) => (<Link key={href} href={href}
             className={`card p-4 hover:shadow-card-hover transition-shadow flex items-start gap-3 ${alert ?"border-orange-200 bg-orange-50/50" :""}`}
           >
@@ -348,4 +382,3 @@ export default async function FinancesPage() {
       </div>
     </div>);
 }
-
