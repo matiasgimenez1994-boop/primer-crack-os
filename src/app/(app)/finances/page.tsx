@@ -10,7 +10,38 @@ import { formatCurrency, formatDate, currentMonthRange } from"@/lib/utils";
 import { subMonths, startOfMonth, endOfMonth, format } from"date-fns";
 import { es } from"date-fns/locale";
 import { toMonthlyAmount, CATEGORY_LABELS, CATEGORY_ICONS } from"@/lib/expenses";
-import type { Sale, Expense } from"@/types";
+import type { Order, Expense } from"@/types";
+
+type FinanceOrder = Order & {
+  order_items?: Array<{
+    product_type: "roasted" | "green";
+    green_weight_kg: number | null;
+    weight_grams: number | null;
+    quantity: number;
+    green_coffees?: { purchase_price_per_kg?: number | null } | null;
+    roast_batches?: { total_cost_per_kg_roasted?: number | null } | null;
+  }>;
+};
+
+const FINANCE_STATUSES = ["confirmed", "ready", "delivered"];
+
+function orderCost(order: FinanceOrder) {
+  return (order.order_items ?? []).reduce((total, item) => {
+    if (item.product_type === "green") {
+      return total
+        + Number(item.green_weight_kg ?? 0)
+        * Number(item.green_coffees?.purchase_price_per_kg ?? 0);
+    }
+    return total
+      + (Number(item.weight_grams ?? 0) / 1000)
+      * Number(item.quantity ?? 0)
+      * Number(item.roast_batches?.total_cost_per_kg_roasted ?? 0);
+  }, 0);
+}
+
+function orderProfit(order: FinanceOrder) {
+  return Number(order.total_amount ?? 0) - orderCost(order);
+}
 
 export default async function FinancesPage() {
   const supabase = await createClient();
@@ -31,11 +62,16 @@ export default async function FinancesPage() {
     { data: allExpenses },
     { data: monthExpenses },
   ] = await Promise.all([
-    supabase.from("sales").select("*").eq("roaster_id", roaster.id),
-    supabase.from("sales").select("*").eq("roaster_id", roaster.id)
-      .gte("sale_date", monthStart).lte("sale_date", monthEnd),
-    supabase.from("sales").select("*, clients(name)")
-      .eq("roaster_id", roaster.id).in("payment_status", ["pending","partial"]),
+    supabase.from("orders")
+      .select("*, order_items(product_type, green_weight_kg, weight_grams, quantity, green_coffees(purchase_price_per_kg), roast_batches(total_cost_per_kg_roasted))")
+      .eq("roaster_id", roaster.id).in("status", FINANCE_STATUSES),
+    supabase.from("orders")
+      .select("*, order_items(product_type, green_weight_kg, weight_grams, quantity, green_coffees(purchase_price_per_kg), roast_batches(total_cost_per_kg_roasted))")
+      .eq("roaster_id", roaster.id).in("status", FINANCE_STATUSES)
+      .gte("order_date", monthStart).lte("order_date", monthEnd),
+    supabase.from("orders").select("*, clients(name)")
+      .eq("roaster_id", roaster.id).in("status", FINANCE_STATUSES)
+      .in("payment_status", ["pending","partial"]),
     supabase.from("green_coffees").select("current_stock_kg, purchase_price_per_kg")
       .eq("roaster_id", roaster.id),
     supabase.from("expenses").select("*").eq("roaster_id", roaster.id),
@@ -44,27 +80,28 @@ export default async function FinancesPage() {
   ]);
 
   //  Mes actual 
-  const monthRevenue = (monthSales ?? []).reduce((s: number, x: Sale) => s + x.final_price, 0);
-  const monthGrossProfit = (monthSales ?? []).reduce((s: number, x: Sale) => s + x.profit, 0);
+  const monthRevenue = (monthSales ?? []).reduce((s: number, x: FinanceOrder) => s + Number(x.total_amount ?? 0), 0);
+  const monthGrossProfit = (monthSales ?? []).reduce((s: number, x: FinanceOrder) => s + orderProfit(x), 0);
   const monthExpenseTotal = (monthExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
   const monthNetProfit = monthGrossProfit - monthExpenseTotal;
   const monthGrossMargin = monthRevenue > 0 ? (monthGrossProfit / monthRevenue) * 100 : 0;
   const monthNetMargin = monthRevenue > 0 ? (monthNetProfit / monthRevenue) * 100 : 0;
-  const monthCash = (monthSales ?? []).filter((s: Sale) => s.payment_type ==="cash")
-    .reduce((s: number, x: Sale) => s + x.final_price, 0);
-  const monthTransfer = (monthSales ?? []).filter((s: Sale) => s.payment_type ==="transfer")
-    .reduce((s: number, x: Sale) => s + x.final_price, 0);
+  const monthCash = (monthSales ?? []).filter((s: FinanceOrder) => s.payment_type ==="cash")
+    .reduce((s: number, x: FinanceOrder) => s + Number(x.total_amount ?? 0), 0);
+  const monthTransfer = (monthSales ?? []).filter((s: FinanceOrder) => s.payment_type ==="transfer")
+    .reduce((s: number, x: FinanceOrder) => s + Number(x.total_amount ?? 0), 0);
 
   //  Pendiente de cobro 
-  const totalPending = (pendingSales ?? []).reduce((s: number, x: Sale) => s + (x.final_price - x.amount_paid), 0);
+  const totalPending = (pendingSales ?? []).reduce((s: number, x: FinanceOrder) =>
+    s + (Number(x.total_amount ?? 0) - Number(x.amount_paid ?? 0)), 0);
 
   //  Inventario valorizado 
   const inventoryValue = (greenCoffees ?? []).reduce((s: number, c: { current_stock_kg: number; purchase_price_per_kg: number }) =>
       s + c.current_stock_kg * c.purchase_price_per_kg, 0);
 
   //  Histórico 
-  const totalRevenue = (allSales ?? []).reduce((s: number, x: Sale) => s + x.final_price, 0);
-  const totalGrossProfit = (allSales ?? []).reduce((s: number, x: Sale) => s + x.profit, 0);
+  const totalRevenue = (allSales ?? []).reduce((s: number, x: FinanceOrder) => s + Number(x.total_amount ?? 0), 0);
+  const totalGrossProfit = (allSales ?? []).reduce((s: number, x: FinanceOrder) => s + orderProfit(x), 0);
   const totalExpenses = (allExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
   const totalNetProfit = totalGrossProfit - totalExpenses;
 
@@ -78,10 +115,10 @@ export default async function FinancesPage() {
     const d = subMonths(new Date(), 5 - i);
     const start = format(startOfMonth(d),"yyyy-MM-dd");
     const end = format(endOfMonth(d),"yyyy-MM-dd");
-    const ms = (allSales ?? []).filter((s: Sale) => s.sale_date >= start && s.sale_date <= end);
+    const ms = (allSales ?? []).filter((s: FinanceOrder) => s.order_date >= start && s.order_date <= end);
     const me = (allExpenses ?? []).filter((e: Expense) => e.expense_date >= start && e.expense_date <= end);
-    const revenue = ms.reduce((s: number, x: Sale) => s + x.final_price, 0);
-    const grossProfit = ms.reduce((s: number, x: Sale) => s + x.profit, 0);
+    const revenue = ms.reduce((s: number, x: FinanceOrder) => s + Number(x.total_amount ?? 0), 0);
+    const grossProfit = ms.reduce((s: number, x: FinanceOrder) => s + orderProfit(x), 0);
     const expenses = me.reduce((s: number, e: Expense) => s + e.amount, 0);
     return {
       month: format(d,"MMM", { locale: es }),
