@@ -74,6 +74,15 @@ function formatDual(amounts: DualAmounts) {
   return `${formatCurrency(amounts.USD, "USD")} / ${formatCurrency(amounts.UYU, "UYU")}`;
 }
 
+function DualValue({ amounts }: { amounts: DualAmounts }) {
+  return (
+    <span className="flex flex-col gap-1 text-lg xl:text-xl leading-tight">
+      <span className="whitespace-nowrap">{formatCurrency(amounts.USD, "USD")}</span>
+      <span className="whitespace-nowrap">{formatCurrency(amounts.UYU, "UYU")}</span>
+    </span>
+  );
+}
+
 export default async function FinancesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -227,16 +236,16 @@ export default async function FinancesPage() {
 
       {/* Stats del mes */}
       <p className="section-title">Este mes</p>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatsCard icon={DollarSign} label="Ingresos" value={formatDual(monthRevenue)} sub="USD / UYU" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
+        <StatsCard icon={DollarSign} label="Ingresos" value={<DualValue amounts={monthRevenue} />} sub="USD / UYU" />
         <StatsCard icon={TrendingUp} label="Ganancia bruta"
-          value={formatDual(monthGrossProfit)}
+          value={<DualValue amounts={monthGrossProfit} />}
           sub={`${monthGrossMargin.toFixed(1)}% margen bruto`} />
         <StatsCard icon={Receipt} label="Gastos"
-          value={formatDual(monthExpensesDual)}
+          value={<DualValue amounts={monthExpensesDual} />}
           sub="USD / UYU" />
         <StatsCard icon={TrendingDown} label="Ganancia neta"
-          value={formatDual(monthNetProfit)}
+          value={<DualValue amounts={monthNetProfit} />}
           sub={`${monthNetMargin.toFixed(1)}% margen neto`}
           alert={monthNetProfit.USD < 0} />
       </div>
@@ -248,11 +257,11 @@ export default async function FinancesPage() {
           Cotización BCU: 1 USD = {exchangeRate.usdUyu.toFixed(3)} UYU
           {exchangeRate.date ? ` · cierre ${exchangeRate.date}` : " · valor de respaldo"}
         </p>
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {(["USD", "UYU"] as const).map(currency => (
             <div key={currency} className="rounded-xl border border-border-default p-4">
               <p className="text-xs font-semibold text-text-secondary mb-3">{currency}</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 text-sm">
                 {[
                   { label:"Ingresos", value: monthRevenue[currency], color:"text-text-primary" },
                   { label:"- Costo producción", value: monthCostDual[currency], color:"text-status-danger" },
