@@ -223,57 +223,66 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
         </div>
       ) : (
         <div className="card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="w-full">
+            <table className="w-full table-fixed text-sm">
+              <colgroup>
+                <col className="w-[8%]" />
+                <col className="w-[11%]" />
+                <col className="w-[19%]" />
+                <col className="w-[13%]" />
+                <col className="w-[11%]" />
+                <col className="w-[9%]" />
+                <col className="w-[11%]" />
+                <col className="w-[9%]" />
+                <col className="w-[9%]" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-border-default bg-[#F8FAFC]">
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">Fecha</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">Documento</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary">Productos</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary hidden md:table-cell">Cliente</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Subtotal</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">IVA</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Total</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Pago</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Acciones</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-text-secondary">Fecha</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-text-secondary">Documento</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-text-secondary">Productos</th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-text-secondary hidden md:table-cell">Cliente</th>
+                  <th className="text-right px-3 py-3 text-xs font-semibold text-text-secondary">Subtotal</th>
+                  <th className="text-right px-3 py-3 text-xs font-semibold text-text-secondary">IVA</th>
+                  <th className="text-right px-3 py-3 text-xs font-semibold text-text-secondary">Total</th>
+                  <th className="text-right px-3 py-3 text-xs font-semibold text-text-secondary">Pago</th>
+                  <th className="text-right px-3 py-3 text-xs font-semibold text-text-secondary">Docs.</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.map((order) => (
                   <tr key={order.id} className="border-b border-border-default last:border-0 hover:bg-[#F8FAFC] transition-colors group">
-                    <td className="px-5 py-3.5 text-text-secondary">{formatDate(order.order_date)}</td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-3 py-3 text-text-secondary break-words">{formatDate(order.order_date)}</td>
+                    <td className="px-3 py-3">
                       <div className="flex flex-col gap-1">
                         <span className="font-medium text-text-primary">{documentLabel(order)}</span>
                         <span className="text-xs text-text-secondary">{statusLabel(order.status)}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-3 py-3 align-top">
                       <div className="flex flex-col gap-1">
-                        {(order.order_items ?? []).map((item) => <span key={item.id} className="text-text-primary">{itemLabel(item)}</span>)}
+                        {(order.order_items ?? []).map((item) => <span key={item.id} className="text-text-primary break-words">{itemLabel(item)}</span>)}
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-text-secondary hidden md:table-cell">{(order as any).clients?.name ?? order.client_name ?? "-"}</td>
-                    <td className="px-5 py-3.5 text-right font-mono whitespace-nowrap">{formatCurrency(order.subtotal_amount ?? 0, saleCurrency(order, currency))}</td>
-                    <td className="px-5 py-3.5 text-right font-mono whitespace-nowrap">{formatCurrency(order.tax_amount ?? 0, saleCurrency(order, currency))}</td>
-                    <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary whitespace-nowrap">{formatCurrency(order.total_amount ?? 0, saleCurrency(order, currency))}</td>
-                    <td className="px-5 py-3.5 text-right">
+                    <td className="px-3 py-3 text-text-secondary hidden md:table-cell break-words">{(order as any).clients?.name ?? order.client_name ?? "-"}</td>
+                    <td className="px-3 py-3 text-right text-xs font-mono whitespace-nowrap">{formatCurrency(order.subtotal_amount ?? 0, saleCurrency(order, currency))}</td>
+                    <td className="px-3 py-3 text-right text-xs font-mono whitespace-nowrap">{formatCurrency(order.tax_amount ?? 0, saleCurrency(order, currency))}</td>
+                    <td className="px-3 py-3 text-right text-xs font-mono font-medium text-text-primary whitespace-nowrap">{formatCurrency(order.total_amount ?? 0, saleCurrency(order, currency))}</td>
+                    <td className="px-3 py-3 text-right">
                       <div className="flex flex-col items-end gap-1">
                         <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium border ${paymentClass(order)}`}>{paymentLabel(order)}</span>
                         {(order as any).amount_paid != null && <span className="text-[11px] text-text-secondary">{formatCurrency(Number((order as any).amount_paid ?? 0), paymentCurrency(order, currency))}</span>}
                       </div>
                     </td>
-                    <td className="px-5 py-3.5 text-right">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        <Link href={`/sales/${order.id}/edit`} className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-2.5 py-1.5 text-xs font-medium text-text-primary hover:border-accent-green hover:text-accent-green hover:bg-green-50 transition-all" title="Editar venta">
+                    <td className="px-3 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Link href={`/sales/${order.id}/edit`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border-default text-text-primary hover:border-accent-green hover:text-accent-green hover:bg-green-50 transition-all" title="Editar venta" aria-label="Editar venta">
                           <Pencil className="w-3.5 h-3.5" />
-                          Editar
                         </Link>
-                        <button onClick={() => handleDownload(order)} disabled={downloading === order.id} className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-2.5 py-1.5 text-xs font-medium text-text-primary hover:border-accent-green hover:text-accent-green hover:bg-green-50 transition-all disabled:opacity-60" title="Descargar boleta o proforma">
+                        <button onClick={() => handleDownload(order)} disabled={downloading === order.id} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border-default text-text-primary hover:border-accent-green hover:text-accent-green hover:bg-green-50 transition-all disabled:opacity-60" title="Descargar boleta o proforma" aria-label="Descargar boleta o proforma">
                           {downloading === order.id ? <div className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                          Descargar
                         </button>
-                        <button onClick={() => handleDelete(order.id)} disabled={deleting === order.id || Boolean(order.inventory_committed_at)} className="p-1.5 rounded-lg text-text-secondary hover:text-status-danger hover:bg-red-50 transition-all disabled:opacity-30" title="Eliminar venta">
+                        <button onClick={() => handleDelete(order.id)} disabled={deleting === order.id || Boolean(order.inventory_committed_at)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary hover:text-status-danger hover:bg-red-50 transition-all disabled:opacity-30" title="Eliminar venta" aria-label="Eliminar venta">
                           {deleting === order.id ? <div className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                         </button>
                       </div>
@@ -283,8 +292,8 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
               </tbody>
               <tfoot className="border-t-2 border-border-default bg-[#F8FAFC]">
                 <tr>
-                  <td colSpan={6} className="px-5 py-3 text-xs font-semibold text-text-secondary">Total historico</td>
-                  <td className="px-5 py-3 text-right font-mono font-semibold text-text-primary whitespace-nowrap">{totalHistRevenueLabel}</td>
+                  <td colSpan={6} className="px-3 py-3 text-xs font-semibold text-text-secondary">Total historico</td>
+                  <td className="px-3 py-3 text-right text-xs font-mono font-semibold text-text-primary whitespace-nowrap">{totalHistRevenueLabel}</td>
                   <td colSpan={2} />
                 </tr>
               </tfoot>
