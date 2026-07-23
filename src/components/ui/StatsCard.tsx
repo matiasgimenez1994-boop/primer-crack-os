@@ -1,10 +1,11 @@
 import { cn } from"@/lib/utils";
 import type { LucideIcon } from"lucide-react";
+import type { ReactNode } from"react";
 
 interface StatsCardProps {
   icon: LucideIcon;
   label: string;
-  value: string;
+  value: ReactNode;
   sub?: string;
   alert?: boolean;
   className?: string;
@@ -22,7 +23,7 @@ export function StatsCard({ icon: Icon, label, value, sub, alert, className }: S
         </div>
       </div>
       <div>
-        <p className="text-2xl font-semibold text-text-primary font-mono whitespace-nowrap">{value}</p>
+        <div className="text-2xl font-semibold text-text-primary font-mono">{value}</div>
         {sub && <p className="text-xs text-text-secondary mt-0.5">{sub}</p>}
       </div>
     </div>);
