@@ -3,10 +3,10 @@ import { redirect } from"next/navigation";
 import Link from"next/link";
 import {
   DollarSign, TrendingUp, TrendingDown, Clock,
-  AlertTriangle, ShoppingBag, Leaf, Receipt,
+  AlertTriangle, ShoppingBag, Leaf, Receipt, CalendarRange,
 } from"lucide-react";
 import { StatsCard } from"@/components/ui/StatsCard";
-import { formatCurrency, formatDate, currentMonthRange } from"@/lib/utils";
+import { formatCurrency, formatDate } from"@/lib/utils";
 import { subMonths, startOfMonth, endOfMonth, format } from"date-fns";
 import { es } from"date-fns/locale";
 import { toMonthlyAmount, CATEGORY_LABELS, CATEGORY_ICONS } from"@/lib/expenses";
@@ -83,7 +83,14 @@ function DualValue({ amounts }: { amounts: DualAmounts }) {
   );
 }
 
-export default async function FinancesPage() {
+type FinanceSearchParams = Record<string, string | string[] | undefined>;
+
+function param(searchParams: FinanceSearchParams, key: string) {
+  const value = searchParams[key];
+  return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
+
+export default async function FinancesPage({ searchParams = {} }: { searchParams?: FinanceSearchParams }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -93,38 +100,49 @@ export default async function FinancesPage() {
   if (!roaster) redirect("/onboarding");
 
   const exchangeRate = await getBcuUsdUyuRate();
-  const { start: monthStart, end: monthEnd } = currentMonthRange();
+  const period = param(searchParams, "period") || "month";
+  const selectedMonth = param(searchParams, "month") || format(new Date(), "yyyy-MM");
+  const selectedFrom = param(searchParams, "from");
+  const selectedTo = param(searchParams, "to");
+  const periodLabel = period === "all"
+    ? "Todo el histórico"
+    : period === "custom"
+      ? `${selectedFrom || "Inicio"} a ${selectedTo || "Hoy"}`
+      : format(new Date(`${selectedMonth}-01T12:00:00`), "MMMM yyyy", { locale: es });
+  const inSelectedPeriod = (dateValue: string) => {
+    const date = String(dateValue ?? "").slice(0, 10);
+    if (period === "all") return true;
+    if (period === "custom") {
+      if (selectedFrom && date < selectedFrom) return false;
+      if (selectedTo && date > selectedTo) return false;
+      return true;
+    }
+    return date.startsWith(selectedMonth);
+  };
 
   const [
     { data: allSales },
-    { data: monthSales },
     { data: pendingSales },
     { data: greenCoffees },
     { data: allExpenses },
-    { data: monthExpenses },
   ] = await Promise.all([
     supabase.from("orders")
       .select("*, order_items(product_type, green_weight_kg, weight_grams, quantity, green_coffees(purchase_price_per_kg), roast_batches(total_cost_per_kg_roasted))")
       .eq("roaster_id", roaster.id).in("status", FINANCE_STATUSES),
-    supabase.from("orders")
-      .select("*, order_items(product_type, green_weight_kg, weight_grams, quantity, green_coffees(purchase_price_per_kg), roast_batches(total_cost_per_kg_roasted))")
-      .eq("roaster_id", roaster.id).in("status", FINANCE_STATUSES)
-      .gte("order_date", monthStart).lte("order_date", monthEnd),
     supabase.from("orders").select("*, clients(name)")
       .eq("roaster_id", roaster.id).in("status", FINANCE_STATUSES)
       .in("payment_status", ["pending","partial"]),
     supabase.from("green_coffees").select("current_stock_kg, purchase_price_per_kg")
       .eq("roaster_id", roaster.id),
     supabase.from("expenses").select("*").eq("roaster_id", roaster.id),
-    supabase.from("expenses").select("*").eq("roaster_id", roaster.id)
-      .gte("expense_date", monthStart).lte("expense_date", monthEnd),
   ]);
 
   const baseCurrency = roaster.currency ?? "USD";
   const financeSales = (allSales ?? []) as FinanceOrder[];
-  const currentMonthSales = (monthSales ?? []) as FinanceOrder[];
+  const currentMonthSales = financeSales.filter(sale => inSelectedPeriod(sale.order_date));
+  const monthExpenses = (allExpenses ?? []).filter((expense: Expense) => inSelectedPeriod(expense.expense_date));
 
-  // Mes actual: todos los valores se expresan en paralelo en USD y UYU.
+  // Período seleccionado: todos los valores se expresan en paralelo en USD y UYU.
   const monthRevenue = revenueDual(currentMonthSales, baseCurrency, exchangeRate.usdUyu);
   const monthGrossProfit = profitDual(currentMonthSales, baseCurrency, exchangeRate.usdUyu);
   const monthExpenseTotal = (monthExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
@@ -152,10 +170,10 @@ export default async function FinancesPage() {
   const inventoryValueDual = dualFromBase(inventoryValue, baseCurrency, exchangeRate.usdUyu);
 
   //  Histórico 
-  const totalRevenue = revenueDual(financeSales, baseCurrency, exchangeRate.usdUyu);
-  const totalGrossProfit = profitDual(financeSales, baseCurrency, exchangeRate.usdUyu);
-  const totalExpenses = (allExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
-  const totalExpensesDual = dualFromBase(totalExpenses, baseCurrency, exchangeRate.usdUyu);
+  const totalRevenue = monthRevenue;
+  const totalGrossProfit = monthGrossProfit;
+  const totalExpenses = monthExpenseTotal;
+  const totalExpensesDual = monthExpensesDual;
   const totalNetProfit: DualAmounts = {
     USD: totalGrossProfit.USD - totalExpensesDual.USD,
     UYU: totalGrossProfit.UYU - totalExpensesDual.UYU,
@@ -170,8 +188,8 @@ export default async function FinancesPage() {
     USD: monthRevenue.USD - monthGrossProfit.USD,
     UYU: monthRevenue.UYU - monthGrossProfit.UYU,
   };
-  const ticketAverageDual: DualAmounts = financeSales.length > 0
-    ? { USD: totalRevenue.USD / financeSales.length, UYU: totalRevenue.UYU / financeSales.length }
+  const ticketAverageDual: DualAmounts = currentMonthSales.length > 0
+    ? { USD: totalRevenue.USD / currentMonthSales.length, UYU: totalRevenue.UYU / currentMonthSales.length }
     : { USD: 0, UYU: 0 };
 
   //  íšltimos 6 meses 
@@ -219,6 +237,25 @@ export default async function FinancesPage() {
         </div>
       </div>
 
+      <form method="get" className="card p-4 mb-5">
+        <div className="flex items-center gap-2 mb-3">
+          <CalendarRange className="w-4 h-4 text-accent-green" />
+          <p className="text-sm font-semibold text-text-primary">Período financiero</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <select name="period" defaultValue={period} className="input-base">
+            <option value="month">Por mes</option>
+            <option value="custom">Fechas específicas</option>
+            <option value="all">Todo el histórico</option>
+          </select>
+          <input type="month" name="month" defaultValue={selectedMonth} className="input-base" aria-label="Mes" />
+          <input type="date" name="from" defaultValue={selectedFrom} className="input-base" aria-label="Fecha desde" />
+          <input type="date" name="to" defaultValue={selectedTo} className="input-base" aria-label="Fecha hasta" />
+          <button type="submit" className="btn-primary justify-center">Aplicar período</button>
+        </div>
+        <p className="text-xs text-text-secondary mt-3">Mostrando: <span className="font-medium capitalize">{periodLabel}</span>. Para fechas específicas, elegí esa opción y completá desde/hasta.</p>
+      </form>
+
       {/* Alerta pagos pendientes */}
       {(pendingSales ?? []).length > 0 && (<div className="mb-5 bg-orange-50 border border-orange-200 rounded-xl p-4">
           <div className="flex items-center justify-between">
@@ -234,8 +271,8 @@ export default async function FinancesPage() {
           </div>
         </div>)}
 
-      {/* Stats del mes */}
-      <p className="section-title">Este mes</p>
+      {/* Stats del período */}
+      <p className="section-title capitalize">{periodLabel}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
         <StatsCard icon={DollarSign} label="Ingresos" value={<DualValue amounts={monthRevenue} />} sub="USD / UYU" />
         <StatsCard icon={TrendingUp} label="Ganancia bruta"
@@ -252,7 +289,7 @@ export default async function FinancesPage() {
 
       {/* Rentabilidad real */}
       <div className="card p-5 mb-6">
-        <p className="text-sm font-semibold text-text-primary mb-1">Rentabilidad real del mes</p>
+        <p className="text-sm font-semibold text-text-primary mb-1">Rentabilidad real del período</p>
         <p className="text-xs text-text-secondary mb-4">
           Cotización BCU: 1 USD = {exchangeRate.usdUyu.toFixed(3)} UYU
           {exchangeRate.date ? ` · cierre ${exchangeRate.date}` : " · valor de respaldo"}
@@ -339,9 +376,9 @@ export default async function FinancesPage() {
             </div>)}
         </div>
 
-        {/* Resumen histórico */}
+        {/* Resumen del período */}
         <div className="card p-5">
-          <p className="section-title">Resumen histórico</p>
+          <p className="section-title">Resumen del período</p>
           <div className="grid grid-cols-2 gap-4">
             {[
               { label:"Ingresos totales", value: formatDual(totalRevenue) },
@@ -355,9 +392,9 @@ export default async function FinancesPage() {
               { label:"Valor inventario", value: formatDual(inventoryValueDual) },
               {
                 label:"Ticket promedio",
-                value: financeSales.length > 0 ? formatDual(ticketAverageDual) : "-",
+                value: currentMonthSales.length > 0 ? formatDual(ticketAverageDual) : "-",
               },
-              { label:"Total ventas", value: `${financeSales.length}` },
+              { label:"Total ventas", value: `${currentMonthSales.length}` },
             ].map(({ label, value, highlight }) => (<div key={label}>
                 <p className="text-xs text-text-secondary">{label}</p>
                 <p className={`text-sm font-mono font-semibold mt-0.5 ${highlight

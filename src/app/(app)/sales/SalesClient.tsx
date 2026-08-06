@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus, ShoppingBag, DollarSign, Package, Trash2, FileText, Download, Pencil } from "lucide-react";
+import { Plus, ShoppingBag, DollarSign, Package, Trash2, FileText, Download, Pencil, Filter, FileSpreadsheet } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatsCard } from "@/components/ui/StatsCard";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -58,6 +58,12 @@ function itemLabel(item: any) {
   return name + " - " + weight + " x " + item.quantity;
 }
 
+function itemProductName(item: any) {
+  return item.product_type === "green"
+    ? item.green_coffees?.name ?? "Cafe verde"
+    : item.roast_batches?.green_coffees?.name ?? item.green_coffees?.name ?? "Cafe tostado";
+}
+
 function documentFilename(order: Order) {
   return documentLabel(order).toLowerCase() + "-" + order.id.slice(0, 8) + ".pdf";
 }
@@ -88,8 +94,72 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [period, setPeriod] = useState<"month" | "custom" | "all">("month");
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [clientFilter, setClientFilter] = useState("");
+  const [productFilter, setProductFilter] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("");
   const supabase = createClient();
   const router = useRouter();
+
+  const clientOptions = useMemo(() => Array.from(new Set(orders.map(order =>
+    (order as any).clients?.name ?? order.client_name ?? "Sin cliente"))).sort(), [orders]);
+  const productOptions = useMemo(() => Array.from(new Set(orders.flatMap(order =>
+    (order.order_items ?? []).map(itemProductName)))).sort(), [orders]);
+
+  const filteredOrders = useMemo(() => orders.filter(order => {
+    const date = String(order.order_date ?? "").slice(0, 10);
+    if (period === "month" && month && !date.startsWith(month)) return false;
+    if (period === "custom" && fromDate && date < fromDate) return false;
+    if (period === "custom" && toDate && date > toDate) return false;
+    const client = (order as any).clients?.name ?? order.client_name ?? "Sin cliente";
+    if (clientFilter && client !== clientFilter) return false;
+    if (productFilter && !(order.order_items ?? []).some(item => itemProductName(item) === productFilter)) return false;
+    if (paymentFilter && ((order as any).payment_status ?? "paid") !== paymentFilter) return false;
+    return true;
+  }), [orders, period, month, fromDate, toDate, clientFilter, productFilter, paymentFilter]);
+
+  async function handleExportExcel() {
+    if (filteredOrders.length === 0) return toast.error("No hay ventas para exportar con estos filtros");
+    setExporting(true);
+    try {
+      const XLSX = await import("xlsx");
+      const rows = filteredOrders.flatMap(order => {
+        const items = order.order_items ?? [];
+        return (items.length ? items : [null]).map((item: any) => ({
+          Fecha: String(order.order_date ?? "").slice(0, 10),
+          Documento: documentLabel(order),
+          Estado: statusLabel(order.status),
+          Cliente: (order as any).clients?.name ?? order.client_name ?? "Sin cliente",
+          Producto: item ? itemProductName(item) : "",
+          Detalle: item ? itemLabel(item) : "",
+          Cantidad: item ? (item.product_type === "green" ? Number(item.green_weight_kg ?? 0) : Number(item.quantity ?? 0)) : 0,
+          Unidad: item?.product_type === "green" ? "kg" : "unidades",
+          Moneda: saleCurrency(order, currency),
+          "Precio unitario": item ? Number(item.unit_price ?? 0) : 0,
+          Subtotal: Number(order.subtotal_amount ?? 0),
+          IVA: Number(order.tax_amount ?? 0),
+          Total: Number(order.total_amount ?? 0),
+          "Estado de pago": paymentLabel(order),
+          "Monto pagado": Number((order as any).amount_paid ?? 0),
+        }));
+      });
+      const sheet = XLSX.utils.json_to_sheet(rows);
+      sheet["!cols"] = [12, 14, 14, 24, 28, 34, 12, 12, 10, 16, 14, 14, 14, 16, 16].map(wch => ({ wch }));
+      const book = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(book, sheet, "Ventas");
+      const range = period === "month" ? month : period === "custom" ? `${fromDate || "inicio"}-${toDate || "hoy"}` : "historico";
+      XLSX.writeFile(book, `reporte-ventas-${range}.xlsx`);
+      toast.success("Reporte Excel descargado");
+    } catch {
+      toast.error("No se pudo generar el reporte Excel");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   async function handleDelete(orderId: string) {
     const order = orders.find((entry) => entry.id === orderId);
@@ -190,7 +260,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
     }
   }
 
-  const totalsByCurrency = orders.reduce<Record<string, number>>((acc, order) => {
+  const totalsByCurrency = filteredOrders.reduce<Record<string, number>>((acc, order) => {
     const orderCurrency = saleCurrency(order, currency);
     acc[orderCurrency] = (acc[orderCurrency] ?? 0) + Number(order.total_amount ?? 0);
     return acc;
@@ -200,6 +270,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([orderCurrency, value]) => formatCurrency(value, orderCurrency))
     .join(" / ") || formatCurrency(0, currency);
+  const filteredUnits = filteredOrders.reduce((sum, order) => sum + (order.order_items?.length ?? 0), 0);
 
   return (
     <div>
@@ -210,14 +281,37 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
         </Link>
       </div>
 
+      <div className="card p-4 mb-6">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-accent-green" />
+            <p className="text-sm font-semibold text-text-primary">Filtrar ventas</p>
+          </div>
+          <button onClick={handleExportExcel} disabled={exporting || filteredOrders.length === 0} className="btn-secondary text-xs disabled:opacity-50">
+            <FileSpreadsheet className="w-4 h-4" /> {exporting ? "Generando..." : "Descargar Excel"}
+          </button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3">
+          <select className="input-base" value={period} onChange={event => setPeriod(event.target.value as any)}>
+            <option value="month">Por mes</option><option value="custom">Fechas específicas</option><option value="all">Todo el histórico</option>
+          </select>
+          {period === "month" && <input type="month" className="input-base" value={month} onChange={event => setMonth(event.target.value)} />}
+          {period === "custom" && <><input type="date" className="input-base" value={fromDate} onChange={event => setFromDate(event.target.value)} aria-label="Fecha desde" /><input type="date" className="input-base" value={toDate} onChange={event => setToDate(event.target.value)} aria-label="Fecha hasta" /></>}
+          <select className="input-base" value={clientFilter} onChange={event => setClientFilter(event.target.value)}><option value="">Todos los clientes</option>{clientOptions.map(client => <option key={client} value={client}>{client}</option>)}</select>
+          <select className="input-base" value={productFilter} onChange={event => setProductFilter(event.target.value)}><option value="">Todos los productos</option>{productOptions.map(product => <option key={product} value={product}>{product}</option>)}</select>
+          <select className="input-base" value={paymentFilter} onChange={event => setPaymentFilter(event.target.value)}><option value="">Todos los pagos</option><option value="paid">Pagado</option><option value="partial">Parcial</option><option value="pending">Pendiente</option></select>
+        </div>
+        <p className="text-xs text-text-secondary mt-3">{filteredOrders.length} venta{filteredOrders.length === 1 ? "" : "s"} encontrada{filteredOrders.length === 1 ? "" : "s"}</p>
+      </div>
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatsCard icon={DollarSign} label="Ingresos este mes" value={totalRevenue} />
-        <StatsCard icon={FileText} label="Documentos" value={String(orders.length)} sub="historico" />
-        <StatsCard icon={Package} label="Items vendidos" value={String(totalUnits)} sub="historico" />
+        <StatsCard icon={DollarSign} label="Ingresos filtrados" value={totalHistRevenueLabel} />
+        <StatsCard icon={FileText} label="Documentos" value={String(filteredOrders.length)} sub="período seleccionado" />
+        <StatsCard icon={Package} label="Items vendidos" value={String(filteredUnits)} sub="período seleccionado" />
         <StatsCard icon={ShoppingBag} label="Total ventas" value={totalHistRevenueLabel} sub="por moneda" />
       </div>
 
-      {orders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <div className="card">
           <EmptyState icon={ShoppingBag} title="No hay ventas registradas" description="Registra tu primera venta para trackear ingresos e inventario." actionLabel="+ Registrar venta" actionHref="/sales/new" />
         </div>
@@ -250,7 +344,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order) => (
+                {filteredOrders.map((order) => (
                   <tr key={order.id} className="border-b border-border-default last:border-0 hover:bg-[#F8FAFC] transition-colors group">
                     <td className="px-3 py-3 text-text-secondary break-words">{formatDate(order.order_date)}</td>
                     <td className="px-3 py-3">
