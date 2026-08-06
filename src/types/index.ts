@@ -178,6 +178,7 @@ export interface Expense {
   name: string;
   category: ExpenseCategory;
   amount: number;
+  currency: PaymentCurrency;
   frequency: ExpenseFrequency;
   expense_date: string;
   notes: string | null;

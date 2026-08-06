@@ -11,6 +11,23 @@ import {
 } from"@/lib/expenses";
 import type { Expense } from"@/types";
 
+function expenseCurrency(expense: Expense, fallback: string) {
+  return expense.currency ?? fallback;
+}
+
+function totalsByCurrency(expenses: Expense[], fallback: string, amount: (expense: Expense) => number = expense => expense.amount) {
+  return expenses.reduce<Record<string, number>>((totals, expense) => {
+    const currency = expenseCurrency(expense, fallback);
+    totals[currency] = (totals[currency] ?? 0) + amount(expense);
+    return totals;
+  }, {});
+}
+
+function formatTotals(totals: Record<string, number>) {
+  return Object.entries(totals).sort(([a], [b]) => a.localeCompare(b))
+    .map(([currency, amount]) => formatCurrency(amount, currency)).join(" / ") || "UYU 0,00";
+}
+
 export default async function ExpensesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -29,21 +46,21 @@ export default async function ExpensesPage() {
       .gte("expense_date", start).lte("expense_date", end),
   ]);
 
-  const monthTotal = (monthExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
-  const totalHistoric = (allExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
+  const monthTotals = totalsByCurrency(monthExpenses ?? [], roaster.currency);
+  const historicTotals = totalsByCurrency(allExpenses ?? [], roaster.currency);
 
   // Estimado mensual (recurrentes)
-  const monthlyEstimate = (allExpenses ?? [])
-    .filter((e: Expense) => e.frequency !=="once")
-    .reduce((s: number, e: Expense) => s + toMonthlyAmount(e.amount, e.frequency), 0);
+  const recurringExpenses = (allExpenses ?? []).filter((e: Expense) => e.frequency !=="once");
+  const monthlyEstimates = totalsByCurrency(recurringExpenses, roaster.currency,
+    expense => toMonthlyAmount(expense.amount, expense.frequency));
 
   // Por categoría este mes
-  const byCategory: Record<string, number> = {};
+  const byCategory: Record<string, Expense[]> = {};
   (monthExpenses ?? []).forEach((e: Expense) => {
-    byCategory[e.category] = (byCategory[e.category] ?? 0) + e.amount;
+    byCategory[e.category] = [...(byCategory[e.category] ?? []), e];
   });
   const topCategories = Object.entries(byCategory)
-    .sort(([, a], [, b]) => b - a)
+    .sort(([, a], [, b]) => b.length - a.length)
     .slice(0, 5);
 
   return (<div>
@@ -57,21 +74,21 @@ export default async function ExpensesPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         <StatsCard icon={Receipt} label="Gastos este mes"
-          value={formatCurrency(monthTotal, roaster.currency)}
+          value={formatTotals(monthTotals)}
           sub={`${(monthExpenses ?? []).length} registros`} />
         <StatsCard icon={Receipt} label="Estimado mensual"
-          value={formatCurrency(monthlyEstimate, roaster.currency)}
+          value={formatTotals(monthlyEstimates)}
           sub="gastos recurrentes" />
         <StatsCard icon={Receipt} label="Total histórico"
-          value={formatCurrency(totalHistoric, roaster.currency)} />
+          value={formatTotals(historicTotals)} />
       </div>
 
       {/* Por categoría */}
       {topCategories.length > 0 && (<div className="card p-5 mb-6">
           <p className="section-title">Gastos del mes por categoría</p>
           <div className="flex flex-col gap-3">
-            {topCategories.map(([cat, amount]) => {
-              const pct = monthTotal > 0 ? (amount / monthTotal) * 100 : 0;
+            {topCategories.map(([cat, expenses]) => {
+              const pct = (monthExpenses ?? []).length > 0 ? (expenses.length / (monthExpenses ?? []).length) * 100 : 0;
               return (<div key={cat}>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-text-secondary">
@@ -79,8 +96,8 @@ export default async function ExpensesPage() {
                       {CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS]}
                     </span>
                     <span className="font-mono font-medium text-text-primary">
-                      {formatCurrency(amount, roaster.currency)}
-                      <span className="text-xs text-text-secondary ml-1">({pct.toFixed(0)}%)</span>
+                      {formatTotals(totalsByCurrency(expenses, roaster.currency))}
+                      <span className="text-xs text-text-secondary ml-1">({expenses.length} registro{expenses.length === 1 ? "" : "s"})</span>
                     </span>
                   </div>
                   <div className="h-1.5 bg-border-default rounded-full overflow-hidden">
@@ -128,11 +145,11 @@ export default async function ExpensesPage() {
                       {formatDate(e.expense_date)}
                     </td>
                     <td className="px-5 py-3.5 text-right font-mono font-semibold text-text-primary">
-                      {formatCurrency(e.amount, roaster.currency)}
+                      {formatCurrency(e.amount, expenseCurrency(e, roaster.currency))}
                     </td>
                     <td className="px-5 py-3.5 text-right font-mono text-text-secondary hidden md:table-cell">
                       {e.frequency !=="once"
-                        ? formatCurrency(toMonthlyAmount(e.amount, e.frequency), roaster.currency)
+                        ? formatCurrency(toMonthlyAmount(e.amount, e.frequency), expenseCurrency(e, roaster.currency))
                         : "-"}
                     </td>
                     <td className="px-3 py-3.5 text-right">
