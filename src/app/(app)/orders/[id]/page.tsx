@@ -29,15 +29,19 @@ const FALLBACK_STATUS = STATUS_CONFIG.pending;
 
 const NEXT_STATUS: Record<string, string> = {
   pending:"roasting",
+  confirmed:"roasting",
   roasting:"ready",
   ready:"delivered",
 };
 
 const NEXT_LABEL: Record<string, string> = {
   pending:" Empezar tueste",
+  confirmed:" Empezar tueste",
   roasting:" Marcar listo",
   ready:" Marcar entregado",
 };
+
+const ORDER_FLOW = ["pending", "confirmed", "roasting", "ready", "delivered"];
 
 const WEIGHT_LABELS: Record<number, string> = { 250:"250g", 500:"500g", 1000:"1kg" };
 
@@ -49,6 +53,7 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [roaster, setRoaster] = useState<Roaster | null>(null);
   const [loading, setLoading] = useState(true);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   async function load() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -66,14 +71,24 @@ export default function OrderDetailPage() {
 
   useEffect(() => { load(); }, [id]);
 
-  async function advanceStatus() {
-    if (!order || !NEXT_STATUS[order.status]) return;
-    const next = NEXT_STATUS[order.status];
+  async function updateStatus(next: string) {
+    if (!order || !ORDER_FLOW.includes(next) || next === order.status) return;
+    setUpdatingStatus(true);
     const { error } = await supabase.from("orders")
       .update({ status: next }).eq("id", id);
-    if (error) { toast.error("Error al actualizar"); return; }
+    if (error) {
+      toast.error("Error al actualizar el estado");
+      setUpdatingStatus(false);
+      return;
+    }
     toast.success(`Pedido marcado como: ${(STATUS_CONFIG[next] ?? FALLBACK_STATUS).label}`);
-    load();
+    await load();
+    setUpdatingStatus(false);
+  }
+
+  async function advanceStatus() {
+    if (!order || !NEXT_STATUS[order.status]) return;
+    await updateStatus(NEXT_STATUS[order.status]);
   }
 
   async function cancelOrder() {
@@ -145,9 +160,18 @@ export default function OrderDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          {isActive && NEXT_STATUS[order.status] && (<button onClick={advanceStatus} className="btn-primary text-xs">
+          {isActive && NEXT_STATUS[order.status] && (<button onClick={advanceStatus} disabled={updatingStatus} className="btn-primary text-xs disabled:opacity-50">
               {NEXT_LABEL[order.status]}
             </button>)}
+          {isActive && (<select
+              className="input-base text-xs w-auto min-w-[150px]"
+              value={order.status}
+              disabled={updatingStatus}
+              onChange={(event) => updateStatus(event.target.value)}
+              aria-label="Cambiar estado del pedido"
+            >
+              {ORDER_FLOW.map(status => <option key={status} value={status}>{STATUS_CONFIG[status].label}</option>)}
+            </select>)}
           {order.status ==="ready" && (<button onClick={convertToSale} className="btn-secondary text-xs">
               <ShoppingBag className="w-3.5 h-3.5" /> Registrar venta
             </button>)}
@@ -169,14 +193,17 @@ export default function OrderDetailPage() {
       {/* Timeline de estado */}
       <div className="card p-5 mb-5">
         <div className="flex items-center gap-0">
-          {["pending","confirmed","roasting","ready","delivered"].map((s, i, arr) => {
+          {ORDER_FLOW.map((s, i, arr) => {
             const scfg = STATUS_CONFIG[s];
             const SIcon = scfg.icon;
-            const flowIndex = ["pending","confirmed","roasting","ready","delivered"].indexOf(order.status);
+            const flowIndex = ORDER_FLOW.indexOf(order.status);
             const isCurrentOrPast = flowIndex >= 0 && flowIndex >= i && order.status !=="cancelled";
             const isCurrent = order.status === s;
             return (<div key={s} className="flex items-center flex-1 last:flex-none">
-                <div className={`flex flex-col items-center gap-1 ${isCurrent ?"scale-110" :""}`}>
+                <button type="button" disabled={updatingStatus || order.status === "cancelled" || isCurrent}
+                  onClick={() => updateStatus(s)}
+                  title={`Marcar como ${scfg.label}`}
+                  className={`flex flex-col items-center gap-1 disabled:cursor-default ${isCurrent ?"scale-110" :"hover:scale-105"}`}>
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${
                     isCurrent ? `${scfg.bg} ${scfg.border} ${scfg.color}` :
                     isCurrentOrPast ?"bg-status-success border-status-success text-white" :"bg-[#FDFAF6] border-border-default text-text-secondary"
@@ -186,7 +213,7 @@ export default function OrderDetailPage() {
                   <span className={`text-xs font-medium hidden sm:block ${isCurrent ? scfg.color : isCurrentOrPast ?"text-status-success" :"text-text-secondary"}`}>
                     {scfg.label}
                   </span>
-                </div>
+                </button>
                 {i < arr.length - 1 && (<div className={`flex-1 h-0.5 mx-1 ${isCurrentOrPast && order.status !== s ?"bg-status-success" :"bg-border-default"}`} />)}
               </div>);
           })}
