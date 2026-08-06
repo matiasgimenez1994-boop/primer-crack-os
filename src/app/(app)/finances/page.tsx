@@ -74,6 +74,17 @@ function formatDual(amounts: DualAmounts) {
   return `${formatCurrency(amounts.USD, "USD")} / ${formatCurrency(amounts.UYU, "UYU")}`;
 }
 
+function expenseTotalsDual(expenses: Expense[], fallbackCurrency: string, usdUyu: number,
+  amount: (expense: Expense) => number = expense => expense.amount): DualAmounts {
+  return expenses.reduce<DualAmounts>((totals, expense) => {
+    const sourceCurrency = expense.currency ?? fallbackCurrency;
+    const value = amount(expense);
+    totals.USD += convertUsdUyu(value, sourceCurrency, "USD", usdUyu);
+    totals.UYU += convertUsdUyu(value, sourceCurrency, "UYU", usdUyu);
+    return totals;
+  }, { USD: 0, UYU: 0 });
+}
+
 function DualValue({ amounts }: { amounts: DualAmounts }) {
   return (
     <span className="flex flex-col gap-1 text-lg xl:text-xl leading-tight">
@@ -145,8 +156,8 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
   // Período seleccionado: todos los valores se expresan en paralelo en USD y UYU.
   const monthRevenue = revenueDual(currentMonthSales, baseCurrency, exchangeRate.usdUyu);
   const monthGrossProfit = profitDual(currentMonthSales, baseCurrency, exchangeRate.usdUyu);
-  const monthExpenseTotal = (monthExpenses ?? []).reduce((s: number, e: Expense) => s + e.amount, 0);
-  const monthExpensesDual = dualFromBase(monthExpenseTotal, baseCurrency, exchangeRate.usdUyu);
+  const monthExpensesDual = expenseTotalsDual(monthExpenses ?? [], baseCurrency, exchangeRate.usdUyu);
+  const monthExpenseTotal = monthExpensesDual.USD;
   const monthNetProfit: DualAmounts = {
     USD: monthGrossProfit.USD - monthExpensesDual.USD,
     UYU: monthGrossProfit.UYU - monthExpensesDual.UYU,
@@ -180,10 +191,10 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
   };
 
   //  Gastos recurrentes estimados por mes 
-  const monthlyExpenseEstimate = (allExpenses ?? [])
-    .filter((e: Expense) => e.frequency !=="once")
-    .reduce((s: number, e: Expense) => s + toMonthlyAmount(e.amount, e.frequency), 0);
-  const monthlyExpenseEstimateDual = dualFromBase(monthlyExpenseEstimate, baseCurrency, exchangeRate.usdUyu);
+  const recurringExpenses = (allExpenses ?? []).filter((e: Expense) => e.frequency !=="once");
+  const monthlyExpenseEstimateDual = expenseTotalsDual(recurringExpenses, baseCurrency, exchangeRate.usdUyu,
+    expense => toMonthlyAmount(expense.amount, expense.frequency));
+  const monthlyExpenseEstimate = monthlyExpenseEstimateDual.USD;
   const monthCostDual: DualAmounts = {
     USD: monthRevenue.USD - monthGrossProfit.USD,
     UYU: monthRevenue.UYU - monthGrossProfit.UYU,
@@ -201,8 +212,7 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
     const me = (allExpenses ?? []).filter((e: Expense) => e.expense_date >= start && e.expense_date <= end);
     const revenue = revenueDual(ms, baseCurrency, exchangeRate.usdUyu);
     const grossProfit = profitDual(ms, baseCurrency, exchangeRate.usdUyu);
-    const expenses = me.reduce((s: number, e: Expense) => s + e.amount, 0);
-    const expensesDual = dualFromBase(expenses, baseCurrency, exchangeRate.usdUyu);
+    const expensesDual = expenseTotalsDual(me, baseCurrency, exchangeRate.usdUyu);
     return {
       month: format(d,"MMM", { locale: es }),
       revenue,
@@ -218,9 +228,11 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
   const maxRevenue = Math.max(...monthlyData.map(m => m.revenue.USD), 1);
 
   //  Gastos por categoría este mes 
-  const expenseByCategory: Record<string, number> = {};
+  const expenseByCategory: Record<string, DualAmounts> = {};
   (monthExpenses ?? []).forEach((e: Expense) => {
-    expenseByCategory[e.category] = (expenseByCategory[e.category] ?? 0) + e.amount;
+    const current = expenseByCategory[e.category] ?? { USD: 0, UYU: 0 };
+    const converted = expenseTotalsDual([e], baseCurrency, exchangeRate.usdUyu);
+    expenseByCategory[e.category] = { USD: current.USD + converted.USD, UYU: current.UYU + converted.UYU };
   });
 
   return (<div>
@@ -356,8 +368,8 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
               <p className="text-sm text-text-secondary">Sin gastos este mes</p>
               <Link href="/expenses/new" className="btn-primary mt-3 inline-flex text-xs">+ Registrar gasto</Link>
             </div>) : (<div className="flex flex-col gap-3">
-              {Object.entries(expenseByCategory).sort(([,a],[,b]) => b-a).map(([cat, amount]) => {
-                const pct = monthExpenseTotal > 0 ? (amount / monthExpenseTotal) * 100 : 0;
+              {Object.entries(expenseByCategory).sort(([,a],[,b]) => b.USD-a.USD).map(([cat, amount]) => {
+                const pct = monthExpenseTotal > 0 ? (amount.USD / monthExpenseTotal) * 100 : 0;
                 return (<div key={cat}>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-text-secondary">
@@ -365,7 +377,7 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
                         {CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS]}
                       </span>
                       <span className="font-mono text-xs font-medium">
-                        {formatDual(dualFromBase(amount, baseCurrency, exchangeRate.usdUyu))}
+                        {formatDual(amount)}
                       </span>
                     </div>
                     <div className="h-1.5 bg-border-default rounded-full">

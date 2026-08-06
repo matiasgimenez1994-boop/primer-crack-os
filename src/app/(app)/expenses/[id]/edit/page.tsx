@@ -15,6 +15,7 @@ const schema = z.object({
   name: z.string().min(1),
   category: z.enum(["energy","rent","packaging","maintenance","labor","marketing","supplies","other"]),
   amount: z.coerce.number().positive(),
+  currency: z.enum(["USD", "UYU"]),
   frequency: z.enum(["once","daily","weekly","monthly","yearly"]),
   expense_date: z.string().min(1),
   notes: z.string().optional(),
@@ -37,14 +38,14 @@ export default function EditExpensePage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
-      supabase.from("roasters").select("id").eq("user_id", user.id).single()
+      supabase.from("roasters").select("id, currency").eq("user_id", user.id).single()
         .then(({ data: r }) => {
           if (!r) return;
           setRoasterId(r.id);
           supabase.from("expenses").select("*").eq("id", id).eq("roaster_id", r.id).single()
             .then(({ data: e }) => {
               if (!e) return;
-              reset({ ...e, notes: e.notes ??"" });
+              reset({ ...e, currency: e.currency ?? r.currency ?? "UYU", notes: e.notes ??"" });
               setLoading(false);
             });
         });
@@ -88,7 +89,7 @@ export default function EditExpensePage() {
             <label className="label-base">Descripción *</label>
             <input type="text" className="input-base" {...register("name")} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="label-base">Categoría</label>
               <select className="input-base" {...register("category")}>
@@ -106,6 +107,13 @@ export default function EditExpensePage() {
             <div>
               <label className="label-base">Monto *</label>
               <input type="number" step="0.01" className="input-base font-mono" {...register("amount")} />
+            </div>
+            <div>
+              <label className="label-base">Moneda</label>
+              <select className="input-base" {...register("currency")}>
+                <option value="UYU">UYU - Pesos uruguayos</option>
+                <option value="USD">USD - Dólares</option>
+              </select>
             </div>
             <div>
               <label className="label-base">Fecha</label>

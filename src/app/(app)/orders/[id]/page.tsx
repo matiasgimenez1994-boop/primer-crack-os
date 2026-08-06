@@ -142,6 +142,7 @@ export default function OrderDetailPage() {
     : null;
   const items: OrderItem[] = (order as any).order_items ?? [];
   const client = (order as any).clients;
+  const orderCurrency = (order as any).payment_currency ?? roaster?.currency ?? "USD";
 
   return (<div>
       <div className="page-header">
@@ -249,10 +250,10 @@ export default function OrderDetailPage() {
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono">{item.quantity}</td>
                       <td className="px-5 py-3.5 text-right font-mono text-text-secondary">
-                        {formatCurrency(item.unit_price, roaster?.currency)}
+                        {formatCurrency(item.unit_price, orderCurrency)}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono font-semibold text-text-primary">
-                        {formatCurrency(item.unit_price * item.quantity, roaster?.currency)}
+                        {formatCurrency(item.unit_price * item.quantity, orderCurrency)}
                       </td>
                     </tr>);
                 })}
@@ -261,7 +262,7 @@ export default function OrderDetailPage() {
                 <tr>
                   <td colSpan={3} className="px-5 py-3 text-sm font-semibold text-text-secondary text-right">Total</td>
                   <td className="px-5 py-3 text-right font-mono font-bold text-accent-terra text-base">
-                    {formatCurrency(order.total_amount, roaster?.currency)}
+                    {formatCurrency(order.total_amount, orderCurrency)}
                   </td>
                 </tr>
               </tfoot>

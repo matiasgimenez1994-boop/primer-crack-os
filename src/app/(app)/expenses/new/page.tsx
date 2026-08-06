@@ -17,6 +17,7 @@ const schema = z.object({
   name: z.string().min(1,"El nombre es requerido"),
   category: z.enum(["energy","rent","packaging","maintenance","labor","marketing","supplies","other"]),
   amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
+  currency: z.enum(["USD", "UYU"]),
   frequency: z.enum(["once","daily","weekly","monthly","yearly"]),
   expense_date: z.string().min(1),
   notes: z.string().optional(),
@@ -41,13 +42,16 @@ export default function NewExpensePage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
       supabase.from("roasters").select("*").eq("user_id", user.id).single()
-        .then(({ data }) => setRoaster(data));
+        .then(({ data }) => {
+          setRoaster(data);
+          if (data?.currency === "USD" || data?.currency === "UYU") setValue("currency", data.currency);
+        });
     });
   }, []);
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { category:"energy", frequency:"monthly", expense_date: todayISO() },
+    defaultValues: { category:"energy", frequency:"monthly", currency:"UYU", expense_date: todayISO() },
   });
 
   async function onSubmit(data: FormData) {
@@ -80,7 +84,7 @@ export default function NewExpensePage() {
                 {errors.name && <p className="text-xs text-status-danger mt-1">{errors.name.message}</p>}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="label-base">Categoría</label>
                   <select className="input-base" {...register("category")}>
@@ -100,6 +104,13 @@ export default function NewExpensePage() {
                   <label className="label-base">Monto *</label>
                   <input type="number" step="0.01" className="input-base font-mono" placeholder="0.00" {...register("amount")} />
                   {errors.amount && <p className="text-xs text-status-danger mt-1">{errors.amount.message}</p>}
+                </div>
+                <div>
+                  <label className="label-base">Moneda</label>
+                  <select className="input-base" {...register("currency")}>
+                    <option value="UYU">UYU - Pesos uruguayos</option>
+                    <option value="USD">USD - Dólares</option>
+                  </select>
                 </div>
                 <div>
                   <label className="label-base">Fecha</label>
