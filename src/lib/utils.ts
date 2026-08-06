@@ -13,6 +13,7 @@ export function formatCurrency(value: number,
   return new Intl.NumberFormat("es-UY", {
     style:"currency",
     currency,
+    currencyDisplay:"code",
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(value);
