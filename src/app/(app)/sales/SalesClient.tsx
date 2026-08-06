@@ -128,7 +128,9 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
     try {
       const XLSX = await import("xlsx");
       const rows = filteredOrders.flatMap(order => {
-        const items = order.order_items ?? [];
+        const items = (order.order_items ?? []).filter(item =>
+          !productFilter || itemProductName(item) === productFilter);
+        if (productFilter && items.length === 0) return [];
         return (items.length ? items : [null]).map((item: any) => ({
           Fecha: String(order.order_date ?? "").slice(0, 10),
           Documento: documentLabel(order),
