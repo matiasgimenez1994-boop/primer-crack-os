@@ -124,7 +124,7 @@ export default async function OrdersPage() {
                         {itemCount}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono font-medium text-text-primary">
-                        {o.total_amount > 0 ? formatCurrency(o.total_amount, roaster.currency) : "-"}
+                        {o.total_amount > 0 ? formatCurrency(o.total_amount, (o as any).payment_currency ?? roaster.currency) : "-"}
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-medium border ${cfg.bg} ${cfg.color} ${cfg.border}`}>
@@ -139,4 +139,3 @@ export default async function OrdersPage() {
         </div>)}
     </div>);
 }
-
