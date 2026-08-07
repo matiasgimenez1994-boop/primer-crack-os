@@ -2,7 +2,7 @@
 
 import Link from"next/link";
 import { usePathname } from"next/navigation";
-import { LayoutDashboard, Leaf, Flame, ShoppingBag, Users } from"lucide-react";
+import { LayoutDashboard, Leaf, Flame, ShoppingBag, Users, Receipt } from"lucide-react";
 import { cn } from"@/lib/utils";
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
   { href:"/roasts",    label:"Tuestes",    icon: Flame },
   { href:"/sales",     label:"Ventas",     icon: ShoppingBag },
   { href:"/clients",   label:"Clientes",   icon: Users },
+  { href:"/expenses",  label:"Gastos",     icon: Receipt },
 ];
 
 export function BottomNav() {
@@ -20,7 +21,7 @@ export function BottomNav() {
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href +"/");
           return (<Link key={href} href={href}
-              className={cn("flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors",
+              className={cn("min-w-0 flex-1 flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors",
                 active ?"text-accent-green" :"text-text-secondary")}
             >
               <Icon className={cn("w-5 h-5", active &&"text-accent-green")} />
