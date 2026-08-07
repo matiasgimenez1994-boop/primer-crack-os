@@ -295,7 +295,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3">
           <select className="input-base" value={period} onChange={event => setPeriod(event.target.value as any)}>
-            <option value="month">Por mes</option><option value="custom">Fechas específicas</option><option value="all">Todo el histórico</option>
+            <option value="month">Por mes</option><option value="custom">Fechas especÃ­ficas</option><option value="all">Todo el histÃ³rico</option>
           </select>
           {period === "month" && <input type="month" className="input-base" value={month} onChange={event => setMonth(event.target.value)} />}
           {period === "custom" && <><input type="date" className="input-base" value={fromDate} onChange={event => setFromDate(event.target.value)} aria-label="Fecha desde" /><input type="date" className="input-base" value={toDate} onChange={event => setToDate(event.target.value)} aria-label="Fecha hasta" /></>}
@@ -308,8 +308,8 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatsCard icon={DollarSign} label="Ingresos filtrados" value={totalHistRevenueLabel} />
-        <StatsCard icon={FileText} label="Documentos" value={String(filteredOrders.length)} sub="período seleccionado" />
-        <StatsCard icon={Package} label="Items vendidos" value={String(filteredUnits)} sub="período seleccionado" />
+        <StatsCard icon={FileText} label="Documentos" value={String(filteredOrders.length)} sub="perÃ­odo seleccionado" />
+        <StatsCard icon={Package} label="Items vendidos" value={String(filteredUnits)} sub="perÃ­odo seleccionado" />
         <StatsCard icon={ShoppingBag} label="Total ventas" value={totalHistRevenueLabel} sub="por moneda" />
       </div>
 
@@ -319,7 +319,78 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
         </div>
       ) : (
         <div className="card overflow-hidden">
-          <div className="w-full">
+          <div className="divide-y divide-border-default md:hidden">
+            {filteredOrders.map((order) => (
+              <article key={order.id} className="p-4 space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-text-primary">{documentLabel(order)}</p>
+                    <p className="mt-1 text-xs text-text-secondary">
+                      {formatDate(order.order_date)} Â· {statusLabel(order.status)}
+                    </p>
+                  </div>
+                  <span className={`shrink-0 inline-flex px-2 py-1 rounded-md text-xs font-medium border ${paymentClass(order)}`}>
+                    {paymentLabel(order)}
+                  </span>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">Cliente</p>
+                  <p className="mt-1 text-sm text-text-primary">{(order as any).clients?.name ?? order.client_name ?? "-"}</p>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-text-secondary">Productos</p>
+                  <div className="mt-1 space-y-1">
+                    {(order.order_items ?? []).map((item) => (
+                      <p key={item.id} className="text-sm leading-5 text-text-primary">{itemLabel(item)}</p>
+                    ))}
+                  </div>
+                </div>
+
+                <dl className="grid grid-cols-3 gap-2 rounded-xl bg-[#F8FAFC] p-3">
+                  <div>
+                    <dt className="text-[10px] text-text-secondary">Subtotal</dt>
+                    <dd className="mt-1 text-xs font-mono font-medium whitespace-nowrap">{formatCurrency(order.subtotal_amount ?? 0, saleCurrency(order, currency))}</dd>
+                  </div>
+                  <div className="text-center">
+                    <dt className="text-[10px] text-text-secondary">IVA</dt>
+                    <dd className="mt-1 text-xs font-mono font-medium whitespace-nowrap">{formatCurrency(order.tax_amount ?? 0, saleCurrency(order, currency))}</dd>
+                  </div>
+                  <div className="text-right">
+                    <dt className="text-[10px] text-text-secondary">Total</dt>
+                    <dd className="mt-1 text-xs font-mono font-semibold text-text-primary whitespace-nowrap">{formatCurrency(order.total_amount ?? 0, saleCurrency(order, currency))}</dd>
+                  </div>
+                </dl>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] text-text-secondary">Monto pagado</p>
+                    <p className="mt-0.5 text-xs font-mono text-text-primary">
+                      {formatCurrency(Number((order as any).amount_paid ?? 0), paymentCurrency(order, currency))}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/sales/${order.id}/edit`} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-default text-text-primary" title="Editar venta" aria-label="Editar venta">
+                      <Pencil className="w-4 h-4" />
+                    </Link>
+                    <button onClick={() => handleDownload(order)} disabled={downloading === order.id} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-default text-text-primary disabled:opacity-60" title="Descargar boleta o proforma" aria-label="Descargar boleta o proforma">
+                      {downloading === order.id ? <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin" /> : <Download className="w-4 h-4" />}
+                    </button>
+                    <button onClick={() => handleDelete(order.id)} disabled={deleting === order.id || Boolean(order.inventory_committed_at)} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary disabled:opacity-30" title="Eliminar venta" aria-label="Eliminar venta">
+                      {deleting === order.id ? <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+            <div className="flex items-center justify-between gap-3 bg-[#F8FAFC] px-4 py-3">
+              <span className="text-xs font-semibold text-text-secondary">Total histÃ³rico</span>
+              <span className="text-xs font-mono font-semibold text-text-primary text-right">{totalHistRevenueLabel}</span>
+            </div>
+          </div>
+
+          <div className="hidden w-full md:block">
             <table className="w-full table-fixed text-sm">
               <colgroup>
                 <col className="w-[8%]" />
@@ -400,3 +471,4 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
     </div>
   );
 }
+
