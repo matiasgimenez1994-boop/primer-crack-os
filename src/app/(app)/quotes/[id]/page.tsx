@@ -84,21 +84,26 @@ export default function QuoteDetailPage() {
       return;
     }
 
-    const orderItems = items.map((item) => ({
-      order_id: order.id,
-      product_type: item.item_kind === "green_coffee" ? "green" : item.item_kind === "roast_service" ? "service" : "product",
-      roast_batch_id: null,
-      green_coffee_id: item.item_kind === "green_coffee" ? item.green_coffee_id || null : null,
-      weight_grams: null,
-      green_weight_kg: item.item_kind === "green_coffee" ? item.quantity : null,
-      quantity: item.item_kind === "green_coffee" ? 1 : item.quantity,
-      unit_price: item.unit_price,
-      tax_rate: quote.tax_enabled ? quote.tax_rate : 0,
-      subtotal_amount: item.line_subtotal,
-      tax_amount: quote.tax_enabled ? item.line_subtotal * (quote.tax_rate / 100) : 0,
-      total_amount: quote.tax_enabled ? item.line_subtotal * (1 + quote.tax_rate / 100) : item.line_subtotal,
-      notes: item.description,
-    }));
+    const orderItems = items.map((item) => {
+      const itemTaxEnabled = item.tax_enabled ?? quote.tax_enabled;
+      const itemTaxRate = itemTaxEnabled ? Number(item.tax_rate ?? quote.tax_rate ?? 0) : 0;
+      const itemTaxAmount = item.tax_amount ?? (itemTaxEnabled ? item.line_subtotal * (itemTaxRate / 100) : 0);
+      return {
+        order_id: order.id,
+        product_type: item.item_kind === "green_coffee" ? "green" : item.item_kind === "roast_service" ? "service" : "product",
+        roast_batch_id: null,
+        green_coffee_id: item.item_kind === "green_coffee" ? item.green_coffee_id || null : null,
+        weight_grams: null,
+        green_weight_kg: item.item_kind === "green_coffee" ? item.quantity : null,
+        quantity: item.item_kind === "green_coffee" ? 1 : item.quantity,
+        unit_price: item.unit_price,
+        tax_rate: itemTaxRate,
+        subtotal_amount: item.line_subtotal,
+        tax_amount: itemTaxAmount,
+        total_amount: item.line_total ?? item.line_subtotal + itemTaxAmount,
+        notes: item.description,
+      };
+    });
 
     if (orderItems.length > 0) {
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
@@ -167,6 +172,7 @@ export default function QuoteDetailPage() {
                     <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary hidden md:table-cell">Tipo</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Cant.</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Unitario</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">IVA</th>
                     <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Subtotal</th>
                   </tr>
                 </thead>
@@ -180,23 +186,24 @@ export default function QuoteDetailPage() {
                       <td className="px-5 py-3.5 text-text-secondary hidden md:table-cell">{QUOTE_KIND_LABELS[item.item_kind]}</td>
                       <td className="px-5 py-3.5 text-right font-mono">{item.quantity} {item.unit_label}</td>
                       <td className="px-5 py-3.5 text-right font-mono">{formatCurrency(item.unit_price, quote.currency)}</td>
+                      <td className="px-5 py-3.5 text-right font-mono">{(item.tax_enabled ?? quote.tax_enabled) ? `${Number(item.tax_rate ?? quote.tax_rate ?? 0)}%` : "sin IVA"}</td>
                       <td className="px-5 py-3.5 text-right font-mono font-medium">{formatCurrency(item.line_subtotal, quote.currency)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot className="border-t-2 border-border-default bg-[#F8FAFC]">
                   <tr>
-                    <td colSpan={4} className="px-5 py-2 text-right text-sm text-text-secondary">Subtotal</td>
+                    <td colSpan={5} className="px-5 py-2 text-right text-sm text-text-secondary">Subtotal</td>
                     <td className="px-5 py-2 text-right font-mono">{formatCurrency(quote.subtotal_amount, quote.currency)}</td>
                   </tr>
                   <tr>
-                    <td colSpan={4} className="px-5 py-2 text-right text-sm text-text-secondary">
-                      IVA {quote.tax_enabled ? `${quote.tax_rate}%` : "sin IVA"}
+                    <td colSpan={5} className="px-5 py-2 text-right text-sm text-text-secondary">
+                      IVA
                     </td>
                     <td className="px-5 py-2 text-right font-mono">{formatCurrency(quote.tax_amount, quote.currency)}</td>
                   </tr>
                   <tr>
-                    <td colSpan={4} className="px-5 py-3 text-right text-sm font-semibold">Total</td>
+                    <td colSpan={5} className="px-5 py-3 text-right text-sm font-semibold">Total</td>
                     <td className="px-5 py-3 text-right font-mono font-bold text-text-primary">{formatCurrency(quote.total_amount, quote.currency)}</td>
                   </tr>
                 </tfoot>

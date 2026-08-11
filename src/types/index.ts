@@ -176,6 +176,10 @@ export interface QuotationItem {
   unit_label: string;
   unit_price: number;
   line_subtotal: number;
+  tax_enabled?: boolean;
+  tax_rate?: number;
+  tax_amount?: number;
+  line_total?: number;
   sort_order: number;
   created_at: string;
   green_coffees?: GreenCoffee;

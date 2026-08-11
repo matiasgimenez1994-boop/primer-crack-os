@@ -84,9 +84,23 @@ create table if not exists public.quotation_items (
   unit_label text not null default 'unidad',
   unit_price numeric not null check (unit_price >= 0),
   line_subtotal numeric not null check (line_subtotal >= 0),
+  tax_enabled boolean not null default true,
+  tax_rate numeric not null default 0 check (tax_rate >= 0),
+  tax_amount numeric not null default 0 check (tax_amount >= 0),
+  line_total numeric not null default 0 check (line_total >= 0),
   sort_order integer not null default 0,
   created_at timestamptz default now()
 );
+
+alter table if exists public.quotation_items add column if not exists tax_enabled boolean not null default true;
+alter table if exists public.quotation_items add column if not exists tax_rate numeric not null default 0 check (tax_rate >= 0);
+alter table if exists public.quotation_items add column if not exists tax_amount numeric not null default 0 check (tax_amount >= 0);
+alter table if exists public.quotation_items add column if not exists line_total numeric not null default 0 check (line_total >= 0);
+
+update public.quotation_items
+set line_total = line_subtotal + coalesce(tax_amount, 0)
+where line_total = 0
+  and line_subtotal > 0;
 
 -- ============================================================
 -- Ventas: moneda, IVA, origen desde cotizacion y renglones

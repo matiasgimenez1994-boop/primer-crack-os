@@ -21,6 +21,8 @@ const itemSchema = z.object({
   quantity: z.coerce.number().positive("La cantidad debe ser mayor a 0"),
   unit_label: z.string().min(1),
   unit_price: z.coerce.number().min(0),
+  tax_enabled: z.boolean(),
+  tax_rate: z.coerce.number().min(0),
 });
 
 const schema = z.object({
@@ -47,6 +49,8 @@ const defaultItem = {
   quantity: 1,
   unit_label: "kg",
   unit_price: 0,
+  tax_enabled: true,
+  tax_rate: 22,
 };
 
 export default function NewQuotePage() {
@@ -81,6 +85,7 @@ export default function NewQuotePage() {
   const watched = useWatch({ control });
   const category = watch("category");
   const taxEnabled = watch("tax_enabled");
+  const defaultTaxRate = watch("tax_rate");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -110,6 +115,8 @@ export default function NewQuotePage() {
     const items = (watched.items ?? []).map((item) => ({
       quantity: Number(item?.quantity) || 0,
       unit_price: Number(item?.unit_price) || 0,
+      tax_enabled: Boolean(item?.tax_enabled),
+      tax_rate: Number(item?.tax_rate) || 0,
     }));
     return calculateQuoteTotals(items, Boolean(watched.tax_enabled), Number(watched.tax_rate) || 0);
   }, [watched.items, watched.tax_enabled, watched.tax_rate]);
@@ -123,6 +130,8 @@ export default function NewQuotePage() {
     setValue(`items.${index}.description`, item.description ? `${item.name} - ${item.description}` : item.name);
     setValue(`items.${index}.unit_label`, item.unit_label);
     setValue(`items.${index}.unit_price`, item.suggested_unit_price);
+    setValue(`items.${index}.tax_enabled`, item.item_kind !== "roast_service");
+    setValue(`items.${index}.tax_rate`, defaultTaxRate || 22);
   }
 
   function applyGreenCoffee(index: number, coffeeId: string) {
@@ -133,6 +142,8 @@ export default function NewQuotePage() {
     setValue(`items.${index}.description`, coffee.name);
     setValue(`items.${index}.unit_label`, "kg");
     setValue(`items.${index}.unit_price`, Number(coffee.purchase_price_per_kg) || 0);
+    setValue(`items.${index}.tax_enabled`, true);
+    setValue(`items.${index}.tax_rate`, defaultTaxRate || 22);
   }
 
   function addBrandCreationLines() {
@@ -144,6 +155,8 @@ export default function NewQuotePage() {
       quantity: 1,
       unit_label: "kg",
       unit_price: 0,
+      tax_enabled: true,
+      tax_rate: defaultTaxRate || 22,
     });
     append({
       catalog_item_id: "",
@@ -153,6 +166,8 @@ export default function NewQuotePage() {
       quantity: 1,
       unit_label: "servicio",
       unit_price: 0,
+      tax_enabled: false,
+      tax_rate: defaultTaxRate || 22,
     });
   }
 
@@ -166,6 +181,22 @@ export default function NewQuotePage() {
       quantity: Number(greenLine?.quantity) || 1,
       unit_label: "kg",
       unit_price: 5,
+      tax_enabled: false,
+      tax_rate: defaultTaxRate || 22,
+    });
+  }
+
+  function applyTaxEnabledToAll(enabled: boolean) {
+    setValue("tax_enabled", enabled);
+    (watched.items ?? []).forEach((_, index) => {
+      setValue(`items.${index}.tax_enabled`, enabled);
+    });
+  }
+
+  function applyTaxRateToAll(rate: number) {
+    setValue("tax_rate", rate);
+    (watched.items ?? []).forEach((_, index) => {
+      setValue(`items.${index}.tax_rate`, rate);
     });
   }
 
@@ -205,18 +236,26 @@ export default function NewQuotePage() {
       return;
     }
 
-    const items = data.items.map((item, index) => ({
-      quotation_id: quote.id,
-      catalog_item_id: item.catalog_item_id || null,
-      green_coffee_id: item.green_coffee_id || null,
-      item_kind: item.item_kind,
-      description: item.description,
-      quantity: Number(item.quantity),
-      unit_label: item.unit_label,
-      unit_price: Number(item.unit_price),
-      line_subtotal: Number(item.quantity) * Number(item.unit_price),
-      sort_order: index,
-    }));
+    const items = data.items.map((item, index) => {
+      const lineSubtotal = Number(item.quantity) * Number(item.unit_price);
+      const lineTax = item.tax_enabled ? lineSubtotal * (Number(item.tax_rate) / 100) : 0;
+      return {
+        quotation_id: quote.id,
+        catalog_item_id: item.catalog_item_id || null,
+        green_coffee_id: item.green_coffee_id || null,
+        item_kind: item.item_kind,
+        description: item.description,
+        quantity: Number(item.quantity),
+        unit_label: item.unit_label,
+        unit_price: Number(item.unit_price),
+        line_subtotal: lineSubtotal,
+        tax_enabled: item.tax_enabled,
+        tax_rate: item.tax_enabled ? Number(item.tax_rate) : 0,
+        tax_amount: lineTax,
+        line_total: lineSubtotal + lineTax,
+        sort_order: index,
+      };
+    });
 
     const { error: itemError } = await supabase.from("quotation_items").insert(items);
     if (itemError) {
@@ -290,15 +329,15 @@ export default function NewQuotePage() {
                   <input type="date" className="input-base" {...register("valid_until")} />
                 </div>
                 <div>
-                  <label className="label-base">IVA</label>
+                  <label className="label-base">IVA por defecto</label>
                   <label className="flex items-center gap-2 h-10 px-3 rounded-lg border border-border-default cursor-pointer">
-                    <input type="checkbox" className="accent-accent-green" {...register("tax_enabled")} />
+                    <input type="checkbox" className="accent-accent-green" checked={taxEnabled} onChange={(event) => applyTaxEnabledToAll(event.target.checked)} />
                     <span className="text-sm">Aplicar IVA</span>
                   </label>
                 </div>
                 <div>
-                  <label className="label-base">Alícuota IVA (%)</label>
-                  <input type="number" step="0.1" disabled={!taxEnabled} className="input-base font-mono disabled:bg-bg-subtle" {...register("tax_rate")} />
+                  <label className="label-base">Alícuota por defecto (%)</label>
+                  <input type="number" step="0.1" disabled={!taxEnabled} className="input-base font-mono disabled:bg-bg-subtle" value={defaultTaxRate} onChange={(event) => applyTaxRateToAll(Number(event.target.value))} />
                 </div>
               </div>
             </div>
@@ -383,9 +422,32 @@ export default function NewQuotePage() {
                           <label className="label-base">Precio unitario</label>
                           <input type="number" step="0.01" className="input-base font-mono" {...register(`items.${index}.unit_price`)} />
                         </div>
+                        <div>
+                          <label className="label-base">IVA renglón</label>
+                          <label className="flex items-center gap-2 h-10 px-3 rounded-lg border border-border-default cursor-pointer">
+                            <input type="checkbox" className="accent-accent-green" {...register(`items.${index}.tax_enabled`)} />
+                            <span className="text-sm">Incluir IVA</span>
+                          </label>
+                        </div>
+                        <div>
+                          <label className="label-base">Alícuota IVA (%)</label>
+                          <input type="number" step="0.1" disabled={!item?.tax_enabled} className="input-base font-mono disabled:bg-bg-subtle" {...register(`items.${index}.tax_rate`)} />
+                        </div>
                       </div>
                       <div className="text-right text-xs text-text-secondary">
-                        Subtotal: <span className="font-mono font-medium text-text-primary">{formatCurrency((Number(item?.quantity) || 0) * (Number(item?.unit_price) || 0), roaster?.currency)}</span>
+                        {(() => {
+                          const lineSubtotal = (Number(item?.quantity) || 0) * (Number(item?.unit_price) || 0);
+                          const lineTax = item?.tax_enabled ? lineSubtotal * ((Number(item?.tax_rate) || 0) / 100) : 0;
+                          return (
+                            <>
+                              Subtotal: <span className="font-mono font-medium text-text-primary">{formatCurrency(lineSubtotal, watch("currency"))}</span>
+                              <span className="mx-2">·</span>
+                              IVA: <span className="font-mono font-medium text-text-primary">{formatCurrency(lineTax, watch("currency"))}</span>
+                              <span className="mx-2">·</span>
+                              Total: <span className="font-mono font-semibold text-text-primary">{formatCurrency(lineSubtotal + lineTax, watch("currency"))}</span>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   );

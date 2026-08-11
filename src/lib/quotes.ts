@@ -25,14 +25,19 @@ export const QUOTE_KIND_LABELS: Record<QuoteItemKind, string> = {
 };
 
 export function calculateQuoteTotals(
-  items: Array<{ quantity: number; unit_price: number }>,
-  taxEnabled: boolean,
-  taxRate: number
+  items: Array<{ quantity: number; unit_price: number; tax_enabled?: boolean; tax_rate?: number }>,
+  taxEnabled = true,
+  taxRate = 0
 ) {
   const subtotal = items.reduce((sum, item) => {
     return sum + (Number(item.quantity) || 0) * (Number(item.unit_price) || 0);
   }, 0);
-  const taxAmount = taxEnabled ? subtotal * ((Number(taxRate) || 0) / 100) : 0;
+  const taxAmount = items.reduce((sum, item) => {
+    const lineSubtotal = (Number(item.quantity) || 0) * (Number(item.unit_price) || 0);
+    const lineTaxEnabled = item.tax_enabled ?? taxEnabled;
+    const lineTaxRate = item.tax_rate ?? taxRate;
+    return sum + (lineTaxEnabled ? lineSubtotal * ((Number(lineTaxRate) || 0) / 100) : 0);
+  }, 0);
   return {
     subtotal,
     taxAmount,
