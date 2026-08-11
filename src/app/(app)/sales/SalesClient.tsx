@@ -48,6 +48,10 @@ function statusLabel(status: string) {
 }
 
 function itemLabel(item: any) {
+  if (item.product_type === "service" || item.product_type === "product") {
+    return (item.notes || "Servicio de tueste") + " - " + Number(item.quantity ?? 0).toFixed(3) + " kg";
+  }
+
   if (item.product_type === "green") {
     const name = item.green_coffees?.name ?? "Cafe verde";
     return name + " - Verde " + Number(item.green_weight_kg ?? 0).toFixed(3) + " kg";
@@ -59,6 +63,7 @@ function itemLabel(item: any) {
 }
 
 function itemProductName(item: any) {
+  if (item.product_type === "service" || item.product_type === "product") return item.notes ?? "Servicio de tueste";
   return item.product_type === "green"
     ? item.green_coffees?.name ?? "Cafe verde"
     : item.roast_batches?.green_coffees?.name ?? item.green_coffees?.name ?? "Cafe tostado";
@@ -139,7 +144,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
           Producto: item ? itemProductName(item) : "",
           Detalle: item ? itemLabel(item) : "",
           Cantidad: item ? (item.product_type === "green" ? Number(item.green_weight_kg ?? 0) : Number(item.quantity ?? 0)) : 0,
-          Unidad: item?.product_type === "green" ? "kg" : "unidades",
+          Unidad: item?.product_type === "green" || item?.product_type === "service" ? "kg" : "unidades",
           Moneda: saleCurrency(order, currency),
           "Precio unitario": item ? Number(item.unit_price ?? 0) : 0,
           Subtotal: Number(order.subtotal_amount ?? 0),
@@ -222,7 +227,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
 
       const rows = (order.order_items ?? []).map((item: any) => [
         itemLabel(item),
-        item.product_type === "green" ? Number(item.green_weight_kg ?? 0).toFixed(3) + " kg" : String(item.quantity),
+        item.product_type === "green" || item.product_type === "service" ? Number(item.product_type === "green" ? item.green_weight_kg ?? 0 : item.quantity ?? 0).toFixed(3) + " kg" : String(item.quantity),
         formatCurrency(Number(item.unit_price ?? 0), saleCurrency(order, currency)),
         Number(item.tax_rate ?? order.tax_rate ?? 0).toFixed(2) + "%",
         formatCurrency(Number(item.total_amount ?? 0), saleCurrency(order, currency)),

@@ -2,7 +2,7 @@
 
 import Link from"next/link";
 import { usePathname } from"next/navigation";
-import { LayoutDashboard, Leaf, Flame, ShoppingBag, Users, Receipt } from"lucide-react";
+import { LayoutDashboard, Leaf, Flame, ShoppingBag, Users, Receipt, FileSignature } from"lucide-react";
 import { cn } from"@/lib/utils";
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { href:"/inventory", label:"Stock",      icon: Leaf },
   { href:"/roasts",    label:"Tuestes",    icon: Flame },
   { href:"/sales",     label:"Ventas",     icon: ShoppingBag },
+  { href:"/quotes",    label:"Cotiz.",     icon: FileSignature },
   { href:"/clients",   label:"Clientes",   icon: Users },
   { href:"/expenses",  label:"Gastos",     icon: Receipt },
 ];

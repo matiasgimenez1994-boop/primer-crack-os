@@ -100,7 +100,7 @@ export interface OrderItem {
   order_id: string;
   green_coffee_id: string | null;
   roast_batch_id: string | null;
-  product_type:"roasted" |"green";
+  product_type:"roasted" |"green" |"service" |"product";
   weight_grams: number | null;
   green_weight_kg: number | null;
   quantity: number;
@@ -141,6 +141,70 @@ export interface Order {
   updated_at: string;
   clients?: Client;
   order_items?: OrderItem[];
+}
+
+export type QuoteCategory ="green_coffee" |"brand_creation" |"machines";
+export type QuoteStatus ="draft" |"issued" |"accepted" |"rejected" |"invoiced";
+export type QuoteItemKind ="green_coffee" |"roast_service" |"machine" |"destoner" |"other";
+
+export interface QuotePriceCatalogItem {
+  id: string;
+  roaster_id: string;
+  category: QuoteCategory;
+  item_kind: QuoteItemKind;
+  green_coffee_id: string | null;
+  name: string;
+  description: string | null;
+  unit_label: string;
+  suggested_unit_price: number;
+  machine_capacity_kg: number | null;
+  active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  green_coffees?: GreenCoffee;
+}
+
+export interface QuotationItem {
+  id: string;
+  quotation_id: string;
+  catalog_item_id: string | null;
+  green_coffee_id: string | null;
+  item_kind: QuoteItemKind;
+  description: string;
+  quantity: number;
+  unit_label: string;
+  unit_price: number;
+  line_subtotal: number;
+  sort_order: number;
+  created_at: string;
+  green_coffees?: GreenCoffee;
+}
+
+export interface Quotation {
+  id: string;
+  roaster_id: string;
+  quote_number: string;
+  category: QuoteCategory;
+  status: QuoteStatus;
+  client_id: string | null;
+  client_name: string | null;
+  client_email: string | null;
+  currency: string;
+  quote_date: string;
+  valid_until: string | null;
+  tax_enabled: boolean;
+  tax_rate: number;
+  subtotal_amount: number;
+  tax_amount: number;
+  total_amount: number;
+  notes: string | null;
+  converted_sale_id: string | null;
+  issued_at: string | null;
+  created_at: string;
+  updated_at: string;
+  clients?: Client;
+  quotation_items?: QuotationItem[];
 }
 
 export interface RoastProfile {
@@ -198,7 +262,7 @@ export interface Payment {
   notes: string | null;
   created_at: string;
 }
-export type ProductType ="roasted" |"green";
+export type ProductType ="roasted" |"green" |"service" |"product";
 
 export interface Client {
   id: string;
@@ -216,6 +280,8 @@ export interface Client {
 export interface Sale {
   id: string;
   roaster_id: string;
+  quotation_id?: string | null;
+  currency?: string | null;
   client_id: string | null;
   payment_type: PaymentType;
   payment_status: PaymentStatus;
@@ -232,6 +298,11 @@ export interface Sale {
   quantity: number;
   unit_price: number;
   discount_pct: number;
+  subtotal_amount?: number | null;
+  tax_enabled?: boolean | null;
+  tax_rate?: number | null;
+  tax_amount?: number | null;
+  total_with_tax?: number | null;
   final_price: number;
   cost_per_unit: number;
   profit: number;
@@ -239,6 +310,22 @@ export interface Sale {
   notes: string | null;
   created_at: string;
   roast_batches?: RoastBatch & { green_coffees?: GreenCoffee };
+  green_coffees?: GreenCoffee;
+  sale_items?: SaleItem[];
+}
+
+export interface SaleItem {
+  id: string;
+  sale_id: string;
+  item_kind: "roasted_coffee" |"green_coffee" |"roast_service" |"machine" |"destoner" |"other" |"product";
+  green_coffee_id: string | null;
+  description: string;
+  quantity: number;
+  unit_label: string;
+  unit_price: number;
+  line_subtotal: number;
+  sort_order: number;
+  created_at: string;
   green_coffees?: GreenCoffee;
 }
 

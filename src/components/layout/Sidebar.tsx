@@ -5,7 +5,7 @@ import { usePathname, useRouter } from"next/navigation";
 import {
   LayoutDashboard, Leaf, Flame, ShoppingBag,
   Users, BarChart2, FileText, Receipt, BookOpen,
-  ClipboardList, Tag, Settings, LogOut,
+  ClipboardList, Tag, Settings, LogOut, FileSignature,
 } from"lucide-react";
 import { cn } from"@/lib/utils";
 import { createClient } from"@/lib/supabase/client";
@@ -17,6 +17,7 @@ const navItems = [
   { href:"/roasts",    label:"Tuestes",    icon: Flame },
   { href:"/profiles",  label:"Perfiles",   icon: BookOpen },
   { href:"/sales",     label:"Ventas",     icon: ShoppingBag },
+  { href:"/quotes",    label:"Cotizaciones", icon: FileSignature },
   { href:"/orders",    label:"Pedidos",    icon: ClipboardList },
   { href:"/clients",   label:"Clientes",   icon: Users },
   { href:"/expenses",  label:"Gastos",     icon: Receipt },

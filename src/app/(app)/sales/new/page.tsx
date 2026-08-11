@@ -10,7 +10,7 @@ import { formatCurrency, todayISO } from "@/lib/utils";
 import type { Client, GreenCoffee, RoastBatch, Roaster } from "@/types";
 
 type DocumentType = "draft" | "proforma" | "boleta";
-type ProductType = "roasted" | "green";
+type ProductType = "roasted" | "green" | "service";
 type PaymentCurrency = "USD" | "UYU";
 
 interface BatchOption {
@@ -44,11 +44,11 @@ function makeItem(productType: ProductType = "green"): SaleItemForm {
     roast_batch_id: "",
     weight_grams: 250,
     green_coffee_id: "",
-    green_weight_kg: 1,
+    green_weight_kg: productType === "service" ? 0 : 1,
     quantity: 1,
-    unit_price: 0,
+    unit_price: productType === "service" ? 5 : 0,
     tax_rate: 19,
-    notes: "",
+    notes: productType === "service" ? "Servicio de tueste" : "",
   };
 }
 
@@ -118,6 +118,13 @@ export default function NewSalePage() {
         next.green_coffee_id = "";
         next.green_weight_kg = 1;
       }
+      if (patch.product_type === "service") {
+        next.roast_batch_id = "";
+        next.green_coffee_id = "";
+        next.green_weight_kg = 0;
+        next.weight_grams = 0;
+        next.notes = next.notes || "Servicio de tueste";
+      }
       return next;
     }));
   }
@@ -128,7 +135,16 @@ export default function NewSalePage() {
   }
 
   function addItem(productType: ProductType) {
-    setItems((current) => [...current, { ...makeItem(productType), tax_rate: defaultTaxRate }]);
+    setItems((current) => {
+      const item = { ...makeItem(productType), tax_rate: defaultTaxRate };
+      if (productType === "service") {
+        const greenKg = current
+          .filter((entry) => entry.product_type === "green")
+          .reduce((sum, entry) => sum + Number(entry.green_weight_kg || 0), 0);
+        item.quantity = greenKg > 0 ? money(greenKg) : 1;
+      }
+      return [...current, item];
+    });
   }
 
   function removeItem(id: string) {
@@ -137,6 +153,7 @@ export default function NewSalePage() {
 
   function lineSubtotal(item: SaleItemForm) {
     if (item.product_type === "green") return Number(item.green_weight_kg || 0) * Number(item.unit_price || 0);
+    if (item.product_type === "service") return Number(item.quantity || 0) * Number(item.unit_price || 0);
     return Number(item.quantity || 0) * Number(item.unit_price || 0);
   }
 
@@ -158,12 +175,14 @@ export default function NewSalePage() {
         if (!coffee) return "Selecciona el cafe verde en todos los items";
         if (Number(item.green_weight_kg) <= 0) return "La cantidad de cafe verde debe ser mayor a 0";
         if (Number(item.green_weight_kg) > Number(coffee.current_stock_kg)) return coffee.name + " no tiene stock suficiente";
-      } else {
+      } else if (item.product_type === "roasted") {
         const option = batchOptions.find((b) => b.batch.id === item.roast_batch_id);
         if (!option) return "Selecciona el lote de tueste en todos los items tostados";
         const requestedKg = Number(item.weight_grams || 0) * Number(item.quantity || 0) / 1000;
         if (requestedKg <= 0) return "La cantidad tostada debe ser mayor a 0";
         if (requestedKg > option.remainingKg) return (option.batch.green_coffees?.name ?? "Un lote") + " no tiene stock suficiente";
+      } else {
+        if (Number(item.quantity) <= 0) return "La cantidad del servicio debe ser mayor a 0";
       }
       if (Number(item.unit_price) <= 0) return "Todos los items necesitan precio";
     }
@@ -216,7 +235,7 @@ export default function NewSalePage() {
         order_id: order.id,
         product_type: item.product_type,
         roast_batch_id: item.product_type === "roasted" ? item.roast_batch_id : null,
-        green_coffee_id: item.product_type === "green" ? item.green_coffee_id : batchOptions.find((option) => option.batch.id === item.roast_batch_id)?.batch.green_coffee_id ?? null,
+        green_coffee_id: item.product_type === "green" ? item.green_coffee_id : item.product_type === "roasted" ? batchOptions.find((option) => option.batch.id === item.roast_batch_id)?.batch.green_coffee_id ?? null : null,
         weight_grams: item.product_type === "roasted" ? item.weight_grams : null,
         green_weight_kg: item.product_type === "green" ? item.green_weight_kg : null,
         quantity: item.product_type === "green" ? 1 : item.quantity,
@@ -327,6 +346,7 @@ export default function NewSalePage() {
                 </div>
                 <button type="button" className="btn-secondary" onClick={() => addItem("green")}><Plus className="w-4 h-4" /> Cafe verde</button>
                 <button type="button" className="btn-secondary" onClick={() => addItem("roasted")}><Plus className="w-4 h-4" /> Cafe tostado</button>
+                <button type="button" className="btn-secondary" onClick={() => addItem("service")}><Plus className="w-4 h-4" /> Servicio tueste</button>
               </div>
             </div>
 
@@ -348,10 +368,17 @@ export default function NewSalePage() {
                         <select className="input-base" value={item.product_type} onChange={(event) => updateItem(item.id, { product_type: event.target.value as ProductType })}>
                           <option value="green">Cafe verde</option>
                           <option value="roasted">Cafe tostado</option>
+                          <option value="service">Servicio de tueste</option>
                         </select>
                       </div>
 
-                      {item.product_type === "green" ? (
+                      {item.product_type === "service" ? (
+                        <>
+                          <div><label className="label-base">Descripcion</label><input className="input-base" value={item.notes} onChange={(event) => updateItem(item.id, { notes: event.target.value })} placeholder="Servicio de tueste" /></div>
+                          <div><label className="label-base">Kg servicio</label><input type="number" min="0" step="0.001" className="input-base font-mono" value={item.quantity} onChange={(event) => updateItem(item.id, { quantity: Number(event.target.value) })} /></div>
+                          <div><label className="label-base">Precio por kg ({paymentCurrency})</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={item.unit_price} onChange={(event) => updateItem(item.id, { unit_price: Number(event.target.value) })} /></div>
+                        </>
+                      ) : item.product_type === "green" ? (
                         <>
                           <div>
                             <label className="label-base">Cafe verde</label>
@@ -384,7 +411,7 @@ export default function NewSalePage() {
                       )}
 
                       <div><label className="label-base">IVA item</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={item.tax_rate} onChange={(event) => updateItem(item.id, { tax_rate: Number(event.target.value) })} /></div>
-                      <div><label className="label-base">Notas item</label><input className="input-base" value={item.notes} onChange={(event) => updateItem(item.id, { notes: event.target.value })} placeholder="Opcional" /></div>
+                      {item.product_type !== "service" && <div><label className="label-base">Notas item</label><input className="input-base" value={item.notes} onChange={(event) => updateItem(item.id, { notes: event.target.value })} placeholder="Opcional" /></div>}
                     </div>
                     <div className="mt-4 grid grid-cols-3 gap-3 text-xs bg-[#F8FAFC] rounded-lg p-3">
                       <div><p className="text-text-secondary">Subtotal</p><p className="font-mono font-medium">{formatCurrency(subtotal, paymentCurrency)}</p></div>
