@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Leaf, Flame, ShoppingBag,
   Users, BarChart2, FileText, Receipt, BookOpen,
   ClipboardList, Tag, Settings, LogOut, FileSignature,
+  MonitorDot,
 } from"lucide-react";
 import { cn } from"@/lib/utils";
 import { createClient } from"@/lib/supabase/client";
@@ -15,6 +16,7 @@ const navItems = [
   { href:"/dashboard", label:"Dashboard",  icon: LayoutDashboard },
   { href:"/inventory", label:"Inventario", icon: Leaf },
   { href:"/roasts",    label:"Tuestes",    icon: Flame },
+  { href:"/roast-studio", label:"Roast Studio", icon: MonitorDot },
   { href:"/profiles",  label:"Perfiles",   icon: BookOpen },
   { href:"/sales",     label:"Ventas",     icon: ShoppingBag },
   { href:"/quotes",    label:"Cotizaciones", icon: FileSignature },
