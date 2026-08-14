@@ -61,6 +61,12 @@ function isStockCommitError(message: string) {
   return normalized.includes("stock") || normalized.includes("inventario");
 }
 
+function roastedSelectionValue(item: SaleItemForm) {
+  if (item.roast_batch_id) return `batch:${item.roast_batch_id}`;
+  if (item.green_coffee_id) return `green:${item.green_coffee_id}`;
+  return "";
+}
+
 export default function NewSalePage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -156,6 +162,18 @@ export default function NewSalePage() {
     setItems((current) => current.length === 1 ? current : current.filter((item) => item.id !== id));
   }
 
+  function updateRoastedSelection(id: string, value: string) {
+    if (value.startsWith("batch:")) {
+      updateItem(id, { roast_batch_id: value.slice(6), green_coffee_id: "" });
+      return;
+    }
+    if (value.startsWith("green:")) {
+      updateItem(id, { roast_batch_id: "", green_coffee_id: value.slice(6) });
+      return;
+    }
+    updateItem(id, { roast_batch_id: "", green_coffee_id: "" });
+  }
+
   function lineSubtotal(item: SaleItemForm) {
     if (item.product_type === "green") return Number(item.green_weight_kg || 0) * Number(item.unit_price || 0);
     if (item.product_type === "service") return Number(item.quantity || 0) * Number(item.unit_price || 0);
@@ -182,7 +200,8 @@ export default function NewSalePage() {
         if (Number(item.green_weight_kg) > Number(coffee.current_stock_kg)) return `${coffee.name} no tiene stock suficiente de cafe verde`;
       } else if (item.product_type === "roasted") {
         const option = batchOptions.find((b) => b.batch.id === item.roast_batch_id);
-        if (!option) return "Selecciona el lote de tueste en todos los items tostados";
+        const coffee = greenCoffees.find((c) => c.id === item.green_coffee_id);
+        if (!option && !coffee) return "Selecciona un lote tostado o un cafe verde para producir";
         const requestedKg = Number(item.weight_grams || 0) * Number(item.quantity || 0) / 1000;
         if (requestedKg <= 0) return "La cantidad tostada debe ser mayor a 0";
       } else {
@@ -200,10 +219,11 @@ export default function NewSalePage() {
       .filter((item) => item.product_type === "roasted")
       .forEach((item) => {
         const option = batchOptions.find((entry) => entry.batch.id === item.roast_batch_id);
-        const key = item.roast_batch_id || item.id;
+        const coffee = greenCoffees.find((entry) => entry.id === item.green_coffee_id);
+        const key = item.roast_batch_id ? `batch:${item.roast_batch_id}` : item.green_coffee_id ? `green:${item.green_coffee_id}` : item.id;
         const requestedKg = Number(item.weight_grams || 0) * Number(item.quantity || 0) / 1000;
         const current = grouped.get(key) ?? {
-          name: option?.batch.green_coffees?.name ?? "Cafe tostado",
+          name: option?.batch.green_coffees?.name ?? coffee?.name ?? "Cafe tostado",
           requestedKg: 0,
           availableKg: Number(option?.remainingKg ?? 0),
         };
@@ -265,8 +285,8 @@ export default function NewSalePage() {
       return {
         order_id: order.id,
         product_type: item.product_type,
-        roast_batch_id: item.product_type === "roasted" ? item.roast_batch_id : null,
-        green_coffee_id: item.product_type === "green" ? item.green_coffee_id : item.product_type === "roasted" ? batchOptions.find((option) => option.batch.id === item.roast_batch_id)?.batch.green_coffee_id ?? null : null,
+        roast_batch_id: item.product_type === "roasted" && item.roast_batch_id ? item.roast_batch_id : null,
+        green_coffee_id: item.product_type === "green" ? item.green_coffee_id : item.product_type === "roasted" ? (batchOptions.find((option) => option.batch.id === item.roast_batch_id)?.batch.green_coffee_id ?? item.green_coffee_id) || null : null,
         weight_grams: item.product_type === "roasted" ? item.weight_grams : null,
         green_weight_kg: item.product_type === "green" ? item.green_weight_kg : null,
         quantity: item.product_type === "green" ? 1 : item.quantity,
@@ -452,12 +472,18 @@ export default function NewSalePage() {
                       ) : (
                         <>
                           <div>
-                            <label className="label-base">Lote tostado</label>
-                            <select className="input-base" value={item.roast_batch_id} onChange={(event) => updateItem(item.id, { roast_batch_id: event.target.value })}>
-                              <option value="">Seleccionar lote...</option>
-                              {batchOptions.map(({ batch, remainingKg }) => <option key={batch.id} value={batch.id}>{batch.green_coffees?.name} - {new Date(batch.roast_date).toLocaleDateString("es-UY")} - {remainingKg.toFixed(2)} kg</option>)}
+                            <label className="label-base">Cafe tostado o para producir</label>
+                            <select className="input-base" value={roastedSelectionValue(item)} onChange={(event) => updateRoastedSelection(item.id, event.target.value)}>
+                              <option value="">Seleccionar cafe...</option>
+                              <optgroup label="Lotes tostados disponibles">
+                                {batchOptions.map(({ batch, remainingKg }) => <option key={batch.id} value={`batch:${batch.id}`}>{batch.green_coffees?.name} - {new Date(batch.roast_date).toLocaleDateString("es-UY")} - {remainingKg.toFixed(2)} kg</option>)}
+                              </optgroup>
+                              <optgroup label="Cafe verde para tostar">
+                                {greenCoffees.map((coffee) => <option key={coffee.id} value={`green:${coffee.id}`}>{coffee.name} - verde {coffee.current_stock_kg.toFixed(2)} kg</option>)}
+                              </optgroup>
                             </select>
                             {selectedBatch && <p className="text-xs text-text-secondary mt-1">Stock: {selectedBatch.remainingKg.toFixed(3)} kg</p>}
+                            {!selectedBatch && item.green_coffee_id && <p className="text-xs text-orange-700 mt-1">Sin lote tostado: se guarda como pendiente para planificar tueste.</p>}
                           </div>
                           <div><label className="label-base">Presentacion</label><select className="input-base" value={item.weight_grams} onChange={(event) => updateItem(item.id, { weight_grams: Number(event.target.value) })}>{weightOptions.map((weight) => <option key={weight.value} value={weight.value}>{weight.label}</option>)}</select></div>
                           <div><label className="label-base">Cantidad</label><input type="number" min="1" step="1" className="input-base font-mono" value={item.quantity} onChange={(event) => updateItem(item.id, { quantity: Number(event.target.value) })} /></div>

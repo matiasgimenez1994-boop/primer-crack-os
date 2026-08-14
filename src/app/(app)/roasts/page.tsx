@@ -9,7 +9,7 @@ import { formatCurrency, formatWeight, formatDate } from"@/lib/utils";
 import type { RoastBatch } from"@/types";
 
 type RoastPlanItem = {
-  batchId: string;
+  id: string;
   coffeeName: string;
   demandedKg: number;
   availableKg: number;
@@ -39,7 +39,7 @@ export default async function RoastsPage() {
 
   const { data: pendingRoastedItems } = await supabase
     .from("order_items")
-    .select("id, roast_batch_id, weight_grams, quantity, orders!inner(id, roaster_id, document_type, status, inventory_committed_at), roast_batches(id, current_stock_kg, roasted_weight_kg, green_coffees(name))")
+    .select("id, roast_batch_id, green_coffee_id, weight_grams, quantity, orders!inner(id, roaster_id, document_type, status, inventory_committed_at), roast_batches(id, current_stock_kg, roasted_weight_kg, green_coffees(name)), green_coffees(id, name)")
     .eq("product_type", "roasted")
     .eq("orders.roaster_id", roaster.id)
     .eq("orders.document_type", "boleta")
@@ -49,13 +49,14 @@ export default async function RoastsPage() {
   const planningMap = new Map<string, RoastPlanItem>();
 
   (pendingRoastedItems ?? []).forEach((item: any) => {
-    if (!item.roast_batch_id) return;
     const batch = item.roast_batches;
+    const greenCoffee = item.green_coffees;
+    const planKey = item.roast_batch_id ? `batch:${item.roast_batch_id}` : item.green_coffee_id ? `green:${item.green_coffee_id}` : item.id;
     const requestedKg = Number(item.weight_grams || 0) * Number(item.quantity || 0) / 1000;
-    const availableKg = Number(batch?.current_stock_kg ?? batch?.roasted_weight_kg ?? 0);
-    const current = planningMap.get(item.roast_batch_id) ?? {
-      batchId: item.roast_batch_id,
-      coffeeName: batch?.green_coffees?.name ?? "Cafe tostado",
+    const availableKg = item.roast_batch_id ? Number(batch?.current_stock_kg ?? batch?.roasted_weight_kg ?? 0) : 0;
+    const current = planningMap.get(planKey) ?? {
+      id: planKey,
+      coffeeName: batch?.green_coffees?.name ?? greenCoffee?.name ?? "Cafe tostado",
       demandedKg: 0,
       availableKg,
       shortageKg: 0,
@@ -67,7 +68,7 @@ export default async function RoastsPage() {
     current.ordersCount += 1;
     current.shortageKg = Math.max(0, current.demandedKg - current.availableKg);
     current.estimatedGreenKg = current.shortageKg > 0 ? current.shortageKg / 0.85 : 0;
-    planningMap.set(item.roast_batch_id, current);
+    planningMap.set(planKey, current);
   });
 
   const roastPlan = Array.from(planningMap.values())
@@ -108,7 +109,7 @@ export default async function RoastsPage() {
               </thead>
               <tbody>
                 {roastPlan.map((item) => (
-                  <tr key={item.batchId} className="border-b border-orange-100 last:border-0">
+                  <tr key={item.id} className="border-b border-orange-100 last:border-0">
                     <td className="py-2 pr-4 font-medium text-orange-950">{item.coffeeName}</td>
                     <td className="py-2 px-4 text-right font-mono text-orange-900">{formatWeight(item.demandedKg)}</td>
                     <td className="py-2 px-4 text-right font-mono text-orange-900">{formatWeight(item.availableKg)}</td>
