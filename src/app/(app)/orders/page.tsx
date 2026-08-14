@@ -20,6 +20,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 
 const FALLBACK_STATUS = STATUS_CONFIG.pending;
 const STATUS_ORDER = ["draft","proforma","pending","confirmed","roasting","ready","delivered","cancelled"];
+const OVERDUE_STATUSES = ["pending", "roasting", "ready"];
 
 export default async function OrdersPage() {
   const supabase = await createClient();
@@ -40,7 +41,7 @@ export default async function OrdersPage() {
     !["delivered","cancelled","draft","proforma"].includes(o.status));
   const today = todayISO();
   const overdue = active.filter((o: Order) =>
-    o.delivery_date && o.delivery_date < today && o.status !=="delivered");
+    o.delivery_date && o.delivery_date < today && OVERDUE_STATUSES.includes(o.status));
 
   // Contadores por estado
   const counts: Record<string, number> = {};
@@ -56,7 +57,7 @@ export default async function OrdersPage() {
         </Link>
       </div>
 
-      {/* Stats rápidas */}
+      {/* Stats rapidas */}
       <div className="flex gap-2 flex-wrap mb-5">
         {STATUS_ORDER.filter(s => counts[s]).map(s => {
           const cfg = STATUS_CONFIG[s] ?? FALLBACK_STATUS;
@@ -74,16 +75,16 @@ export default async function OrdersPage() {
               {overdue.length} pedido{overdue.length > 1 ?"s" :""} con entrega vencida
             </span>
           </div>
-          {overdue.map((o: Order) => (<Link key={o.id} href={`/orders/${o.id}`}
-              className="block text-xs text-status-danger ml-6 hover:underline">
-              · {(o as any).clients?.name ?? o.client_name ??"Sin cliente"} ""
-              vencido hace {differenceInDays(new Date(), parseISO(o.delivery_date!))} días
-            </Link>))}
+          {overdue.map((o: Order) => (
+            <Link key={o.id} href={`/orders/${o.id}`} className="block text-xs text-status-danger ml-6 hover:underline">
+              - {(o as any).clients?.name ?? o.client_name ?? "Sin cliente"} vencido hace {differenceInDays(new Date(), parseISO(o.delivery_date!))} dias
+            </Link>
+          ))}
         </div>)}
 
       {(orders ?? []).length === 0 ? (<div className="card">
           <EmptyState icon={ClipboardList} title="No hay pedidos"
-            description="Registrá los pedidos de tus clientes para hacer un seguimiento desde que piden hasta que entregan."
+            description="Registra los pedidos de tus clientes para hacer un seguimiento desde que piden hasta que entregan."
             actionLabel="+ Nuevo pedido" actionHref="/orders/new" />
         </div>) : (<div className="card overflow-hidden">
           <div className="overflow-x-auto">
@@ -101,7 +102,7 @@ export default async function OrdersPage() {
               <tbody>
                 {(orders ?? []).map((o: Order) => {
                   const cfg = STATUS_CONFIG[o.status] ?? FALLBACK_STATUS;
-                  const isOverdue = o.delivery_date && o.delivery_date < today && !["delivered","cancelled"].includes(o.status);
+                  const isOverdue = o.delivery_date && o.delivery_date < today && OVERDUE_STATUSES.includes(o.status);
                   const itemCount = (o as any).order_items?.length ?? 0;
                   return (<tr key={o.id}
                       className="border-b border-border-default last:border-0 hover:bg-[#F5EFE6]/50 transition-colors group">
