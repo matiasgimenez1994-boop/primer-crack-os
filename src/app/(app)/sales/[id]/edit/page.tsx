@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import type { Client, GreenCoffee, Order, RoastBatch, Roaster } from "@/types";
 
 type DocumentType = "draft" | "proforma" | "boleta";
-type ProductType = "green" | "roasted";
+type ProductType = "green" | "roasted" | "service";
 type PaymentType = "cash" | "transfer" | "credit";
 type PaymentStatus = "paid" | "pending" | "partial";
 type PaymentCurrency = "USD" | "UYU";
@@ -45,12 +45,12 @@ function makeItem(productType: ProductType = "green"): EditableItem {
     product_type: productType,
     green_coffee_id: "",
     roast_batch_id: "",
-    weight_grams: 250,
-    green_weight_kg: 1,
+    weight_grams: productType === "service" ? 0 : 250,
+    green_weight_kg: productType === "service" ? 0 : 1,
     quantity: 1,
-    unit_price: 0,
+    unit_price: productType === "service" ? 5 : 0,
     tax_rate: 19,
-    notes: "",
+    notes: productType === "service" ? "Servicio de tueste" : "",
   };
 }
 
@@ -182,6 +182,13 @@ export default function EditSalePage() {
         next.green_coffee_id = "";
         next.green_weight_kg = 1;
       }
+      if (patch.product_type === "service") {
+        next.green_coffee_id = "";
+        next.roast_batch_id = "";
+        next.green_weight_kg = 0;
+        next.weight_grams = 0;
+        next.notes = next.notes || "Servicio de tueste";
+      }
       return next;
     }));
   }
@@ -222,11 +229,13 @@ export default function EditSalePage() {
       if (item.product_type === "green") {
         if (!item.green_coffee_id) return "Selecciona el cafe verde en todos los items";
         if (Number(item.green_weight_kg) <= 0) return "La cantidad de cafe verde debe ser mayor a 0";
-      } else {
+      } else if (item.product_type === "roasted") {
         const coffee = greenCoffees.find((entry) => entry.id === item.green_coffee_id);
         const batch = batchOptions.find((entry) => entry.batch.id === item.roast_batch_id);
         if (!batch && !coffee) return "Selecciona un lote tostado o un cafe verde para producir";
         if (Number(item.quantity) <= 0) return "La cantidad debe ser mayor a 0";
+      } else {
+        if (Number(item.quantity) <= 0) return "La cantidad del servicio debe ser mayor a 0";
       }
       if (Number(item.unit_price) < 0) return "El precio no puede ser negativo";
     }
@@ -302,7 +311,9 @@ export default function EditSalePage() {
         product_type: item.product_type,
         green_coffee_id: item.product_type === "green"
           ? item.green_coffee_id
-          : (batchOptions.find((option) => option.batch.id === item.roast_batch_id)?.batch.green_coffee_id ?? item.green_coffee_id) || null,
+          : item.product_type === "roasted"
+            ? (batchOptions.find((option) => option.batch.id === item.roast_batch_id)?.batch.green_coffee_id ?? item.green_coffee_id) || null
+            : null,
         roast_batch_id: item.product_type === "roasted" && item.roast_batch_id ? item.roast_batch_id : null,
         weight_grams: item.product_type === "roasted" ? item.weight_grams : null,
         green_weight_kg: item.product_type === "green" ? item.green_weight_kg : null,
@@ -326,7 +337,8 @@ export default function EditSalePage() {
     const selectedClient = clients.find((client) => client.id === clientId);
     const shouldConfirm = documentType === "boleta";
     const hasRoastedItems = items.some((item) => item.product_type === "roasted");
-    const canCommitInventoryImmediately = shouldConfirm && !hasRoastedItems;
+    const hasServiceItems = items.some((item) => item.product_type === "service");
+    const canCommitInventoryImmediately = shouldConfirm && !hasRoastedItems && !hasServiceItems;
     const paidAmount = paymentStatus === "pending" ? 0 : amountPaid > 0 ? amountPaid : totals.total;
 
     const { error: orderError } = await supabase.from("orders").update({
@@ -364,7 +376,13 @@ export default function EditSalePage() {
       }
     }
 
-    toast.success(hasRoastedItems && shouldConfirm ? "Venta actualizada. Cafe tostado pendiente para planificacion." : "Venta actualizada");
+    if (hasRoastedItems && shouldConfirm) {
+      toast.success("Venta actualizada. Cafe tostado pendiente para planificacion.");
+    } else if (hasServiceItems && shouldConfirm) {
+      toast.success("Venta actualizada. El servicio no descuenta inventario.");
+    } else {
+      toast.success("Venta actualizada");
+    }
     router.push("/sales");
     router.refresh();
   }
@@ -462,6 +480,7 @@ export default function EditSalePage() {
                 </div>
                 <button type="button" className="btn-secondary" onClick={() => addItem("green")}><Plus className="w-4 h-4" /> Cafe verde</button>
                 <button type="button" className="btn-secondary" onClick={() => addItem("roasted")}><Plus className="w-4 h-4" /> Cafe tostado</button>
+                <button type="button" className="btn-secondary" onClick={() => addItem("service")}><Plus className="w-4 h-4" /> Servicio tueste</button>
               </div>
             </div>
             <div className="flex flex-col gap-4">
@@ -480,10 +499,17 @@ export default function EditSalePage() {
                         <select className="input-base" value={item.product_type} onChange={(event) => updateItem(item.id, { product_type: event.target.value as ProductType })}>
                           <option value="green">Cafe verde</option>
                           <option value="roasted">Cafe tostado</option>
+                          <option value="service">Servicio de tueste</option>
                         </select>
                       </div>
 
-                      {item.product_type === "green" ? (
+                      {item.product_type === "service" ? (
+                        <>
+                          <div><label className="label-base">Descripcion</label><input className="input-base" value={item.notes} onChange={(event) => updateItem(item.id, { notes: event.target.value })} placeholder="Servicio de tueste" /></div>
+                          <div><label className="label-base">Kg servicio</label><input type="number" min="0" step="0.001" className="input-base font-mono" value={item.quantity} onChange={(event) => updateItem(item.id, { quantity: Number(event.target.value) })} /></div>
+                          <div><label className="label-base">Precio por kg ({paymentCurrency})</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={item.unit_price} onChange={(event) => updateItem(item.id, { unit_price: Number(event.target.value) })} /></div>
+                        </>
+                      ) : item.product_type === "green" ? (
                         <>
                           <div>
                             <label className="label-base">Cafe verde</label>
@@ -517,7 +543,7 @@ export default function EditSalePage() {
                       )}
 
                       <div><label className="label-base">IVA item</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={item.tax_rate} onChange={(event) => updateItem(item.id, { tax_rate: Number(event.target.value) })} /></div>
-                      <div><label className="label-base">Notas item</label><input className="input-base" value={item.notes} onChange={(event) => updateItem(item.id, { notes: event.target.value })} /></div>
+                      {item.product_type !== "service" && <div><label className="label-base">Notas item</label><input className="input-base" value={item.notes} onChange={(event) => updateItem(item.id, { notes: event.target.value })} /></div>}
                     </div>
                     <div className="mt-4 grid grid-cols-3 gap-3 text-xs bg-[#F8FAFC] rounded-lg p-3">
                       <div><p className="text-text-secondary">Subtotal</p><p className="font-mono font-medium">{formatCurrency(subtotal, paymentCurrency)}</p></div>
