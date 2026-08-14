@@ -216,6 +216,18 @@ export default function EditSalePage() {
     setItems((current) => [...current, makeItem(productType)]);
   }
 
+  function addGreenWithRoastService() {
+    setItems((current) => {
+      const greenItem = makeItem("green");
+      const serviceItem = {
+        ...makeItem("service"),
+        quantity: greenItem.green_weight_kg,
+      };
+      return [...current, greenItem, serviceItem];
+    });
+    toast.info("Agregado cafe verde + servicio de tueste. Edita el cafe y los kg vendidos.");
+  }
+
   function removeItem(itemId: string) {
     setItems((current) => current.length === 1 ? current : current.filter((item) => item.id !== itemId));
   }
@@ -582,6 +594,7 @@ export default function EditSalePage() {
                 <button type="button" className="btn-secondary" onClick={() => addItem("green")}><Plus className="w-4 h-4" /> Cafe verde</button>
                 <button type="button" className="btn-secondary" onClick={() => addItem("roasted")}><Plus className="w-4 h-4" /> Cafe tostado</button>
                 <button type="button" className="btn-secondary" onClick={() => addItem("service")}><Plus className="w-4 h-4" /> Servicio tueste</button>
+                <button type="button" className="btn-secondary" onClick={addGreenWithRoastService}><Plus className="w-4 h-4" /> Verde + tueste</button>
               </div>
             </div>
             <div className="flex flex-col gap-4">

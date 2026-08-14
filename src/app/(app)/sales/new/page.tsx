@@ -184,6 +184,19 @@ export default function NewSalePage() {
     });
   }
 
+  function addGreenWithRoastService() {
+    setItems((current) => {
+      const greenItem = { ...makeItem("green"), tax_rate: defaultTaxRate };
+      const serviceItem = {
+        ...makeItem("service"),
+        quantity: money(greenItem.green_weight_kg),
+        tax_rate: defaultTaxRate,
+      };
+      return [...current, greenItem, serviceItem];
+    });
+    toast.info("Agregado cafe verde + servicio de tueste. Edita el cafe y los kg vendidos.");
+  }
+
   function removeItem(id: string) {
     setItems((current) => current.length === 1 ? current : current.filter((item) => item.id !== id));
   }
@@ -530,6 +543,7 @@ export default function NewSalePage() {
                 <button type="button" className="btn-secondary" onClick={() => addItem("green")}><Plus className="w-4 h-4" /> Cafe verde</button>
                 <button type="button" className="btn-secondary" onClick={() => addItem("roasted")}><Plus className="w-4 h-4" /> Cafe tostado</button>
                 <button type="button" className="btn-secondary" onClick={() => addItem("service")}><Plus className="w-4 h-4" /> Servicio tueste</button>
+                <button type="button" className="btn-secondary" onClick={addGreenWithRoastService}><Plus className="w-4 h-4" /> Verde + tueste</button>
               </div>
             </div>
 

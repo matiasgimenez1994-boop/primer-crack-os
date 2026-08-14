@@ -11,10 +11,10 @@ import type { RoastBatch } from"@/types";
 type RoastPlanItem = {
   id: string;
   coffeeName: string;
-  demandedKg: number;
-  availableKg: number;
-  shortageKg: number;
-  estimatedGreenKg: number;
+  source: "roasted_shortage" | "green_with_service";
+  roastedDemandKg: number;
+  availableRoastedKg: number;
+  greenToRoastKg: number;
   ordersCount: number;
 };
 
@@ -46,6 +46,15 @@ export default async function RoastsPage() {
     .is("orders.inventory_committed_at", null)
     .in("orders.status", ["pending", "confirmed", "roasting", "ready"]);
 
+  const { data: pendingGreenAndServiceItems } = await supabase
+    .from("order_items")
+    .select("id, order_id, product_type, green_coffee_id, green_weight_kg, quantity, orders!inner(id, roaster_id, document_type, status, inventory_committed_at), green_coffees(id, name)")
+    .in("product_type", ["green", "service"])
+    .eq("orders.roaster_id", roaster.id)
+    .eq("orders.document_type", "boleta")
+    .is("orders.inventory_committed_at", null)
+    .in("orders.status", ["pending", "confirmed", "roasting", "ready"]);
+
   const planningMap = new Map<string, RoastPlanItem>();
 
   (pendingRoastedItems ?? []).forEach((item: any) => {
@@ -57,23 +66,58 @@ export default async function RoastsPage() {
     const current = planningMap.get(planKey) ?? {
       id: planKey,
       coffeeName: batch?.green_coffees?.name ?? greenCoffee?.name ?? "Cafe tostado",
-      demandedKg: 0,
-      availableKg,
-      shortageKg: 0,
-      estimatedGreenKg: 0,
+      source: "roasted_shortage",
+      roastedDemandKg: 0,
+      availableRoastedKg: availableKg,
+      greenToRoastKg: 0,
       ordersCount: 0,
     };
 
-    current.demandedKg += requestedKg;
+    current.roastedDemandKg += requestedKg;
     current.ordersCount += 1;
-    current.shortageKg = Math.max(0, current.demandedKg - current.availableKg);
-    current.estimatedGreenKg = current.shortageKg > 0 ? current.shortageKg / 0.85 : 0;
+    const roastedShortageKg = Math.max(0, current.roastedDemandKg - current.availableRoastedKg);
+    current.greenToRoastKg = roastedShortageKg > 0 ? roastedShortageKg / 0.85 : 0;
     planningMap.set(planKey, current);
   });
 
+  const itemsByOrder = new Map<string, any[]>();
+  (pendingGreenAndServiceItems ?? []).forEach((item: any) => {
+    const current = itemsByOrder.get(item.order_id) ?? [];
+    current.push(item);
+    itemsByOrder.set(item.order_id, current);
+  });
+
+  itemsByOrder.forEach((orderItems) => {
+    const hasRoastService = orderItems.some((item) => item.product_type === "service" && Number(item.quantity || 0) > 0);
+    if (!hasRoastService) return;
+
+    orderItems
+      .filter((item) => item.product_type === "green" && item.green_coffee_id)
+      .forEach((item) => {
+        const greenKg = Number(item.green_weight_kg || 0);
+        if (greenKg <= 0) return;
+
+        const planKey = `green-service:${item.green_coffee_id}`;
+        const current = planningMap.get(planKey) ?? {
+          id: planKey,
+          coffeeName: item.green_coffees?.name ?? "Cafe verde",
+          source: "green_with_service",
+          roastedDemandKg: 0,
+          availableRoastedKg: 0,
+          greenToRoastKg: 0,
+          ordersCount: 0,
+        };
+
+        current.greenToRoastKg += greenKg;
+        current.roastedDemandKg += greenKg * 0.85;
+        current.ordersCount += 1;
+        planningMap.set(planKey, current);
+      });
+  });
+
   const roastPlan = Array.from(planningMap.values())
-    .filter((item) => item.shortageKg > 0)
-    .sort((a, b) => b.shortageKg - a.shortageKg);
+    .filter((item) => item.greenToRoastKg > 0)
+    .sort((a, b) => b.greenToRoastKg - a.greenToRoastKg);
 
   return (<div>
       <div className="page-header">
@@ -92,7 +136,7 @@ export default async function RoastsPage() {
             <div>
               <p className="text-sm font-semibold text-orange-900">Planificacion sugerida por ventas sin stock</p>
               <p className="text-xs text-orange-800 mt-1">
-                Estas cantidades salen de boletas guardadas que todavia no pudieron comprometer inventario tostado.
+                Para ventas con cafe verde + servicio, la planificacion usa los kg verdes vendidos. Para ventas de cafe tostado, estima el verde necesario desde el faltante tostado.
               </p>
             </div>
           </div>
@@ -101,20 +145,20 @@ export default async function RoastsPage() {
               <thead>
                 <tr className="border-b border-orange-200">
                   <th className="text-left py-2 pr-4 text-xs font-semibold text-orange-900">Cafe</th>
-                  <th className="text-right py-2 px-4 text-xs font-semibold text-orange-900">Demandado</th>
-                  <th className="text-right py-2 px-4 text-xs font-semibold text-orange-900">Disponible</th>
-                  <th className="text-right py-2 px-4 text-xs font-semibold text-orange-900">Falta tostar</th>
-                  <th className="text-right py-2 pl-4 text-xs font-semibold text-orange-900">Verde estimado</th>
+                  <th className="text-left py-2 px-4 text-xs font-semibold text-orange-900">Origen</th>
+                  <th className="text-right py-2 px-4 text-xs font-semibold text-orange-900">Verde a tostar</th>
+                  <th className="text-right py-2 px-4 text-xs font-semibold text-orange-900">Tostado estimado</th>
+                  <th className="text-right py-2 pl-4 text-xs font-semibold text-orange-900">Stock tostado</th>
                 </tr>
               </thead>
               <tbody>
                 {roastPlan.map((item) => (
                   <tr key={item.id} className="border-b border-orange-100 last:border-0">
                     <td className="py-2 pr-4 font-medium text-orange-950">{item.coffeeName}</td>
-                    <td className="py-2 px-4 text-right font-mono text-orange-900">{formatWeight(item.demandedKg)}</td>
-                    <td className="py-2 px-4 text-right font-mono text-orange-900">{formatWeight(item.availableKg)}</td>
-                    <td className="py-2 px-4 text-right font-mono font-semibold text-orange-950">{formatWeight(item.shortageKg)}</td>
-                    <td className="py-2 pl-4 text-right font-mono text-orange-900">{formatWeight(item.estimatedGreenKg)}</td>
+                    <td className="py-2 px-4 text-orange-900">{item.source === "green_with_service" ? "Verde + tueste" : "Tostado faltante"}</td>
+                    <td className="py-2 px-4 text-right font-mono font-semibold text-orange-950">{formatWeight(item.greenToRoastKg)}</td>
+                    <td className="py-2 px-4 text-right font-mono text-orange-900">{formatWeight(item.roastedDemandKg)}</td>
+                    <td className="py-2 pl-4 text-right font-mono text-orange-900">{formatWeight(item.availableRoastedKg)}</td>
                   </tr>
                 ))}
               </tbody>
