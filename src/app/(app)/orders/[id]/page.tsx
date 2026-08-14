@@ -26,6 +26,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 };
 
 const FALLBACK_STATUS = STATUS_CONFIG.pending;
+const OVERDUE_STATUSES = ["pending", "roasting", "ready"];
 
 const NEXT_STATUS: Record<string, string> = {
   pending:"roasting",
@@ -136,7 +137,7 @@ export default function OrderDetailPage() {
   const cfg = STATUS_CONFIG[order.status] ?? FALLBACK_STATUS;
   const StatusIcon = cfg.icon;
   const isActive = !["delivered","cancelled"].includes(order.status);
-  const isOverdue = order.delivery_date && order.delivery_date < todayISO() && isActive;
+  const isOverdue = order.delivery_date && order.delivery_date < todayISO() && OVERDUE_STATUSES.includes(order.status);
   const daysUntilDelivery = order.delivery_date
     ? differenceInDays(parseISO(order.delivery_date), new Date())
     : null;
@@ -301,7 +302,7 @@ export default function OrderDetailPage() {
                 </a>)}
               {client.email && (<a href={`mailto:${client.email}`}
                   className="block text-xs text-accent-terra hover:underline mt-0.5">
-                  ️ {client.email}
+                  {client.email}
                 </a>)}
             </div>)}
 
