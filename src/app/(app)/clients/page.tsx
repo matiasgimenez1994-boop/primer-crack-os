@@ -25,9 +25,14 @@ const typeColors: Record<string, string> = {
 
 type ClientOrder = {
   client_id: string | null;
+  client_name: string | null;
   total_amount: number | null;
   order_date: string;
 };
+
+function normalizeClientName(value: string | null | undefined) {
+  return (value ?? "").trim().toLowerCase();
+}
 
 export default async function ClientsPage() {
   const supabase = await createClient();
@@ -49,21 +54,26 @@ export default async function ClientsPage() {
 
   const { data: orders } = await supabase
     .from("orders")
-    .select("client_id, total_amount, order_date")
+    .select("client_id, client_name, total_amount, order_date")
     .eq("roaster_id", roaster.id)
-    .not("client_id", "is", null)
     .neq("status", "cancelled");
 
   const salesByClient: Record<string, { total: number; lastDate: string; count: number }> = {};
+  const clientIdsByName = new Map<string, string>();
+  (clients ?? []).forEach((client: Client) => {
+    clientIdsByName.set(normalizeClientName(client.name), client.id);
+  });
+
   ((orders ?? []) as ClientOrder[]).forEach((order) => {
-    if (!order.client_id) return;
-    if (!salesByClient[order.client_id]) {
-      salesByClient[order.client_id] = { total: 0, lastDate: order.order_date, count: 0 };
+    const clientKey = order.client_id ?? clientIdsByName.get(normalizeClientName(order.client_name));
+    if (!clientKey) return;
+    if (!salesByClient[clientKey]) {
+      salesByClient[clientKey] = { total: 0, lastDate: order.order_date, count: 0 };
     }
-    salesByClient[order.client_id].total += Number(order.total_amount ?? 0);
-    salesByClient[order.client_id].count += 1;
-    if (order.order_date > salesByClient[order.client_id].lastDate) {
-      salesByClient[order.client_id].lastDate = order.order_date;
+    salesByClient[clientKey].total += Number(order.total_amount ?? 0);
+    salesByClient[clientKey].count += 1;
+    if (order.order_date > salesByClient[clientKey].lastDate) {
+      salesByClient[clientKey].lastDate = order.order_date;
     }
   });
 
