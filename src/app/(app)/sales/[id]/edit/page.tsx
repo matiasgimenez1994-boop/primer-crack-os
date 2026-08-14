@@ -58,6 +58,12 @@ function roundMoney(value: number) {
   return Math.round(value * 100) / 100;
 }
 
+function roastedSelectionValue(item: EditableItem) {
+  if (item.roast_batch_id) return `batch:${item.roast_batch_id}`;
+  if (item.green_coffee_id) return `green:${item.green_coffee_id}`;
+  return "";
+}
+
 export default function EditSalePage() {
   const params = useParams();
   const id = params.id as string;
@@ -93,7 +99,13 @@ export default function EditSalePage() {
 
       const [{ data: clientsData }, { data: coffeesData }, { data: batchesData }, { data: orderData }] = await Promise.all([
         supabase.from("clients").select("*").eq("roaster_id", r.id).order("name"),
-        supabase.from("green_coffees").select("*").eq("roaster_id", r.id).order("name"),
+        supabase
+          .from("green_coffees")
+          .select("*")
+          .eq("roaster_id", r.id)
+          .gt("current_stock_kg", 0)
+          .or("status.is.null,status.neq.depleted")
+          .order("name"),
         supabase.from("roast_batches").select("*, green_coffees(*)").eq("roaster_id", r.id).eq("status", "production").order("roast_date", { ascending: false }),
         supabase
           .from("orders")
@@ -182,13 +194,26 @@ export default function EditSalePage() {
     setItems((current) => current.length === 1 ? current : current.filter((item) => item.id !== itemId));
   }
 
+  function updateRoastedSelection(itemId: string, value: string) {
+    if (value.startsWith("batch:")) {
+      updateItem(itemId, { roast_batch_id: value.slice(6), green_coffee_id: "" });
+      return;
+    }
+    if (value.startsWith("green:")) {
+      updateItem(itemId, { roast_batch_id: "", green_coffee_id: value.slice(6) });
+      return;
+    }
+    updateItem(itemId, { roast_batch_id: "", green_coffee_id: "" });
+  }
+
   function itemLabel(item: EditableItem) {
     if (item.product_type === "green") {
       const coffee = greenCoffees.find((entry) => entry.id === item.green_coffee_id);
       return (coffee?.name ?? "Cafe verde") + " - " + Number(item.green_weight_kg || 0).toFixed(3) + " kg";
     }
     const option = batchOptions.find((entry) => entry.batch.id === item.roast_batch_id);
-    return (option?.batch.green_coffees?.name ?? "Cafe tostado") + " - " + item.weight_grams + " g x " + item.quantity;
+    const coffee = greenCoffees.find((entry) => entry.id === item.green_coffee_id);
+    return (option?.batch.green_coffees?.name ?? coffee?.name ?? "Cafe tostado") + " - " + item.weight_grams + " g x " + item.quantity;
   }
 
   function validateItems() {
@@ -198,7 +223,9 @@ export default function EditSalePage() {
         if (!item.green_coffee_id) return "Selecciona el cafe verde en todos los items";
         if (Number(item.green_weight_kg) <= 0) return "La cantidad de cafe verde debe ser mayor a 0";
       } else {
-        if (!item.roast_batch_id) return "Selecciona el lote tostado en todos los items tostados";
+        const coffee = greenCoffees.find((entry) => entry.id === item.green_coffee_id);
+        const batch = batchOptions.find((entry) => entry.batch.id === item.roast_batch_id);
+        if (!batch && !coffee) return "Selecciona un lote tostado o un cafe verde para producir";
         if (Number(item.quantity) <= 0) return "La cantidad debe ser mayor a 0";
       }
       if (Number(item.unit_price) < 0) return "El precio no puede ser negativo";
@@ -275,8 +302,8 @@ export default function EditSalePage() {
         product_type: item.product_type,
         green_coffee_id: item.product_type === "green"
           ? item.green_coffee_id
-          : batchOptions.find((option) => option.batch.id === item.roast_batch_id)?.batch.green_coffee_id ?? null,
-        roast_batch_id: item.product_type === "roasted" ? item.roast_batch_id : null,
+          : (batchOptions.find((option) => option.batch.id === item.roast_batch_id)?.batch.green_coffee_id ?? item.green_coffee_id) || null,
+        roast_batch_id: item.product_type === "roasted" && item.roast_batch_id ? item.roast_batch_id : null,
         weight_grams: item.product_type === "roasted" ? item.weight_grams : null,
         green_weight_kg: item.product_type === "green" ? item.green_weight_kg : null,
         quantity: item.product_type === "green" ? 1 : item.quantity,
@@ -298,6 +325,8 @@ export default function EditSalePage() {
 
     const selectedClient = clients.find((client) => client.id === clientId);
     const shouldConfirm = documentType === "boleta";
+    const hasRoastedItems = items.some((item) => item.product_type === "roasted");
+    const canCommitInventoryImmediately = shouldConfirm && !hasRoastedItems;
     const paidAmount = paymentStatus === "pending" ? 0 : amountPaid > 0 ? amountPaid : totals.total;
 
     const { error: orderError } = await supabase.from("orders").update({
@@ -326,7 +355,7 @@ export default function EditSalePage() {
       return;
     }
 
-    if (shouldConfirm) {
+    if (canCommitInventoryImmediately) {
       const { error: confirmError } = await supabase.rpc("confirm_order_and_commit_inventory", { p_order_id: order.id });
       if (confirmError) {
         toast.error(confirmError.message || "La venta se guardo, pero no se pudo confirmar inventario");
@@ -335,7 +364,7 @@ export default function EditSalePage() {
       }
     }
 
-    toast.success("Venta actualizada");
+    toast.success(hasRoastedItems && shouldConfirm ? "Venta actualizada. Cafe tostado pendiente para planificacion." : "Venta actualizada");
     router.push("/sales");
     router.refresh();
   }
@@ -469,11 +498,17 @@ export default function EditSalePage() {
                       ) : (
                         <>
                           <div>
-                            <label className="label-base">Lote tostado</label>
-                            <select className="input-base" value={item.roast_batch_id} onChange={(event) => updateItem(item.id, { roast_batch_id: event.target.value })}>
-                              <option value="">Seleccionar lote...</option>
-                              {batchOptions.map(({ batch, remainingKg }) => <option key={batch.id} value={batch.id}>{batch.green_coffees?.name} - {new Date(batch.roast_date).toLocaleDateString("es-UY")} - {remainingKg.toFixed(2)} kg</option>)}
+                            <label className="label-base">Cafe tostado o para producir</label>
+                            <select className="input-base" value={roastedSelectionValue(item)} onChange={(event) => updateRoastedSelection(item.id, event.target.value)}>
+                              <option value="">Seleccionar cafe...</option>
+                              <optgroup label="Lotes tostados disponibles">
+                                {batchOptions.map(({ batch, remainingKg }) => <option key={batch.id} value={`batch:${batch.id}`}>{batch.green_coffees?.name} - {new Date(batch.roast_date).toLocaleDateString("es-UY")} - {remainingKg.toFixed(2)} kg</option>)}
+                              </optgroup>
+                              <optgroup label="Cafe verde para tostar">
+                                {greenCoffees.map((coffee) => <option key={coffee.id} value={`green:${coffee.id}`}>{coffee.name} - verde {coffee.current_stock_kg.toFixed(2)} kg</option>)}
+                              </optgroup>
                             </select>
+                            {!item.roast_batch_id && item.green_coffee_id && <p className="text-xs text-orange-700 mt-1">Sin lote tostado: queda pendiente para planificar tueste.</p>}
                           </div>
                           <div><label className="label-base">Presentacion</label><select className="input-base" value={item.weight_grams} onChange={(event) => updateItem(item.id, { weight_grams: Number(event.target.value) })}>{weightOptions.map((weight) => <option key={weight.value} value={weight.value}>{weight.label}</option>)}</select></div>
                           <div><label className="label-base">Cantidad</label><input type="number" min="1" step="1" className="input-base font-mono" value={item.quantity} onChange={(event) => updateItem(item.id, { quantity: Number(event.target.value) })} /></div>
