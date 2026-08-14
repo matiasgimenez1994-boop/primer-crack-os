@@ -80,6 +80,22 @@ function roastedSelectionValue(item: EditableItem) {
   return "";
 }
 
+function inventoryFingerprint(items: EditableItem[]) {
+  return items
+    .map((item) => ({
+      id: item.id,
+      product_type: item.product_type,
+      green_coffee_id: item.green_coffee_id || null,
+      roast_batch_id: item.roast_batch_id || null,
+      weight_grams: item.product_type === "roasted" ? Number(item.weight_grams || 0) : null,
+      green_weight_kg: item.product_type === "green" ? Number(item.green_weight_kg || 0) : null,
+      quantity: item.product_type !== "green" ? Number(item.quantity || 0) : 1,
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((item) => JSON.stringify(item))
+    .join("|");
+}
+
 export default function EditSalePage() {
   const params = useParams();
   const id = params.id as string;
@@ -104,6 +120,7 @@ export default function EditSalePage() {
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<EditableItem[]>([]);
+  const [originalInventoryFingerprint, setOriginalInventoryFingerprint] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -153,7 +170,7 @@ export default function EditSalePage() {
         setAmountPaid(Number((orderData as any).amount_paid ?? orderData.total_amount ?? 0));
         setDueDate((orderData as any).due_date ?? "");
         setNotes(orderData.notes ?? "");
-        setItems(((orderData as any).order_items ?? []).map((item: any) => ({
+        const loadedItems = ((orderData as any).order_items ?? []).map((item: any) => ({
           id: item.id,
           product_type: item.product_type,
           green_coffee_id: item.green_coffee_id ?? "",
@@ -164,7 +181,9 @@ export default function EditSalePage() {
           unit_price: Number(item.unit_price ?? 0),
           tax_rate: Number(item.tax_rate ?? orderData.tax_rate ?? 19),
           notes: item.notes ?? "",
-        })));
+        }));
+        setItems(loadedItems);
+        setOriginalInventoryFingerprint(inventoryFingerprint(loadedItems));
       }
 
       setLoading(false);
@@ -371,10 +390,14 @@ export default function EditSalePage() {
 
     setSaving(true);
 
-    const reversed = await reverseCommittedInventory();
-    if (!reversed) {
-      setSaving(false);
-      return;
+    const inventoryChanged = inventoryFingerprint(items) !== originalInventoryFingerprint;
+
+    if (inventoryChanged) {
+      const reversed = await reverseCommittedInventory();
+      if (!reversed) {
+        setSaving(false);
+        return;
+      }
     }
 
     await supabase.from("order_items").delete().eq("order_id", order.id);
@@ -414,7 +437,7 @@ export default function EditSalePage() {
     const shouldConfirm = documentType === "boleta";
     const hasRoastedItems = items.some((item) => item.product_type === "roasted");
     const hasServiceItems = items.some((item) => item.product_type === "service");
-    const canCommitInventoryImmediately = shouldConfirm && !hasRoastedItems && !hasServiceItems;
+    const canCommitInventoryImmediately = shouldConfirm && inventoryChanged && !hasRoastedItems && !hasServiceItems;
     const paidAmount = paymentStatus === "pending" ? 0 : amountPaid > 0 ? amountPaid : totals.total;
 
     const { error: orderError } = await supabase.from("orders").update({
