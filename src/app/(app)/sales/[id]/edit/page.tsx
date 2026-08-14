@@ -7,7 +7,7 @@ import { ArrowLeft, Plus, Save, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import type { Client, GreenCoffee, Order, RoastBatch, Roaster } from "@/types";
+import type { Client, ClientType, GreenCoffee, Order, RoastBatch, Roaster } from "@/types";
 
 type DocumentType = "draft" | "proforma" | "boleta";
 type ProductType = "green" | "roasted" | "service";
@@ -33,11 +33,27 @@ interface EditableItem {
   notes: string;
 }
 
+interface InlineClientForm {
+  name: string;
+  type: ClientType;
+  email: string;
+  phone: string;
+  notes: string;
+}
+
 const weightOptions = [
   { value: 250, label: "250 g" },
   { value: 500, label: "500 g" },
   { value: 1000, label: "1 kg" },
 ];
+
+const emptyInlineClient: InlineClientForm = {
+  name: "",
+  type: "individual",
+  email: "",
+  phone: "",
+  notes: "",
+};
 
 function makeItem(productType: ProductType = "green"): EditableItem {
   return {
@@ -71,6 +87,9 @@ export default function EditSalePage() {
   const supabase = useMemo(() => createClient(), []);
   const [roaster, setRoaster] = useState<Roaster | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
+  const [isAddingClient, setIsAddingClient] = useState(false);
+  const [newClient, setNewClient] = useState<InlineClientForm>(emptyInlineClient);
+  const [isSavingClient, setIsSavingClient] = useState(false);
   const [greenCoffees, setGreenCoffees] = useState<GreenCoffee[]>([]);
   const [batchOptions, setBatchOptions] = useState<BatchOption[]>([]);
   const [order, setOrder] = useState<Order | null>(null);
@@ -199,6 +218,51 @@ export default function EditSalePage() {
 
   function removeItem(itemId: string) {
     setItems((current) => current.length === 1 ? current : current.filter((item) => item.id !== itemId));
+  }
+
+  function handleClientSelect(value: string) {
+    if (value === "__new__") {
+      setIsAddingClient(true);
+      return;
+    }
+    setClientId(value);
+  }
+
+  async function createInlineClient() {
+    if (!roaster || isSavingClient) return;
+    const name = newClient.name.trim();
+    if (!name) {
+      toast.error("Ingresa el nombre del cliente");
+      return;
+    }
+
+    setIsSavingClient(true);
+    const { data, error } = await supabase
+      .from("clients")
+      .insert({
+        roaster_id: roaster.id,
+        name,
+        type: newClient.type,
+        email: newClient.email.trim() || null,
+        phone: newClient.phone.trim() || null,
+        notes: newClient.notes.trim() || null,
+        inactive_alert_days: 30,
+      })
+      .select("*")
+      .single();
+
+    setIsSavingClient(false);
+    if (error || !data) {
+      toast.error("No se pudo crear el cliente");
+      return;
+    }
+
+    const created = data as Client;
+    setClients((current) => [...current, created].sort((a, b) => a.name.localeCompare(b.name)));
+    setClientId(created.id);
+    setNewClient(emptyInlineClient);
+    setIsAddingClient(false);
+    toast.success(`${created.name} agregado`);
   }
 
   function updateRoastedSelection(itemId: string, value: string) {
@@ -446,11 +510,48 @@ export default function EditSalePage() {
               </div>}
               <div>
                 <label className="label-base">Cliente</label>
-                <select className="input-base" value={clientId} onChange={(event) => setClientId(event.target.value)}>
+                <select className="input-base" value={clientId} onChange={(event) => handleClientSelect(event.target.value)}>
                   <option value="">Sin cliente asignado</option>
+                  <option value="__new__">+ Nuevo cliente</option>
                   {clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}
                 </select>
               </div>
+              {isAddingClient && (
+                <div className="md:col-span-3 rounded-lg border border-border-default bg-[#F8FAFC] p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="label-base">Nombre cliente *</label>
+                      <input className="input-base" value={newClient.name} onChange={(event) => setNewClient((current) => ({ ...current, name: event.target.value }))} placeholder="Nombre o empresa" />
+                    </div>
+                    <div>
+                      <label className="label-base">Tipo</label>
+                      <select className="input-base" value={newClient.type} onChange={(event) => setNewClient((current) => ({ ...current, type: event.target.value as ClientType }))}>
+                        <option value="individual">Consumidor final</option>
+                        <option value="cafe">Cafeteria</option>
+                        <option value="restaurant">Restaurante</option>
+                        <option value="distributor">Distribuidor</option>
+                        <option value="other">Otro</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label-base">Telefono / WhatsApp</label>
+                      <input className="input-base" value={newClient.phone} onChange={(event) => setNewClient((current) => ({ ...current, phone: event.target.value }))} placeholder="+598..." />
+                    </div>
+                    <div>
+                      <label className="label-base">Email</label>
+                      <input type="email" className="input-base" value={newClient.email} onChange={(event) => setNewClient((current) => ({ ...current, email: event.target.value }))} placeholder="cliente@email.com" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="label-base">Notas</label>
+                      <input className="input-base" value={newClient.notes} onChange={(event) => setNewClient((current) => ({ ...current, notes: event.target.value }))} placeholder="Opcional" />
+                    </div>
+                  </div>
+                  <div className="mt-3 flex justify-end gap-2">
+                    <button type="button" className="btn-secondary" onClick={() => { setIsAddingClient(false); setNewClient(emptyInlineClient); }}>Cancelar</button>
+                    <button type="button" className="btn-primary" onClick={createInlineClient} disabled={isSavingClient}>{isSavingClient ? "Guardando..." : "Guardar cliente"}</button>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="label-base">Fecha</label>
                 <input type="date" className="input-base" value={orderDate} onChange={(event) => setOrderDate(event.target.value)} />
