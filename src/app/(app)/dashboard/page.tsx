@@ -23,6 +23,16 @@ import { calculateCosts, calculateMargin } from"@/lib/costs";
 import { differenceInDays, parseISO } from"date-fns";
 import type { RoastBatch, GreenCoffee, Client, Order } from"@/types";
 
+type ClientOrder = {
+  client_id: string | null;
+  client_name: string | null;
+  order_date: string;
+};
+
+function normalizeClientName(value: string | null | undefined) {
+  return (value ?? "").trim().toLowerCase();
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const {
@@ -45,7 +55,7 @@ export default async function DashboardPage() {
     { data: recentBatches },
     { data: monthBatches },
     { data: clients },
-    { data: clientSales },
+    { data: clientOrders },
     { data: activeOrders },
   ] = await Promise.all([
     supabase
@@ -70,10 +80,10 @@ export default async function DashboardPage() {
       .select("*")
       .eq("roaster_id", roaster.id),
     supabase
-      .from("sales")
-      .select("client_id, sale_date")
+      .from("orders")
+      .select("client_id, client_name, order_date")
       .eq("roaster_id", roaster.id)
-      .not("client_id","is", null),
+      .neq("status", "cancelled"),
     supabase
       .from("orders")
       .select("*, clients(name)")
@@ -83,15 +93,23 @@ export default async function DashboardPage() {
   ]);
 
   // Clientes inactivos
-  const lastSaleByClient: Record<string, string> = {};
-  (clientSales ?? []).forEach((s: { client_id: string; sale_date: string }) => {
-    if (!lastSaleByClient[s.client_id] || s.sale_date > lastSaleByClient[s.client_id]) {
-      lastSaleByClient[s.client_id] = s.sale_date;
+  const lastOrderByClient: Record<string, string> = {};
+  const clientIdsByName = new Map<string, string>();
+  (clients ?? []).forEach((client: Client) => {
+    clientIdsByName.set(normalizeClientName(client.name), client.id);
+  });
+
+  ((clientOrders ?? []) as ClientOrder[]).forEach((order) => {
+    const clientKey = order.client_id ?? clientIdsByName.get(normalizeClientName(order.client_name));
+    if (!clientKey) return;
+    if (!lastOrderByClient[clientKey] || order.order_date > lastOrderByClient[clientKey]) {
+      lastOrderByClient[clientKey] = order.order_date;
     }
   });
+
   const today = new Date();
   const inactiveClients = (clients ?? []).filter((c: Client) => {
-    const last = lastSaleByClient[c.id];
+    const last = lastOrderByClient[c.id];
     if (!last) return true;
     return differenceInDays(today, parseISO(last)) >= c.inactive_alert_days;
   });
@@ -170,7 +188,7 @@ export default async function DashboardPage() {
                 href={`/inventory/${c.id}`}
                 className="text-sm text-text-secondary hover:text-text-primary transition-colors"
               >
-                · {c.name} ""{""}
+                <span className="mr-1">-</span>{c.name}{" "}
                 <span className="font-mono font-medium">
                   {formatWeight(c.current_stock_kg)} restantes
                 </span>
@@ -188,13 +206,13 @@ export default async function DashboardPage() {
           </div>
           <div className="flex flex-col gap-1">
             {inactiveClients.slice(0, 3).map((c: Client) => {
-              const last = lastSaleByClient[c.id];
+              const last = lastOrderByClient[c.id];
               const days = last ? differenceInDays(today, parseISO(last)) : null;
               return (<Link key={c.id} href={`/clients/${c.id}`}
                   className="text-sm text-blue-700 hover:text-blue-900 transition-colors"
                 >
-                  · <span className="font-medium">{c.name}</span> ""{""}
-                  {days !== null ? `hace ${days} días sin comprar` :"sin compras registradas"}
+                  <span className="mr-1">-</span><span className="font-medium">{c.name}</span>{" "}
+                  {days !== null ? `hace ${days} dias sin comprar` : "sin compras registradas"}
                 </Link>);
             })}
             {inactiveClients.length > 3 && (<Link href="/clients" className="text-xs text-blue-600 hover:underline mt-1">
@@ -202,7 +220,6 @@ export default async function DashboardPage() {
               </Link>)}
           </div>
         </div>)}
-
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
         <StatsCard
