@@ -288,8 +288,14 @@ export default function NewSalePage() {
     }
 
     const shortages = roastedStockShortages();
+    const hasRoastedItems = items.some((item) => item.product_type === "roasted");
+    const hasServiceItems = items.some((item) => item.product_type === "service");
+    const canCommitInventoryImmediately = documentType === "boleta"
+      && shortages.length === 0
+      && !hasRoastedItems
+      && !hasServiceItems;
 
-    if (documentType === "boleta" && shortages.length === 0 && !items.some((item) => item.product_type === "roasted")) {
+    if (canCommitInventoryImmediately) {
       const { error: confirmError } = await supabase.rpc("confirm_order_and_commit_inventory", { p_order_id: order.id });
       if (confirmError) {
         if (isStockCommitError(confirmError.message || "")) {
@@ -308,8 +314,10 @@ export default function NewSalePage() {
     if (shortages.length > 0) {
       const totalShortageKg = shortages.reduce((sum, entry) => sum + entry.shortageKg, 0);
       toast.warning(`Venta guardada. Falta tostar ${totalShortageKg.toFixed(2)} kg de cafe tostado.`);
-    } else if (documentType === "boleta" && items.some((item) => item.product_type === "roasted")) {
+    } else if (documentType === "boleta" && hasRoastedItems) {
       toast.success("Venta guardada. El inventario tostado queda para confirmar desde planificacion.");
+    } else if (documentType === "boleta" && hasServiceItems) {
+      toast.success("Venta guardada. El servicio no descuenta inventario.");
     } else {
       toast.success(documentType === "boleta" ? "Venta confirmada" : "Venta guardada");
     }
