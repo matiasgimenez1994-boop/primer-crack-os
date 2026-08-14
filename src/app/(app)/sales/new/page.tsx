@@ -56,6 +56,11 @@ function money(value: number) {
   return Math.round(value * 100) / 100;
 }
 
+function isStockCommitError(message: string) {
+  const normalized = message.toLowerCase();
+  return normalized.includes("stock") || normalized.includes("inventario");
+}
+
 export default function NewSalePage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -174,19 +179,45 @@ export default function NewSalePage() {
         const coffee = greenCoffees.find((c) => c.id === item.green_coffee_id);
         if (!coffee) return "Selecciona el cafe verde en todos los items";
         if (Number(item.green_weight_kg) <= 0) return "La cantidad de cafe verde debe ser mayor a 0";
-        if (Number(item.green_weight_kg) > Number(coffee.current_stock_kg)) return coffee.name + " no tiene stock suficiente";
+        if (Number(item.green_weight_kg) > Number(coffee.current_stock_kg)) return `${coffee.name} no tiene stock suficiente de cafe verde`;
       } else if (item.product_type === "roasted") {
         const option = batchOptions.find((b) => b.batch.id === item.roast_batch_id);
         if (!option) return "Selecciona el lote de tueste en todos los items tostados";
         const requestedKg = Number(item.weight_grams || 0) * Number(item.quantity || 0) / 1000;
         if (requestedKg <= 0) return "La cantidad tostada debe ser mayor a 0";
-        if (requestedKg > option.remainingKg) return (option.batch.green_coffees?.name ?? "Un lote") + " no tiene stock suficiente";
       } else {
         if (Number(item.quantity) <= 0) return "La cantidad del servicio debe ser mayor a 0";
       }
       if (Number(item.unit_price) <= 0) return "Todos los items necesitan precio";
     }
     return null;
+  }
+
+  function roastedStockShortages() {
+    const grouped = new Map<string, { name: string; requestedKg: number; availableKg: number }>();
+
+    items
+      .filter((item) => item.product_type === "roasted")
+      .forEach((item) => {
+        const option = batchOptions.find((entry) => entry.batch.id === item.roast_batch_id);
+        const key = item.roast_batch_id || item.id;
+        const requestedKg = Number(item.weight_grams || 0) * Number(item.quantity || 0) / 1000;
+        const current = grouped.get(key) ?? {
+          name: option?.batch.green_coffees?.name ?? "Cafe tostado",
+          requestedKg: 0,
+          availableKg: Number(option?.remainingKg ?? 0),
+        };
+
+        current.requestedKg += requestedKg;
+        grouped.set(key, current);
+      });
+
+    return Array.from(grouped.values())
+      .map((entry) => ({
+        ...entry,
+        shortageKg: Math.max(0, entry.requestedKg - entry.availableKg),
+      }))
+      .filter((entry) => entry.shortageKg > 0);
   }
 
   async function onSubmit() {
@@ -256,16 +287,32 @@ export default function NewSalePage() {
       return;
     }
 
-    if (documentType === "boleta") {
+    const shortages = roastedStockShortages();
+
+    if (documentType === "boleta" && shortages.length === 0 && !items.some((item) => item.product_type === "roasted")) {
       const { error: confirmError } = await supabase.rpc("confirm_order_and_commit_inventory", { p_order_id: order.id });
       if (confirmError) {
-        toast.error(confirmError.message || "La venta quedo creada, pero no se pudo confirmar inventario");
-        setIsSubmitting(false);
-        return;
+        if (isStockCommitError(confirmError.message || "")) {
+          toast.warning("Venta guardada. No hay stock suficiente; queda pendiente para planificar tueste.");
+          router.push("/sales");
+          router.refresh();
+          return;
+        } else {
+          toast.error(confirmError.message || "La venta quedo creada, pero no se pudo confirmar inventario");
+          setIsSubmitting(false);
+          return;
+        }
       }
     }
 
-    toast.success(documentType === "boleta" ? "Venta confirmada" : "Venta guardada");
+    if (shortages.length > 0) {
+      const totalShortageKg = shortages.reduce((sum, entry) => sum + entry.shortageKg, 0);
+      toast.warning(`Venta guardada. Falta tostar ${totalShortageKg.toFixed(2)} kg de cafe tostado.`);
+    } else if (documentType === "boleta" && items.some((item) => item.product_type === "roasted")) {
+      toast.success("Venta guardada. El inventario tostado queda para confirmar desde planificacion.");
+    } else {
+      toast.success(documentType === "boleta" ? "Venta confirmada" : "Venta guardada");
+    }
     router.push("/sales");
     router.refresh();
   }
