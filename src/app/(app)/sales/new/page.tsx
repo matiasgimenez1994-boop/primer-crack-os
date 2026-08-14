@@ -96,7 +96,14 @@ export default function NewSalePage() {
         setRoaster(r);
         setPaymentCurrency((r.currency === "UYU" ? "UYU" : "USD") as PaymentCurrency);
         loadBatches(r.id);
-        supabase.from("green_coffees").select("*").eq("roaster_id", r.id).neq("status", "depleted").order("name").then(({ data }) => setGreenCoffees(data ?? []));
+        supabase
+          .from("green_coffees")
+          .select("*")
+          .eq("roaster_id", r.id)
+          .gt("current_stock_kg", 0)
+          .or("status.is.null,status.neq.depleted")
+          .order("name")
+          .then(({ data }) => setGreenCoffees(data ?? []));
         supabase.from("clients").select("*").eq("roaster_id", r.id).order("name").then(({ data }) => setClients(data ?? []));
       });
     });
