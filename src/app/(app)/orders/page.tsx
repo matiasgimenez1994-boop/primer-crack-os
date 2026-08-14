@@ -117,7 +117,7 @@ export default async function OrdersPage() {
                       <td className="px-5 py-3.5 hidden md:table-cell">
                         {o.delivery_date ? (<span className={isOverdue ?"text-status-danger font-medium" :"text-text-secondary"}>
                             {formatDate(o.delivery_date)}
-                            {isOverdue &&" š ï¸"}
+                            {isOverdue && " (vencido)"}
                           </span>) : <span className="text-text-secondary">""</span>}
                       </td>
                       <td className="px-5 py-3.5 text-right font-mono text-text-secondary hidden md:table-cell">

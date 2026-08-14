@@ -203,7 +203,7 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
     ? { USD: totalRevenue.USD / currentMonthSales.length, UYU: totalRevenue.UYU / currentMonthSales.length }
     : { USD: 0, UYU: 0 };
 
-  //  íšltimos 6 meses 
+  // Ultimos 6 meses
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const d = subMonths(new Date(), 5 - i);
     const start = format(startOfMonth(d),"yyyy-MM-dd");
@@ -331,10 +331,10 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
           </p>)}
       </div>
 
-      {/* Gráfico 6 meses */}
+      {/* Grafico 6 meses */}
       <div className="card p-5 mb-6">
         <div className="flex items-center justify-between mb-5">
-          <p className="text-sm font-semibold text-text-primary">íšltimos 6 meses</p>
+          <p className="text-sm font-semibold text-text-primary">Ultimos 6 meses</p>
           <div className="flex items-center gap-4 text-xs text-text-secondary">
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-accent-green inline-block" /> Ingresos</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-accent-olive inline-block" /> G. neta</span>

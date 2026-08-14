@@ -300,7 +300,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3">
           <select className="input-base" value={period} onChange={event => setPeriod(event.target.value as any)}>
-            <option value="month">Por mes</option><option value="custom">Fechas especÃ­ficas</option><option value="all">Todo el histÃ³rico</option>
+            <option value="month">Por mes</option><option value="custom">Fechas especificas</option><option value="all">Todo el historico</option>
           </select>
           {period === "month" && <input type="month" className="input-base" value={month} onChange={event => setMonth(event.target.value)} />}
           {period === "custom" && <><input type="date" className="input-base" value={fromDate} onChange={event => setFromDate(event.target.value)} aria-label="Fecha desde" /><input type="date" className="input-base" value={toDate} onChange={event => setToDate(event.target.value)} aria-label="Fecha hasta" /></>}
@@ -313,8 +313,8 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatsCard icon={DollarSign} label="Ingresos filtrados" value={totalHistRevenueLabel} />
-        <StatsCard icon={FileText} label="Documentos" value={String(filteredOrders.length)} sub="perÃ­odo seleccionado" />
-        <StatsCard icon={Package} label="Items vendidos" value={String(filteredUnits)} sub="perÃ­odo seleccionado" />
+        <StatsCard icon={FileText} label="Documentos" value={String(filteredOrders.length)} sub="periodo seleccionado" />
+        <StatsCard icon={Package} label="Items vendidos" value={String(filteredUnits)} sub="periodo seleccionado" />
         <StatsCard icon={ShoppingBag} label="Total ventas" value={totalHistRevenueLabel} sub="por moneda" />
       </div>
 
@@ -331,7 +331,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
                   <div className="min-w-0">
                     <p className="font-semibold text-text-primary">{documentLabel(order)}</p>
                     <p className="mt-1 text-xs text-text-secondary">
-                      {formatDate(order.order_date)} Â· {statusLabel(order.status)}
+                      {formatDate(order.order_date)} - {statusLabel(order.status)}
                     </p>
                   </div>
                   <span className={`shrink-0 inline-flex px-2 py-1 rounded-md text-xs font-medium border ${paymentClass(order)}`}>
@@ -390,7 +390,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
               </article>
             ))}
             <div className="flex items-center justify-between gap-3 bg-[#F8FAFC] px-4 py-3">
-              <span className="text-xs font-semibold text-text-secondary">Total histÃ³rico</span>
+              <span className="text-xs font-semibold text-text-secondary">Total historico</span>
               <span className="text-xs font-mono font-semibold text-text-primary text-right">{totalHistRevenueLabel}</span>
             </div>
           </div>

@@ -253,7 +253,7 @@ export default async function DashboardPage() {
                       {(o as any).clients?.name ?? o.client_name ??"Sin cliente"}
                     </p>
                     {o.delivery_date && (<p className={`text-xs mt-0.5 ${isOverdue ?"text-status-danger font-medium" :"text-text-secondary"}`}>
-                        Entrega: {formatDate(o.delivery_date)}{isOverdue ?" š ï¸" :""}
+                        Entrega: {formatDate(o.delivery_date)}{isOverdue ? " (vencido)" : ""}
                       </p>)}
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-md border font-medium ${STATUS_COLORS[o.status]}`}>
@@ -264,11 +264,11 @@ export default async function DashboardPage() {
           </div>
         </div>)}
 
-      {/* íšltimos tuestes */}
+      {/* Ultimos tuestes */}
       <div className="card overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border-default">
           <h2 className="text-sm font-semibold text-text-primary">
-            íšltimos tuestes
+            Ultimos tuestes
           </h2>
           <Link
             href="/roasts"
@@ -281,7 +281,7 @@ export default async function DashboardPage() {
         {(recentBatches ?? []).length === 0 ? (<div className="py-12 text-center">
             <Flame className="w-8 h-8 text-border-default mx-auto mb-3" />
             <p className="text-sm text-text-secondary">
-              Todavía no hay tuestes registrados
+              Todavia no hay tuestes registrados
             </p>
             <Link href="/roasts/new" className="btn-primary mt-4 inline-flex">
               Registrar primer tueste

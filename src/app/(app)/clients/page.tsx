@@ -121,7 +121,7 @@ export default async function ClientsPage() {
                   <th className="text-left px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">Tipo</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary hidden md:table-cell">Compras</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Total</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">íšltima compra</th>
+                  <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary hidden sm:table-cell">Ultima compra</th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-text-secondary">Estado</th>
                 </tr>
               </thead>
