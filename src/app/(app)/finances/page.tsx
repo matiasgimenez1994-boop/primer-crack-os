@@ -25,6 +25,7 @@ type FinanceOrder = Order & {
 };
 
 const FINANCE_STATUSES = ["confirmed", "ready", "delivered"];
+const PAYMENT_PENDING_STATUSES = ["pending", "confirmed", "roasting", "ready", "delivered"];
 
 function orderCost(order: FinanceOrder) {
   return (order.order_items ?? []).reduce((total, item) => {
@@ -141,8 +142,8 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
       .select("*, order_items(product_type, green_weight_kg, weight_grams, quantity, green_coffees(purchase_price_per_kg), roast_batches(total_cost_per_kg_roasted))")
       .eq("roaster_id", roaster.id).in("status", FINANCE_STATUSES),
     supabase.from("orders").select("*, clients(name)")
-      .eq("roaster_id", roaster.id).in("status", FINANCE_STATUSES)
-      .in("payment_status", ["pending","partial"]),
+      .eq("roaster_id", roaster.id).in("status", PAYMENT_PENDING_STATUSES)
+      .or("payment_status.in.(pending,partial),payment_status.is.null"),
     supabase.from("green_coffees").select("current_stock_kg, purchase_price_per_kg")
       .eq("roaster_id", roaster.id),
     supabase.from("expenses").select("*").eq("roaster_id", roaster.id),

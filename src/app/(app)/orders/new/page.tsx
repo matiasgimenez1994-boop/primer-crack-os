@@ -98,6 +98,10 @@ export default function NewOrderPage() {
         notes: data.notes || null,
         total_amount: totalAmount,
         status:"pending",
+        payment_status: "pending",
+        payment_currency: roaster.currency,
+        amount_paid: 0,
+        due_date: data.delivery_date || data.order_date,
       }).select().single();
 
     if (error || !order) { toast.error("Error al crear el pedido"); return; }

@@ -37,8 +37,8 @@ export default function PendingPaymentsPage() {
       .from("orders")
       .select("*, clients(name), order_items(*, roast_batches(green_coffees(name)), green_coffees(name))")
       .eq("roaster_id", roasterId)
-      .in("status", ["confirmed", "ready", "delivered"])
-      .in("payment_status", ["pending","partial"])
+      .in("status", ["pending", "confirmed", "roasting", "ready", "delivered"])
+      .or("payment_status.in.(pending,partial),payment_status.is.null")
       .order("order_date", { ascending: true });
     setSales(data ?? []);
     setLoading(false);
@@ -101,7 +101,7 @@ export default function PendingPaymentsPage() {
           <div>
             <h1 className="page-title">Pagos pendientes</h1>
             {sales.length > 0 && (<p className="text-sm text-text-secondary">
-                {sales.length} venta{sales.length > 1 ?"s" :""} · Total pendiente:{""}
+                {sales.length} venta{sales.length > 1 ?"s" :""} - Total pendiente:{" "}
                 <span className="font-mono font-semibold text-status-danger">
                   {totalPending}
                 </span>
@@ -118,14 +118,14 @@ export default function PendingPaymentsPage() {
             </span>
           </div>
           {overdue.map(s => (<p key={s.id} className="text-xs text-status-danger ml-6">
-              · {(s as any).clients?.name ??"Sin cliente"} "" vencido hace{""}
-              {differenceInDays(new Date(), parseISO(s.due_date!))} días
+              - {(s as any).clients?.name ??"Sin cliente"} vencido hace{" "}
+              {differenceInDays(new Date(), parseISO(s.due_date!))} dias
             </p>))}
         </div>)}
 
       {sales.length === 0 ? (<div className="card p-12 text-center">
           <CheckCircle className="w-12 h-12 text-status-success mx-auto mb-3" />
-          <p className="text-base font-semibold text-text-primary">Todo al día</p>
+          <p className="text-base font-semibold text-text-primary">Todo al dia</p>
           <p className="text-sm text-text-secondary mt-1">No hay pagos pendientes</p>
         </div>) : (<div className="flex flex-col gap-4">
           {sales.map(s => {
@@ -187,11 +187,11 @@ function PartialPayCard({
                 Pago parcial
               </span>)}
           </div>
-          <p className="text-sm text-text-secondary ml-6">{productName} · {formatDate(sale.order_date)}</p>
+          <p className="text-sm text-text-secondary ml-6">{productName} - {formatDate(sale.order_date)}</p>
           {sale.due_date && (<p className={`text-xs ml-6 mt-0.5 font-medium ${isOverdue ?"text-status-danger" :"text-status-warning"}`}>
               {isOverdue
-                ? `Vencido hace ${Math.abs(daysUntilDue ?? 0)} días`
-                : `Vence en ${daysUntilDue} días (${formatDate(sale.due_date)})`
+                ? `Vencido hace ${Math.abs(daysUntilDue ?? 0)} dias`
+                : `Vence en ${daysUntilDue} dias (${formatDate(sale.due_date)})`
               }
             </p>)}
 
@@ -224,8 +224,8 @@ function PartialPayCard({
             onChange={e => setPayType(e.target.value)}
             className="input-base text-xs py-1.5 flex-1"
           >
-            <option value="cash">Ÿ"µ Efectivo</option>
-            <option value="transfer">Ÿ¦ Transferencia</option>
+            <option value="cash">Efectivo</option>
+            <option value="transfer">Transferencia</option>
           </select>
           <button
             onClick={() => onMarkPaid(sale, payType)}
