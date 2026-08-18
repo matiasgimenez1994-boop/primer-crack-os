@@ -7,13 +7,17 @@ import { ArrowLeft, Plus, Save, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
-import type { Client, ClientType, GreenCoffee, Order, RoastBatch, Roaster } from "@/types";
+import type { Client, ClientType, GreenCoffee, Order, PaymentCurrency, RoastBatch, Roaster } from "@/types";
 
 type DocumentType = "draft" | "proforma" | "boleta";
 type ProductType = "green" | "roasted" | "service";
 type PaymentType = "cash" | "transfer" | "credit";
 type PaymentStatus = "paid" | "pending" | "partial";
-type PaymentCurrency = "USD" | "UYU";
+const paymentCurrencies: Array<{ value: PaymentCurrency; label: string; shortLabel: string }> = [
+  { value: "USD", label: "Dolares estadounidenses (USD)", shortLabel: "USD" },
+  { value: "UYU", label: "Pesos uruguayos (UYU)", shortLabel: "UYU" },
+  { value: "CLP", label: "Pesos chilenos (CLP)", shortLabel: "CLP" },
+];
 
 interface BatchOption {
   batch: RoastBatch & { green_coffees?: GreenCoffee; current_stock_kg?: number };
@@ -96,6 +100,10 @@ function inventoryFingerprint(items: EditableItem[]) {
     .join("|");
 }
 
+function normalizePaymentCurrency(currency?: string | null): PaymentCurrency {
+  return paymentCurrencies.some((option) => option.value === currency) ? currency as PaymentCurrency : "USD";
+}
+
 export default function EditSalePage() {
   const params = useParams();
   const id = params.id as string;
@@ -166,7 +174,7 @@ export default function EditSalePage() {
         setDocumentType((orderData.document_type ?? "boleta") as DocumentType);
         setPaymentType(((orderData as any).payment_type ?? "cash") as PaymentType);
         setPaymentStatus(((orderData as any).payment_status ?? "paid") as PaymentStatus);
-        setPaymentCurrency(((orderData as any).payment_currency ?? r.currency ?? "USD") as PaymentCurrency);
+        setPaymentCurrency(normalizePaymentCurrency((orderData as any).payment_currency ?? r.currency));
         setAmountPaid(Number((orderData as any).amount_paid ?? orderData.total_amount ?? 0));
         setDueDate((orderData as any).due_date ?? "");
         setNotes(orderData.notes ?? "");
@@ -530,8 +538,9 @@ export default function EditSalePage() {
               <div>
                 <label className="label-base">Moneda de la venta</label>
                 <select className="input-base" value={paymentCurrency} onChange={(event) => setPaymentCurrency(event.target.value as PaymentCurrency)}>
-                  <option value="USD">Dolares (USD)</option>
-                  <option value="UYU">Pesos uruguayos (UYU)</option>
+                  {paymentCurrencies.map((currency) => (
+                    <option key={currency.value} value={currency.value}>{currency.label}</option>
+                  ))}
                 </select>
               </div>
               {paymentStatus !== "pending" && <div>
@@ -610,8 +619,9 @@ export default function EditSalePage() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-text-secondary uppercase">Moneda</span>
                   <select id="sale-currency-products-edit" className="input-base w-28" value={paymentCurrency} onChange={(event) => setPaymentCurrency(event.target.value as PaymentCurrency)}>
-                    <option value="USD">USD</option>
-                    <option value="UYU">UYU</option>
+                    {paymentCurrencies.map((currency) => (
+                      <option key={currency.value} value={currency.value}>{currency.shortLabel}</option>
+                    ))}
                   </select>
                 </div>
                 <button type="button" className="btn-secondary" onClick={() => addItem("green")}><Plus className="w-4 h-4" /> Cafe verde</button>

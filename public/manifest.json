@@ -1,9 +1,12 @@
 {
-  "name": "Primer crack OS",
-  "short_name": "Primer crack",
-  "description": "Gestión para tostadores de café de especialidad",
+  "id": "/",
+  "name": "Primer Crack OS",
+  "short_name": "Primer Crack",
+  "description": "Gestion para tostadores de cafe de especialidad",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "background_color": "#1A3327",
   "theme_color": "#1A3327",
   "orientation": "portrait",
@@ -12,13 +15,25 @@
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "categories": ["business", "productivity"],

@@ -30,7 +30,7 @@ const schema = z.object({
   client_id: z.string().optional(),
   client_name: z.string().optional(),
   client_email: z.string().optional(),
-  currency: z.enum(["USD", "UYU"]),
+  currency: z.enum(["USD", "UYU", "CLP"]),
   quote_date: z.string().min(1),
   valid_until: z.string().optional(),
   tax_enabled: z.boolean(),
@@ -94,7 +94,7 @@ export default function NewQuotePage() {
         .then(({ data: r }) => {
           if (!r) return;
           setRoaster(r);
-          setValue("currency", r.currency === "UYU" ? "UYU" : "USD");
+          setValue("currency", r.currency === "UYU" || r.currency === "CLP" ? r.currency : "USD");
           Promise.all([
             supabase.from("clients").select("*").eq("roaster_id", r.id).order("name"),
             supabase.from("green_coffees").select("*").eq("roaster_id", r.id).neq("status", "depleted").order("name"),
@@ -318,6 +318,7 @@ export default function NewQuotePage() {
                   <select className="input-base" {...register("currency")}>
                     <option value="USD">Dólares estadounidenses (USD)</option>
                     <option value="UYU">Pesos uruguayos (UYU)</option>
+                    <option value="CLP">Pesos chilenos (CLP)</option>
                   </select>
                 </div>
                 <div>

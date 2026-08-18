@@ -7,11 +7,15 @@ import { ArrowLeft, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { formatCurrency, todayISO } from "@/lib/utils";
-import type { Client, ClientType, GreenCoffee, RoastBatch, Roaster } from "@/types";
+import type { Client, ClientType, GreenCoffee, PaymentCurrency, RoastBatch, Roaster } from "@/types";
 
 type DocumentType = "draft" | "proforma" | "boleta";
 type ProductType = "roasted" | "green" | "service";
-type PaymentCurrency = "USD" | "UYU";
+const paymentCurrencies: Array<{ value: PaymentCurrency; label: string; shortLabel: string }> = [
+  { value: "USD", label: "Dolares estadounidenses (USD)", shortLabel: "USD" },
+  { value: "UYU", label: "Pesos uruguayos (UYU)", shortLabel: "UYU" },
+  { value: "CLP", label: "Pesos chilenos (CLP)", shortLabel: "CLP" },
+];
 
 interface BatchOption {
   batch: RoastBatch & { green_coffees?: GreenCoffee; current_stock_kg?: number };
@@ -83,6 +87,10 @@ function roastedSelectionValue(item: SaleItemForm) {
   return "";
 }
 
+function normalizePaymentCurrency(currency?: string | null): PaymentCurrency {
+  return paymentCurrencies.some((option) => option.value === currency) ? currency as PaymentCurrency : "USD";
+}
+
 export default function NewSalePage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -101,7 +109,7 @@ export default function NewSalePage() {
   const [notes, setNotes] = useState("");
   const [paymentType, setPaymentType] = useState<"cash" | "transfer" | "credit">("cash");
   const [paymentStatus, setPaymentStatus] = useState<"paid" | "pending" | "partial">("paid");
-  const [paymentCurrency, setPaymentCurrency] = useState<PaymentCurrency>((roaster?.currency === "UYU" ? "UYU" : "USD") as PaymentCurrency);
+  const [paymentCurrency, setPaymentCurrency] = useState<PaymentCurrency>(normalizePaymentCurrency(roaster?.currency));
   const [amountPaid, setAmountPaid] = useState(0);
   const [dueDate, setDueDate] = useState("");
   const [items, setItems] = useState<SaleItemForm[]>([makeItem("green")]);
@@ -113,7 +121,7 @@ export default function NewSalePage() {
       supabase.from("roasters").select("*").eq("user_id", user.id).single().then(({ data: r }) => {
         if (!r) return;
         setRoaster(r);
-        setPaymentCurrency((r.currency === "UYU" ? "UYU" : "USD") as PaymentCurrency);
+        setPaymentCurrency(normalizePaymentCurrency(r.currency));
         loadBatches(r.id);
         supabase
           .from("green_coffees")
@@ -518,8 +526,9 @@ export default function NewSalePage() {
               <div>
                 <label className="label-base">Moneda de la venta</label>
                 <select className="input-base" value={paymentCurrency} onChange={(event) => setPaymentCurrency(event.target.value as PaymentCurrency)}>
-                  <option value="USD">Dolares (USD)</option>
-                  <option value="UYU">Pesos uruguayos (UYU)</option>
+                  {paymentCurrencies.map((currency) => (
+                    <option key={currency.value} value={currency.value}>{currency.label}</option>
+                  ))}
                 </select>
               </div>
               {paymentStatus !== "pending" && <div><label className="label-base">Monto cobrado</label><input type="number" min="0" step="0.01" className="input-base font-mono" value={amountPaid} onChange={(event) => setAmountPaid(Number(event.target.value))} placeholder={String(totals.total)} /><p className="text-xs text-text-secondary mt-1">{formatCurrency(amountPaid || totals.total, paymentCurrency)}</p></div>}
@@ -536,8 +545,9 @@ export default function NewSalePage() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-text-secondary uppercase">Moneda</span>
                   <select id="sale-currency-products" className="input-base w-28" value={paymentCurrency} onChange={(event) => setPaymentCurrency(event.target.value as PaymentCurrency)}>
-                    <option value="USD">USD</option>
-                    <option value="UYU">UYU</option>
+                    {paymentCurrencies.map((currency) => (
+                      <option key={currency.value} value={currency.value}>{currency.shortLabel}</option>
+                    ))}
                   </select>
                 </div>
                 <button type="button" className="btn-secondary" onClick={() => addItem("green")}><Plus className="w-4 h-4" /> Cafe verde</button>

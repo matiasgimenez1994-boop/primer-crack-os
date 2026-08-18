@@ -254,7 +254,7 @@ export interface Expense {
 }
 export type PaymentType ="cash" |"transfer" |"credit";
 export type PaymentStatus ="paid" |"pending" |"partial";
-export type PaymentCurrency = "USD" | "UYU";
+export type PaymentCurrency = "USD" | "UYU" | "CLP";
 
 export interface Payment {
   id: string;
