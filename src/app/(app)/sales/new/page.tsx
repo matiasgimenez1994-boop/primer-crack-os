@@ -402,10 +402,10 @@ export default function NewSalePage() {
     const shortages = roastedStockShortages();
     const hasRoastedItems = items.some((item) => item.product_type === "roasted");
     const hasServiceItems = items.some((item) => item.product_type === "service");
+    const hasInventoryItems = items.some((item) => item.product_type !== "service");
     const canCommitInventoryImmediately = documentType === "boleta"
       && shortages.length === 0
-      && !hasRoastedItems
-      && !hasServiceItems;
+      && !hasRoastedItems;
 
     if (canCommitInventoryImmediately) {
       const { error: confirmError } = await supabase.rpc("confirm_order_and_commit_inventory", { p_order_id: order.id });
@@ -428,7 +428,7 @@ export default function NewSalePage() {
       toast.warning(`Venta guardada. Falta tostar ${totalShortageKg.toFixed(2)} kg de cafe tostado.`);
     } else if (documentType === "boleta" && hasRoastedItems) {
       toast.success("Venta guardada. El inventario tostado queda para confirmar desde planificacion.");
-    } else if (documentType === "boleta" && hasServiceItems) {
+    } else if (documentType === "boleta" && hasServiceItems && !hasInventoryItems) {
       toast.success("Venta guardada. El servicio no descuenta inventario.");
     } else {
       toast.success(documentType === "boleta" ? "Venta confirmada" : "Venta guardada");

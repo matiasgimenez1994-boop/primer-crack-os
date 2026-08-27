@@ -445,7 +445,10 @@ export default function EditSalePage() {
     const shouldConfirm = documentType === "boleta";
     const hasRoastedItems = items.some((item) => item.product_type === "roasted");
     const hasServiceItems = items.some((item) => item.product_type === "service");
-    const canCommitInventoryImmediately = shouldConfirm && inventoryChanged && !hasRoastedItems && !hasServiceItems;
+    const hasInventoryItems = items.some((item) => item.product_type !== "service");
+    const canCommitInventoryImmediately = shouldConfirm
+      && !hasRoastedItems
+      && (inventoryChanged || !order.inventory_committed_at);
     const paidAmount = paymentStatus === "pending" ? 0 : amountPaid > 0 ? amountPaid : totals.total;
 
     const { error: orderError } = await supabase.from("orders").update({
@@ -485,7 +488,7 @@ export default function EditSalePage() {
 
     if (hasRoastedItems && shouldConfirm) {
       toast.success("Venta actualizada. Cafe tostado pendiente para planificacion.");
-    } else if (hasServiceItems && shouldConfirm) {
+    } else if (hasServiceItems && !hasInventoryItems && shouldConfirm) {
       toast.success("Venta actualizada. El servicio no descuenta inventario.");
     } else {
       toast.success("Venta actualizada");
