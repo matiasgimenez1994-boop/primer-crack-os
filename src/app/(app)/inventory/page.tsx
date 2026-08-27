@@ -6,6 +6,7 @@ import { StatusBadge } from"@/components/ui/StatusBadge";
 import { EmptyState } from"@/components/ui/EmptyState";
 import { formatCurrency, formatWeight } from"@/lib/utils";
 import type { GreenCoffee } from"@/types";
+import { InventoryExportButton } from "./InventoryExportButton";
 
 export default async function InventoryPage({
   searchParams,
@@ -27,17 +28,15 @@ export default async function InventoryPage({
   const params = await searchParams;
   const statusFilter = params.status;
 
-  let query = supabase
+  const { data: allCoffees } = await supabase
     .from("green_coffees")
     .select("*")
     .eq("roaster_id", roaster.id)
     .order("created_at", { ascending: false });
 
-  if (statusFilter && statusFilter !=="all") {
-    query = query.eq("status", statusFilter);
-  }
-
-  const { data: coffees } = await query;
+  const coffees = statusFilter && statusFilter !== "all"
+    ? (allCoffees ?? []).filter((coffee: GreenCoffee) => coffee.status === statusFilter)
+    : (allCoffees ?? []);
 
   const tabs = [
     { key:"all", label:"Todos" },
@@ -49,9 +48,12 @@ export default async function InventoryPage({
   return (<div>
       <div className="page-header">
         <h1 className="page-title">Inventario de café verde</h1>
-        <Link href="/inventory/new" className="btn-primary">
-          <Plus className="w-4 h-4" /> Agregar café
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <InventoryExportButton coffees={(allCoffees ?? []) as GreenCoffee[]} currency={roaster.currency} />
+          <Link href="/inventory/new" className="btn-primary">
+            <Plus className="w-4 h-4" /> Agregar café
+          </Link>
+        </div>
       </div>
 
       {/* Filtros */}
