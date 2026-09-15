@@ -131,6 +131,15 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
     }
     return date.startsWith(selectedMonth);
   };
+  const expenseInPeriod = (expense: Expense) => {
+    if (expense.affects_profit === false) return false;
+    if (period === "all") return true;
+    if (period === "month" && expense.period_label?.match(/^20\d{2}-\d{2}$/))
+      return expense.period_label === selectedMonth;
+    if (expense.expense_date) return inSelectedPeriod(expense.expense_date);
+    if (period === "custom") return false;
+    return expense.period_label === selectedMonth;
+  };
 
   const [
     { data: allSales },
@@ -152,7 +161,7 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
   const baseCurrency = roaster.currency ?? "USD";
   const financeSales = (allSales ?? []) as FinanceOrder[];
   const currentMonthSales = financeSales.filter(sale => inSelectedPeriod(sale.order_date));
-  const monthExpenses = (allExpenses ?? []).filter((expense: Expense) => inSelectedPeriod(expense.expense_date));
+  const monthExpenses = (allExpenses ?? []).filter((expense: Expense) => expenseInPeriod(expense));
 
   // Período seleccionado: todos los valores se expresan en paralelo en USD y UYU.
   const monthRevenue = revenueDual(currentMonthSales, baseCurrency, exchangeRate.usdUyu);
@@ -192,7 +201,8 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
   };
 
   //  Gastos recurrentes estimados por mes 
-  const recurringExpenses = (allExpenses ?? []).filter((e: Expense) => e.frequency !=="once");
+  const recurringExpenses = (allExpenses ?? []).filter((e: Expense) =>
+    e.affects_profit !== false && e.frequency !=="once");
   const monthlyExpenseEstimateDual = expenseTotalsDual(recurringExpenses, baseCurrency, exchangeRate.usdUyu,
     expense => toMonthlyAmount(expense.amount, expense.frequency));
   const monthlyExpenseEstimate = monthlyExpenseEstimateDual.USD;
@@ -210,7 +220,11 @@ export default async function FinancesPage({ searchParams = {} }: { searchParams
     const start = format(startOfMonth(d),"yyyy-MM-dd");
     const end = format(endOfMonth(d),"yyyy-MM-dd");
     const ms = financeSales.filter(s => s.order_date >= start && s.order_date <= end);
-    const me = (allExpenses ?? []).filter((e: Expense) => e.expense_date >= start && e.expense_date <= end);
+    const me = (allExpenses ?? []).filter((e: Expense) =>
+      e.affects_profit !== false &&
+      (e.period_label?.match(/^20\d{2}-\d{2}$/)
+        ? e.period_label === start.slice(0, 7)
+        : Boolean(e.expense_date && e.expense_date >= start && e.expense_date <= end)));
     const revenue = revenueDual(ms, baseCurrency, exchangeRate.usdUyu);
     const grossProfit = profitDual(ms, baseCurrency, exchangeRate.usdUyu);
     const expensesDual = expenseTotalsDual(me, baseCurrency, exchangeRate.usdUyu);

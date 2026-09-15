@@ -248,7 +248,12 @@ export interface Expense {
   amount: number;
   currency: PaymentCurrency;
   frequency: ExpenseFrequency;
-  expense_date: string;
+  expense_date: string | null;
+  period_label?: string | null;
+  date_precision?: "exact" | "month" | "year" | null;
+  nature?: string | null;
+  source_ref?: string | null;
+  affects_profit?: boolean;
   notes: string | null;
   created_at: string;
 }
