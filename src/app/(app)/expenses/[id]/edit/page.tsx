@@ -17,7 +17,7 @@ const schema = z.object({
   amount: z.coerce.number().positive(),
   currency: z.enum(["USD", "UYU"]),
   frequency: z.enum(["once","daily","weekly","monthly","yearly"]),
-  expense_date: z.string().min(1),
+  expense_date: z.string(),
   notes: z.string().optional(),
 });
 
@@ -30,6 +30,7 @@ export default function EditExpensePage() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [roasterId, setRoasterId] = useState<string>("");
+  const [periodLabel, setPeriodLabel] = useState<string | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting, isDirty } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -45,7 +46,8 @@ export default function EditExpensePage() {
           supabase.from("expenses").select("*").eq("id", id).eq("roaster_id", r.id).single()
             .then(({ data: e }) => {
               if (!e) return;
-              reset({ ...e, currency: e.currency ?? r.currency ?? "UYU", notes: e.notes ??"" });
+              setPeriodLabel(e.period_label ?? null);
+              reset({ ...e, expense_date: e.expense_date ?? "", currency: e.currency ?? r.currency ?? "UYU", notes: e.notes ??"" });
               setLoading(false);
             });
         });
@@ -54,7 +56,9 @@ export default function EditExpensePage() {
 
   async function onSubmit(data: FormData) {
     const { error } = await supabase.from("expenses").update({
-      ...data, notes: data.notes || null,
+      ...data, expense_date: data.expense_date || null,
+      ...(data.expense_date ? { date_precision: "exact" } : {}),
+      notes: data.notes || null,
     }).eq("id", id);
     if (error) { toast.error("Error al guardar"); return; }
     toast.success("Gasto actualizado");
@@ -118,6 +122,7 @@ export default function EditExpensePage() {
             <div>
               <label className="label-base">Fecha</label>
               <input type="date" className="input-base" {...register("expense_date")} />
+              {periodLabel && <p className="text-xs text-text-secondary mt-1">Período del archivo: {periodLabel}</p>}
             </div>
           </div>
           <div>
