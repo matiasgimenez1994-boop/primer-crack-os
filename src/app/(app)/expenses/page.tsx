@@ -9,7 +9,7 @@ export default async function ExpensesPage() {
   if (!user) redirect("/login");
 
   const { data: roaster } = await supabase.from("roasters")
-    .select("id, currency").eq("user_id", user.id).single();
+    .select("id, currency, business_name").eq("user_id", user.id).single();
   if (!roaster) redirect("/onboarding");
 
   const { data: expenses, error } = await supabase.from("expenses")
@@ -17,5 +17,5 @@ export default async function ExpensesPage() {
     .order("expense_date", { ascending: false });
 
   return <ExpensesClient expenses={(expenses ?? []) as Expense[]}
-    fallbackCurrency={roaster.currency} loadError={Boolean(error)} />;
+    fallbackCurrency={roaster.currency} businessName={roaster.business_name} loadError={Boolean(error)} />;
 }
