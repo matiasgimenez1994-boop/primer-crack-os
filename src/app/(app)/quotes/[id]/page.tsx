@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle, ShoppingBag, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Download, ShoppingBag, XCircle } from "lucide-react";
+import { generatePDF } from "@/lib/export";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { formatCurrency, formatDate, todayISO } from "@/lib/utils";
@@ -23,6 +24,47 @@ export default function QuoteDetailPage() {
   const [quote, setQuote] = useState<Quotation | null>(null);
   const [roaster, setRoaster] = useState<Roaster | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+
+  async function downloadQuote() {
+    if (!quote || downloading) return;
+    setDownloading(true);
+    try {
+      const rows = (quote.quotation_items ?? []).map((item) => [
+        item.description,
+        `${item.quantity} ${item.unit_label}`,
+        formatCurrency(item.unit_price, quote.currency),
+        (item.tax_enabled ?? quote.tax_enabled) ? `${Number(item.tax_rate ?? quote.tax_rate ?? 0)}%` : "sin IVA",
+        formatCurrency(item.line_subtotal, quote.currency),
+      ]);
+      const doc = await generatePDF({
+        title: "Cotización",
+        businessName: roaster?.business_name || "Primer crack OS",
+        tables: [
+          { title: quote.quote_number, headers: ["Detalle", "Información"], rows: [
+            ["Cliente", quote.client_name ?? "Sin cliente"],
+            ...(quote.client_email ? [["Email", quote.client_email]] : []),
+            ["Emisión", formatDate(quote.quote_date)],
+            ["Válida hasta", quote.valid_until ? formatDate(quote.valid_until) : "Sin vencimiento"],
+            ["Estado", QUOTE_STATUS_LABELS[quote.status]],
+          ] },
+          { title: "Detalle cotizado", headers: ["Descripción", "Cant.", "Unitario", "IVA", "Subtotal"], rows },
+          { title: "Importes", headers: ["Concepto", "Importe"], rows: [
+            ["Subtotal", formatCurrency(quote.subtotal_amount, quote.currency)],
+            ["IVA", formatCurrency(quote.tax_amount, quote.currency)],
+            ["Total", formatCurrency(quote.total_amount, quote.currency)],
+          ] },
+          ...(quote.notes ? [{ title: "Notas", headers: ["Observaciones"], rows: [[quote.notes]] }] : []),
+        ],
+      });
+      doc.save(`${quote.quote_number.replace(/[^a-zA-Z0-9_-]/g, "-")}.pdf`);
+      toast.success("Cotización descargada");
+    } catch {
+      toast.error("No se pudo descargar la cotización");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   async function load() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -129,7 +171,7 @@ export default function QuoteDetailPage() {
   const items = ((quote as any).quotation_items ?? []) as QuotationItem[];
   return (
     <div>
-      <div className="page-header">
+      <div className="page-header flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <Link href="/quotes" className="btn-ghost p-2"><ArrowLeft className="w-4 h-4" /></Link>
           <div>
@@ -139,7 +181,10 @@ export default function QuoteDetailPage() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={downloadQuote} disabled={downloading} className="btn-secondary">
+            <Download className="w-4 h-4" /> {downloading ? "Generando..." : "Descargar PDF"}
+          </button>
           {quote.status !== "accepted" && quote.status !== "invoiced" && (
             <button type="button" onClick={() => updateStatus("accepted")} className="btn-secondary">
               <CheckCircle className="w-4 h-4" /> Aceptada

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { CATEGORY_COLORS, CATEGORY_LABELS, FREQUENCY_LABELS, toMonthlyAmount } from "@/lib/expenses";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Expense } from "@/types";
+import { generatePDF } from "@/lib/export";
 
 function totals(expenses: Expense[], fallback: string, monthly = false) {
   const sums = expenses.reduce<Record<string, number>>((result, expense) => {
@@ -23,9 +24,10 @@ function expenseMonth(expense: Expense) {
     expense.expense_date?.slice(0, 7) ?? "";
 }
 
-export function ExpensesClient({ expenses, fallbackCurrency, loadError }: {
+export function ExpensesClient({ expenses, fallbackCurrency, businessName, loadError }: {
   expenses: Expense[];
   fallbackCurrency: string;
+  businessName: string;
   loadError: boolean;
 }) {
   const [month, setMonth] = useState("");
@@ -33,6 +35,7 @@ export function ExpensesClient({ expenses, fallbackCurrency, loadError }: {
   const [currency, setCurrency] = useState("");
   const [frequency, setFrequency] = useState("");
   const [search, setSearch] = useState("");
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
 
   const months = useMemo(() => Array.from(new Set(expenses.map(expenseMonth)
     .filter(Boolean) as string[])).sort().reverse(), [expenses]);
@@ -50,6 +53,43 @@ export function ExpensesClient({ expenses, fallbackCurrency, loadError }: {
       return result;
     }, {})
   ).sort(([, a], [, b]) => b.length - a.length), [filtered]);
+
+  async function downloadPDF() {
+    if (downloadingPDF || loadError || !filtered.length) return;
+    setDownloadingPDF(true);
+    try {
+      const doc = await generatePDF({
+        title: "Gastos",
+        businessName,
+        tables: [
+          { title: "Filtros aplicados", headers: ["Filtro", "Valor"], rows: [
+            ["Mes", month === "no-month" ? "Sin mes definido" : month || "Todos los meses"],
+            ["Tipo", CATEGORY_LABELS[category as Expense["category"]] ?? "Todos los tipos"],
+            ["Moneda", currency || "Todas las monedas"],
+            ["Frecuencia", FREQUENCY_LABELS[frequency as Expense["frequency"]] ?? "Todas"],
+            ["Búsqueda", search || "Sin búsqueda"],
+          ] },
+          { title: "Detalle de gastos", headers: ["Gasto", "Tipo", "Frecuencia", "Fecha / período", "Monto"], rows: filtered.map(e => [
+            [e.name, e.notes].filter(Boolean).join("\n"),
+            CATEGORY_LABELS[e.category] ?? e.category,
+            FREQUENCY_LABELS[e.frequency] ?? e.frequency,
+            [e.expense_date ? formatDate(e.expense_date) : "", e.period_label].filter(Boolean).join("\n") || "Sin fecha",
+            formatCurrency(e.amount, e.currency ?? fallbackCurrency),
+          ]) },
+          { title: "Resumen", headers: ["Concepto", "Valor"], rows: [
+            ["Registros", filtered.length],
+            ["Total por moneda", totals(filtered, fallbackCurrency)],
+          ] },
+        ],
+      });
+      doc.save(`gastos-${month || "todos-los-meses"}-${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success(`${filtered.length} gastos descargados`);
+    } catch {
+      toast.error("No se pudo generar el PDF");
+    } finally {
+      setDownloadingPDF(false);
+    }
+  }
 
   async function downloadExcel() {
     if (!filtered.length) { toast.error("No hay gastos para descargar"); return; }
@@ -83,6 +123,7 @@ export function ExpensesClient({ expenses, fallbackCurrency, loadError }: {
       <div className="flex flex-wrap gap-2">
         <Link href="/expenses/import" className="btn-secondary"><Upload className="w-4 h-4" /> Ingresar Excel</Link>
         <button type="button" onClick={downloadExcel} className="btn-secondary"><Download className="w-4 h-4" /> Descargar Excel</button>
+        <button type="button" onClick={downloadPDF} disabled={downloadingPDF || loadError || !filtered.length} className="btn-secondary"><Download className="w-4 h-4" /> {downloadingPDF ? "Generando..." : "Descargar PDF"}</button>
         <Link href="/expenses/new" className="btn-primary"><Plus className="w-4 h-4" /> Registrar gasto</Link>
       </div>
     </div>

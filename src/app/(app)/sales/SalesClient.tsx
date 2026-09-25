@@ -48,6 +48,7 @@ function statusLabel(status: string) {
 }
 
 function itemLabel(item: any) {
+  if (item.product_type === "product") return (item.notes || "Otro producto") + " - " + item.quantity + " unidades";
   if (item.product_type === "service" || item.product_type === "product") {
     return (item.notes || "Servicio de tueste") + " - " + Number(item.quantity ?? 0).toFixed(3) + " kg";
   }
@@ -63,6 +64,7 @@ function itemLabel(item: any) {
 }
 
 function itemProductName(item: any) {
+  if (item.product_type === "product") return item.notes || "Otro producto";
   if (item.product_type === "service" || item.product_type === "product") return item.notes ?? "Servicio de tueste";
   return item.product_type === "green"
     ? item.green_coffees?.name ?? "Cafe verde"
