@@ -241,7 +241,9 @@ export default function OrderDetailPage() {
               <tbody>
                 {items.map((item: OrderItem) => {
                   const coffeeName = (item as any).green_coffees?.name ??"—";
-                  const desc = item.product_type ==="roasted"
+                  const desc = item.product_type === "product" || item.product_type === "service"
+                    ? item.notes || (item.product_type === "product" ? "Otro producto" : "Servicio de tueste")
+                    : item.product_type ==="roasted"
                     ? `${coffeeName} · ${WEIGHT_LABELS[item.weight_grams!] ?? item.weight_grams +"g"}`
                     : `${coffeeName} · Verde ${item.green_weight_kg}kg`;
                   return (<tr key={item.id} className="border-b border-border-default last:border-0">
