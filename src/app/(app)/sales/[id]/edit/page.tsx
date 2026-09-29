@@ -166,6 +166,11 @@ export default function EditSalePage() {
         remainingKg: Number(batch.current_stock_kg ?? batch.roasted_weight_kg ?? 0),
       })).filter((option) => option.remainingKg > 0));
 
+      if (orderData?.status === "cancelled") {
+        toast.error("Una venta anulada no se puede editar");
+        router.replace("/sales");
+        return;
+      }
       if (orderData) {
         setOrder(orderData as Order);
         setClientId(orderData.client_id ?? "");
@@ -347,48 +352,16 @@ export default function EditSalePage() {
 
   async function reverseCommittedInventory() {
     if (!order?.inventory_committed_at) return true;
-
-    const { data: movements, error } = await supabase
-      .from("inventory_movements")
-      .select("*")
-      .eq("order_id", order.id);
-
+    const { error } = await supabase.rpc("release_order_inventory_for_edit", { p_order_id: order.id });
     if (error) {
-      toast.error("No se pudieron leer los movimientos de inventario");
+      toast.error(error.message || "No se pudo devolver el inventario");
       return false;
     }
-
-    for (const movement of movements ?? []) {
-      const restoreKg = -Number((movement as any).quantity_kg ?? 0);
-      if (restoreKg <= 0) continue;
-
-      if ((movement as any).product_type === "green" && (movement as any).green_coffee_id) {
-        const { data: coffee } = await supabase.from("green_coffees").select("current_stock_kg, status").eq("id", (movement as any).green_coffee_id).single();
-        if (coffee) {
-          await supabase.from("green_coffees").update({
-            current_stock_kg: Number(coffee.current_stock_kg ?? 0) + restoreKg,
-            status: coffee.status === "depleted" ? "active" : coffee.status,
-          }).eq("id", (movement as any).green_coffee_id);
-        }
-      }
-
-      if ((movement as any).product_type === "roasted" && (movement as any).roast_batch_id) {
-        const { data: batch } = await supabase.from("roast_batches").select("current_stock_kg").eq("id", (movement as any).roast_batch_id).single();
-        if (batch) {
-          await supabase.from("roast_batches").update({
-            current_stock_kg: Number(batch.current_stock_kg ?? 0) + restoreKg,
-          }).eq("id", (movement as any).roast_batch_id);
-        }
-      }
-    }
-
-    await supabase.from("inventory_movements").delete().eq("order_id", order.id);
-    await supabase.from("orders").update({ inventory_committed_at: null, confirmed_at: null }).eq("id", order.id);
     return true;
   }
 
   async function save() {
-    if (!order || saving) return;
+    if (!order || saving || order.status === "cancelled") return;
 
     const validationError = validateItems();
     if (validationError) {
@@ -408,7 +381,12 @@ export default function EditSalePage() {
       }
     }
 
-    await supabase.from("order_items").delete().eq("order_id", order.id);
+    const { error: deleteError } = await supabase.from("order_items").delete().eq("order_id", order.id);
+    if (deleteError) {
+      toast.error(deleteError.message || "No se pudieron actualizar los productos");
+      setSaving(false);
+      return;
+    }
 
     const newRows = items.map((item) => {
       const subtotal = roundMoney(itemSubtotal(item));
