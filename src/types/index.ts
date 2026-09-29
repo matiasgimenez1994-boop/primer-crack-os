@@ -129,6 +129,7 @@ export interface Order {
   tax_amount: number;
   notes: string | null;
   total_amount: number;
+  cancelled_at?: string | null;
   inventory_committed_at: string | null;
   confirmed_at: string | null;
   payment_type: PaymentType | null;
