@@ -42,7 +42,7 @@ function statusLabel(status: string) {
     roasting: "Tostando",
     ready: "Lista",
     delivered: "Entregada",
-    cancelled: "Cancelada",
+    cancelled: "Anulada",
   };
   return labels[status] ?? status;
 }
@@ -109,6 +109,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
   const [clientFilter, setClientFilter] = useState("");
   const [productFilter, setProductFilter] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("active");
   const supabase = createClient();
   const router = useRouter();
 
@@ -118,6 +119,8 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
     (order.order_items ?? []).map(itemProductName)))).sort(), [orders]);
 
   const filteredOrders = useMemo(() => orders.filter(order => {
+    if (statusFilter === "active" && order.status === "cancelled") return false;
+    if (statusFilter === "cancelled" && order.status !== "cancelled") return false;
     const date = String(order.order_date ?? "").slice(0, 10);
     if (period === "month" && month && !date.startsWith(month)) return false;
     if (period === "custom" && fromDate && date < fromDate) return false;
@@ -127,7 +130,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
     if (productFilter && !(order.order_items ?? []).some(item => itemProductName(item) === productFilter)) return false;
     if (paymentFilter && ((order as any).payment_status ?? "paid") !== paymentFilter) return false;
     return true;
-  }), [orders, period, month, fromDate, toDate, clientFilter, productFilter, paymentFilter]);
+  }), [orders, period, month, fromDate, toDate, clientFilter, productFilter, paymentFilter, statusFilter]);
 
   async function handleExportExcel() {
     if (filteredOrders.length === 0) return toast.error("No hay ventas para exportar con estos filtros");
@@ -170,29 +173,24 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
     }
   }
 
-  async function handleDelete(orderId: string) {
+  async function handleCancel(orderId: string) {
     const order = orders.find((entry) => entry.id === orderId);
-    if (!order) return;
-
-    if (order.inventory_committed_at) {
-      toast.error("No se puede eliminar una venta con inventario ya confirmado");
-      return;
-    }
-
-    if (!confirm("Eliminar esta venta? Esta accion no se puede deshacer.")) return;
+    if (!order || deleting || order.cancelled_at) return;
+    if (!confirm("¿Anular esta venta? Se devolverá al inventario el stock descontado y la venta dejará de sumar en los totales. Se conservará el registro como anulada. Esta acción no devuelve pagos al cliente.")) return;
     setDeleting(orderId);
-
-    const { error } = await supabase.from("orders").delete().eq("id", orderId);
-    if (error) {
-      toast.error("Error al eliminar la venta");
+    try {
+      const { data, error } = await supabase.rpc("cancel_order_and_restore_inventory", { p_order_id: orderId });
+      if (error) throw error;
+      const cancelled = Array.isArray(data) ? data[0] : data;
+      if (!cancelled || cancelled.status !== "cancelled") throw new Error("No se pudo confirmar la anulación");
+      setOrders((current) => current.map((entry) => entry.id === orderId ? { ...entry, ...cancelled } : entry));
+      toast.success("Venta anulada. El stock descontado fue devuelto al inventario.");
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error?.message || "No se pudo anular la venta. Intentá nuevamente.");
+    } finally {
       setDeleting(null);
-      return;
     }
-
-    setOrders((current) => current.filter((entry) => entry.id !== orderId));
-    toast.success("Venta eliminada");
-    setDeleting(null);
-    router.refresh();
   }
 
   async function handleDownload(order: Order) {
@@ -202,7 +200,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
       const { default: autoTable } = await import("jspdf-autotable");
       const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const clientName = (order as any).clients?.name ?? order.client_name ?? "Sin cliente";
-      const title = documentLabel(order);
+      const title = documentLabel(order) + (order.status === "cancelled" ? " — ANULADA" : "");
 
       doc.setFillColor(44, 24, 16);
       doc.rect(0, 0, 210, 26, "F");
@@ -270,6 +268,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
   }
 
   const totalsByCurrency = filteredOrders.reduce<Record<string, number>>((acc, order) => {
+    if (order.status === "cancelled") return acc;
     const orderCurrency = saleCurrency(order, currency);
     acc[orderCurrency] = (acc[orderCurrency] ?? 0) + Number(order.total_amount ?? 0);
     return acc;
@@ -279,7 +278,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([orderCurrency, value]) => formatCurrency(value, orderCurrency))
     .join(" / ") || formatCurrency(0, currency);
-  const filteredUnits = filteredOrders.reduce((sum, order) => sum + (order.order_items?.length ?? 0), 0);
+  const filteredUnits = filteredOrders.reduce((sum, order) => sum + (order.status === "cancelled" ? 0 : (order.order_items?.length ?? 0)), 0);
 
   return (
     <div>
@@ -308,6 +307,7 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
           {period === "custom" && <><input type="date" className="input-base" value={fromDate} onChange={event => setFromDate(event.target.value)} aria-label="Fecha desde" /><input type="date" className="input-base" value={toDate} onChange={event => setToDate(event.target.value)} aria-label="Fecha hasta" /></>}
           <select className="input-base" value={clientFilter} onChange={event => setClientFilter(event.target.value)}><option value="">Todos los clientes</option>{clientOptions.map(client => <option key={client} value={client}>{client}</option>)}</select>
           <select className="input-base" value={productFilter} onChange={event => setProductFilter(event.target.value)}><option value="">Todos los productos</option>{productOptions.map(product => <option key={product} value={product}>{product}</option>)}</select>
+          <select aria-label="Estado de las ventas" className="input-base" value={statusFilter} onChange={event => setStatusFilter(event.target.value)}><option value="active">Ventas vigentes</option><option value="cancelled">Ventas anuladas</option><option value="all">Todas las ventas</option></select>
           <select className="input-base" value={paymentFilter} onChange={event => setPaymentFilter(event.target.value)}><option value="">Todos los pagos</option><option value="paid">Pagado</option><option value="partial">Parcial</option><option value="pending">Pendiente</option></select>
         </div>
         <p className="text-xs text-text-secondary mt-3">{filteredOrders.length} venta{filteredOrders.length === 1 ? "" : "s"} encontrada{filteredOrders.length === 1 ? "" : "s"}</p>
@@ -378,13 +378,13 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Link href={`/sales/${order.id}/edit`} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-default text-text-primary" title="Editar venta" aria-label="Editar venta">
+                    {order.status !== "cancelled" && <Link href={`/sales/${order.id}/edit`} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-default text-text-primary" title="Editar venta" aria-label="Editar venta">
                       <Pencil className="w-4 h-4" />
-                    </Link>
+                    </Link>}
                     <button onClick={() => handleDownload(order)} disabled={downloading === order.id} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border-default text-text-primary disabled:opacity-60" title="Descargar boleta o proforma" aria-label="Descargar boleta o proforma">
                       {downloading === order.id ? <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin" /> : <Download className="w-4 h-4" />}
                     </button>
-                    <button onClick={() => handleDelete(order.id)} disabled={deleting === order.id || Boolean(order.inventory_committed_at)} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary disabled:opacity-30" title="Eliminar venta" aria-label="Eliminar venta">
+                    <button onClick={() => handleCancel(order.id)} disabled={deleting !== null || Boolean(order.cancelled_at) || (order.status === "cancelled" && !order.inventory_committed_at)} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary disabled:opacity-30" title={order.status === "cancelled" ? "Venta anulada" : "Anular venta y devolver stock"} aria-label="Anular venta y devolver stock">
                       {deleting === order.id ? <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin" /> : <Trash2 className="w-4 h-4" />}
                     </button>
                   </div>
@@ -450,13 +450,13 @@ export function SalesClient({ orders: initialOrders, currency, businessName, tot
                     </td>
                     <td className="px-3 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Link href={`/sales/${order.id}/edit`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border-default text-text-primary hover:border-accent-green hover:text-accent-green hover:bg-green-50 transition-all" title="Editar venta" aria-label="Editar venta">
+                        {order.status !== "cancelled" && <Link href={`/sales/${order.id}/edit`} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border-default text-text-primary hover:border-accent-green hover:text-accent-green hover:bg-green-50 transition-all" title="Editar venta" aria-label="Editar venta">
                           <Pencil className="w-3.5 h-3.5" />
-                        </Link>
+                        </Link>}
                         <button onClick={() => handleDownload(order)} disabled={downloading === order.id} className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border-default text-text-primary hover:border-accent-green hover:text-accent-green hover:bg-green-50 transition-all disabled:opacity-60" title="Descargar boleta o proforma" aria-label="Descargar boleta o proforma">
                           {downloading === order.id ? <div className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                         </button>
-                        <button onClick={() => handleDelete(order.id)} disabled={deleting === order.id || Boolean(order.inventory_committed_at)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary hover:text-status-danger hover:bg-red-50 transition-all disabled:opacity-30" title="Eliminar venta" aria-label="Eliminar venta">
+                        <button onClick={() => handleCancel(order.id)} disabled={deleting !== null || Boolean(order.cancelled_at) || (order.status === "cancelled" && !order.inventory_committed_at)} className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary hover:text-status-danger hover:bg-red-50 transition-all disabled:opacity-30" title={order.status === "cancelled" ? "Venta anulada" : "Anular venta y devolver stock"} aria-label="Anular venta y devolver stock">
                           {deleting === order.id ? <div className="w-3.5 h-3.5 border border-current border-t-transparent rounded-full animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                         </button>
                       </div>
