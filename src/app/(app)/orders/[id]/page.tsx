@@ -73,7 +73,7 @@ export default function OrderDetailPage() {
   useEffect(() => { load(); }, [id]);
 
   async function updateStatus(next: string) {
-    if (!order || !ORDER_FLOW.includes(next) || next === order.status) return;
+    if (!order || order.status === "cancelled" || !ORDER_FLOW.includes(next) || next === order.status) return;
     setUpdatingStatus(true);
     const { error } = await supabase.from("orders")
       .update({ status: next }).eq("id", id);
@@ -93,10 +93,19 @@ export default function OrderDetailPage() {
   }
 
   async function cancelOrder() {
-    if (!confirm("¿Cancelar este pedido?")) return;
-    await supabase.from("orders").update({ status:"cancelled" }).eq("id", id);
-    toast.success("Pedido cancelado");
-    load();
+    if (!order || updatingStatus) return;
+    if (!confirm("¿Anular este pedido y devolver al inventario el stock descontado?")) return;
+    setUpdatingStatus(true);
+    try {
+      const { error } = await supabase.rpc("cancel_order_and_restore_inventory", { p_order_id: id });
+      if (error) throw error;
+      toast.success("Pedido anulado y stock devuelto");
+      await load();
+    } catch (error: any) {
+      toast.error(error?.message || "No se pudo anular el pedido");
+    } finally {
+      setUpdatingStatus(false);
+    }
   }
 
   async function convertToSale() {
